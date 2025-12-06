@@ -71,7 +71,7 @@ const Index = () => {
   return (
     <>
       <Helmet>
-        <title>ROAMZY - Track Your Global Journey</title>
+        <title>WanderPass - Track Your Global Journey</title>
         <meta name="description" content="Track visited countries, check visa requirements, and plan your next adventure with Travel World." />
       </Helmet>
 

@@ -1,7 +1,7 @@
 {
-    "name": "ROAMZY",
-    "short_name": "ROAMZY",
-    "description": "Track your global journey and check visa requirements with ROAMZY.",
+    "name": "WanderPass",
+    "short_name": "WanderPass",
+    "description": "Track your global journey and check visa requirements with WanderPass.",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#000000",

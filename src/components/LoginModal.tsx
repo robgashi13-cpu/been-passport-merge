@@ -113,7 +113,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-gradient-card border border-border/50 rounded-2xl w-full max-w-md p-6 animate-scale-in">
                 <div className="flex justify-center mb-2">
-                    <img src="/logo.png" alt="ROAMZY" className="w-16 h-16 object-contain" />
+                    <img src="/logo.png" alt="WanderPass" className="w-16 h-16 object-contain" />
                 </div>
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="font-display text-2xl font-bold">

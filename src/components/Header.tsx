@@ -33,7 +33,7 @@ const Header = ({ activeTab, setActiveTab, onLoginClick }: HeaderProps) => {
             </div>
             <div className="hidden sm:block">
               <h1 className="font-display text-xl font-bold tracking-tight bg-gradient-to-r from-white via-white/90 to-white/70 bg-clip-text text-transparent">
-                ROAMZY
+                WanderPass
               </h1>
               <p className="text-[10px] uppercase tracking-widest text-white/50 font-medium">Explore & Track</p>
             </div>
