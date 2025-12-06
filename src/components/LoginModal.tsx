@@ -1,0 +1,250 @@
+import { useState } from 'react';
+import { useUser } from '@/contexts/UserContext';
+import { countries, getCountryByCode } from '@/data/countries';
+import { availablePassports } from '@/data/visaMatrix';
+import { User, Mail, Lock, Globe, LogIn, UserPlus, LogOut, X } from 'lucide-react';
+
+interface LoginModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
+
+export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
+    const { login, signup, isLoggedIn, user, logout } = useUser();
+    const [mode, setMode] = useState<'login' | 'signup'>('login');
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [passportCode, setPassportCode] = useState('DE');
+    const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+
+    if (!isOpen) return null;
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+        setIsLoading(true);
+
+        try {
+            let success = false;
+
+            if (mode === 'login') {
+                success = await login(email, password);
+            } else {
+                success = await signup(name, email, password, passportCode);
+            }
+
+            if (success) {
+                onClose();
+            } else {
+                setError('Invalid credentials. Please try again.');
+            }
+        } catch (err) {
+            setError('An error occurred. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleLogout = () => {
+        logout();
+        onClose();
+    };
+
+    // If logged in, show profile
+    if (isLoggedIn && user) {
+        const passport = getCountryByCode(user.passportCode);
+
+        return (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div className="bg-gradient-card border border-border/50 rounded-2xl w-full max-w-md p-6 animate-scale-in">
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="font-display text-2xl font-bold">Profile</h2>
+                        <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    <div className="text-center mb-6">
+                        <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
+                            <User className="w-10 h-10" />
+                        </div>
+                        <h3 className="text-xl font-bold">{user.name}</h3>
+                        <p className="text-muted-foreground">{user.email}</p>
+                    </div>
+
+                    <div className="bg-white/5 rounded-xl p-4 mb-6">
+                        <div className="flex items-center gap-3">
+                            <span className="text-3xl">{passport?.flagEmoji}</span>
+                            <div>
+                                <div className="font-medium">{passport?.name} Passport</div>
+                                <div className="text-sm text-muted-foreground">
+                                    {user.visitedCountries.length} countries visited
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="bg-white/5 rounded-xl p-4 text-center">
+                            <div className="font-display text-2xl font-bold">{user.visitedCountries.length}</div>
+                            <div className="text-xs text-muted-foreground">Countries</div>
+                        </div>
+                        <div className="bg-white/5 rounded-xl p-4 text-center">
+                            <div className="font-display text-2xl font-bold">{user.bucketList.length}</div>
+                            <div className="text-xs text-muted-foreground">Bucket List</div>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                    >
+                        <LogOut className="w-5 h-5" />
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-gradient-card border border-border/50 rounded-2xl w-full max-w-md p-6 animate-scale-in">
+                <div className="flex justify-center mb-2">
+                    <img src="/logo.png" alt="ROAMZY" className="w-16 h-16 object-contain" />
+                </div>
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="font-display text-2xl font-bold">
+                        {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+                    </h2>
+                    <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                {/* Mode Toggle */}
+                <div className="flex gap-2 mb-6">
+                    <button
+                        onClick={() => setMode('login')}
+                        className={`flex-1 py-2 rounded-lg transition-colors ${mode === 'login' ? 'bg-white text-black' : 'bg-white/10'
+                            }`}
+                    >
+                        Sign In
+                    </button>
+                    <button
+                        onClick={() => setMode('signup')}
+                        className={`flex-1 py-2 rounded-lg transition-colors ${mode === 'signup' ? 'bg-white text-black' : 'bg-white/10'
+                            }`}
+                    >
+                        Sign Up
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {mode === 'signup' && (
+                        <div className="relative">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                            <input
+                                type="text"
+                                placeholder="Your name"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className="w-full bg-white/5 border border-border/50 rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-white/20"
+                                required
+                            />
+                        </div>
+                    )}
+
+                    <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                        <input
+                            type="email"
+                            placeholder="Email address"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full bg-white/5 border border-border/50 rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-white/20"
+                            required
+                        />
+                    </div>
+
+                    <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full bg-white/5 border border-border/50 rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-white/20"
+                            required
+                        />
+                    </div>
+
+                    {mode === 'signup' && (
+                        <div>
+                            <label className="block text-sm text-muted-foreground mb-2">
+                                Select Your Passport
+                            </label>
+                            <div className="relative">
+                                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+                                <select
+                                    value={passportCode}
+                                    onChange={(e) => setPassportCode(e.target.value)}
+                                    className="w-full bg-white/5 border border-border/50 rounded-xl py-3 pl-11 pr-10 appearance-none focus:outline-none focus:ring-2 focus:ring-white/20 cursor-pointer"
+                                >
+                                    {availablePassports
+                                        .map(code => getCountryByCode(code))
+                                        .filter((c): c is NonNullable<typeof c> => !!c)
+                                        .sort((a, b) => a.name.localeCompare(b.name))
+                                        .map(country => (
+                                            <option key={country.code} value={country.code} className="text-black">
+                                                {country.flagEmoji} {country.name}
+                                            </option>
+                                        ))
+                                    }
+                                </select>
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {error && (
+                        <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-sm text-red-400">
+                            {error}
+                        </div>
+                    )}
+
+                    <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white text-black font-medium hover:bg-white/90 transition-colors disabled:opacity-50"
+                    >
+                        {isLoading ? (
+                            <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                        ) : mode === 'login' ? (
+                            <>
+                                <LogIn className="w-5 h-5" />
+                                Sign In
+                            </>
+                        ) : (
+                            <>
+                                <UserPlus className="w-5 h-5" />
+                                Create Account
+                            </>
+                        )}
+                    </button>
+                </form>
+
+                <p className="text-center text-xs text-muted-foreground mt-4">
+                    {mode === 'login'
+                        ? "Don't have an account? Click Sign Up above"
+                        : "Already have an account? Click Sign In above"
+                    }
+                </p>
+            </div>
+        </div>
+    );
+};

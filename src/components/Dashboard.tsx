@@ -4,41 +4,52 @@ import ProgressRing from './ProgressRing';
 import ContinentBreakdown from './ContinentBreakdown';
 import { TravelStats } from '@/hooks/useTravelData';
 
+import { TripEntry } from '@/data/trips';
+import { LevelCard, AchievementList } from './Achievements';
+
 interface DashboardProps {
-  stats: TravelStats;
+  stats: {
+    visitedCount: number;
+    totalCountries: number;
+    percentage: number;
+    continentStats: {
+      name: string;
+      visited: number;
+      total: number;
+    }[];
+    passportScore: number;
+    userPassport: {
+      passportRank?: number;
+      name: string;
+    } | null;
+  };
+  visitedCountries: string[];
 }
 
-const Dashboard = ({ stats }: DashboardProps) => {
+const Dashboard = ({ stats, visitedCountries }: DashboardProps) => {
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Hero Stats */}
-      <div className="text-center py-8">
-        <h2 className="font-display text-4xl md:text-5xl font-bold mb-4">
-          Your Travel <span className="text-gradient-gold">Journey</span>
-        </h2>
-        <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-          Track your adventures, discover your passport power, and plan your next destination.
-        </p>
-      </div>
+    <div className="space-y-6 animate-fade-in">
+      {/* Hero Section: Level & Progress */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <LevelCard visitedCountries={visitedCountries} />
 
-      {/* Main Progress Ring */}
-      <div className="flex justify-center py-8">
-        <ProgressRing 
-          percentage={stats.percentage} 
-          visited={stats.visitedCount} 
-          total={stats.totalCountries}
-        />
+        <div className="bg-gradient-card rounded-2xl border border-border/50 p-6 flex items-center justify-center min-h-[200px]">
+          <ProgressRing
+            percentage={stats.percentage}
+            visited={stats.visitedCount}
+            total={stats.totalCountries}
+          />
+        </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
           title="Countries Visited"
           value={stats.visitedCount}
           subtitle={`of ${stats.totalCountries} countries`}
           icon={MapPin}
           variant="gold"
-          delay={100}
         />
         <StatCard
           title="World Explored"
@@ -46,21 +57,18 @@ const Dashboard = ({ stats }: DashboardProps) => {
           subtitle="Keep exploring!"
           icon={Globe}
           variant="accent"
-          delay={200}
         />
         <StatCard
           title="Passport Power"
           value={stats.passportScore}
           subtitle="Visa-free destinations"
           icon={Plane}
-          delay={300}
         />
         <StatCard
           title="Global Rank"
           value={`#${stats.userPassport?.passportRank || '-'}`}
           subtitle={stats.userPassport?.name || 'Select passport'}
           icon={Trophy}
-          delay={400}
         />
       </div>
 
@@ -81,6 +89,9 @@ const Dashboard = ({ stats }: DashboardProps) => {
           <span>Start exploring the Countries tab</span>
         </div>
       </div>
+
+      {/* Achievements */}
+      <AchievementList visitedCountries={visitedCountries} />
     </div>
   );
 };

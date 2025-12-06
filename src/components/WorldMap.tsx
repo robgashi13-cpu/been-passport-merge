@@ -1,95 +1,392 @@
-import { countries } from '@/data/countries';
-import { MapPin, Check, Plus } from 'lucide-react';
+import { useState } from "react";
+import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
+import { countries, getCountryByCode } from '@/data/countries';
+import { getVisaRequirementFromMatrix, getVisaRequirementColor, getVisaRequirementLabel, VisaRequirement } from '@/data/visaMatrix';
+import { VISA_SUBSTITUTIONS, AVAILABLE_ADDITIONAL_VISAS, getVisaPowerGroups } from '@/data/visaSubstitutions';
+import { MapPin, Globe, CreditCard } from 'lucide-react';
+
+// Import TopoJSON data
+import worldData from '@/data/world-110m.json';
 
 interface WorldMapProps {
   visitedCountries: string[];
   toggleVisited: (code: string) => void;
+  userPassportCode?: string; // Add passport to show visa colors
+  heldVisas?: string[];
 }
 
-const WorldMap = ({ visitedCountries, toggleVisited }: WorldMapProps) => {
+// Comprehensive numeric ID to ISO2 mapping from Natural Earth / world-110m.json
+const numericToIso2: Record<string, string> = {
+  // Europe
+  "8": "AL", "20": "AD", "40": "AT", "112": "BY", "56": "BE", "70": "BA", "100": "BG",
+  "191": "HR", "196": "CY", "203": "CZ", "208": "DK", "233": "EE", "246": "FI", "250": "FR",
+  "276": "DE", "300": "GR", "348": "HU", "352": "IS", "372": "IE", "380": "IT", "428": "LV",
+  "438": "LI", "440": "LT", "442": "LU", "807": "MK", "470": "MT", "498": "MD", "492": "MC",
+  "499": "ME", "528": "NL", "578": "NO", "616": "PL", "620": "PT", "642": "RO", "643": "RU",
+  "674": "SM", "688": "RS", "703": "SK", "705": "SI", "724": "ES", "752": "SE", "756": "CH",
+  "792": "TR", "804": "UA", "826": "GB", "336": "VA",
+  // Americas
+  "28": "AG", "32": "AR", "44": "BS", "52": "BB", "84": "BZ", "68": "BO", "76": "BR",
+  "124": "CA", "152": "CL", "170": "CO", "188": "CR", "192": "CU", "212": "DM", "214": "DO",
+  "218": "EC", "222": "SV", "308": "GD", "320": "GT", "328": "GY", "332": "HT", "340": "HN",
+  "388": "JM", "484": "MX", "558": "NI", "591": "PA", "600": "PY", "604": "PE", "630": "PR",
+  "662": "LC", "670": "VC", "740": "SR", "780": "TT", "840": "US", "858": "UY", "862": "VE",
+  // Asia
+  "4": "AF", "51": "AM", "31": "AZ", "48": "BH", "50": "BD", "64": "BT", "96": "BN",
+  "116": "KH", "156": "CN", "268": "GE", "344": "HK", "356": "IN", "360": "ID", "364": "IR",
+  "368": "IQ", "376": "IL", "392": "JP", "400": "JO", "398": "KZ", "414": "KW", "417": "KG",
+  "418": "LA", "422": "LB", "446": "MO", "458": "MY", "462": "MV", "496": "MN", "104": "MM",
+  "524": "NP", "408": "KP", "512": "OM", "586": "PK", "275": "PS", "608": "PH", "634": "QA",
+  "682": "SA", "702": "SG", "410": "KR", "144": "LK", "760": "SY", "762": "TJ", "764": "TH",
+  "626": "TL", "795": "TM", "784": "AE", "860": "UZ", "704": "VN", "887": "YE",
+  // Africa
+  "12": "DZ", "24": "AO", "204": "BJ", "72": "BW", "854": "BF", "108": "BI", "120": "CM",
+  "132": "CV", "140": "CF", "148": "TD", "174": "KM", "178": "CG", "180": "CD", "262": "DJ",
+  "818": "EG", "226": "GQ", "232": "ER", "748": "SZ", "231": "ET", "266": "GA", "270": "GM",
+  "288": "GH", "324": "GN", "624": "GW", "384": "CI", "404": "KE", "426": "LS", "430": "LR",
+  "434": "LY", "450": "MG", "454": "MW", "466": "ML", "478": "MR", "480": "MU", "504": "MA",
+  "508": "MZ", "516": "NA", "562": "NE", "566": "NG", "646": "RW", "678": "ST", "686": "SN",
+  "690": "SC", "694": "SL", "706": "SO", "710": "ZA", "728": "SS", "729": "SD", "834": "TZ",
+  "768": "TG", "788": "TN", "800": "UG", "894": "ZM", "716": "ZW",
+  // Oceania
+  "36": "AU", "242": "FJ", "296": "KI", "584": "MH", "583": "FM", "520": "NR", "554": "NZ",
+  "585": "PW", "598": "PG", "882": "WS", "90": "SB", "776": "TO", "798": "TV", "548": "VU",
+  // Caribbean & others
+  "660": "AI", "533": "AW", "136": "KY", "531": "CW", "312": "GP", "474": "MQ",
+  "652": "BL", "663": "MF", "534": "SX", "796": "TC", "850": "VI", "92": "VG",
+  // Additional entries
+  "732": "EH", "540": "NC",
+};
+
+// Name-based fallback mapping
+const nameToIso2: Record<string, string> = {
+  "czechia": "CZ", "czech republic": "CZ", "czech rep.": "CZ",
+  "united states of america": "US", "united states": "US", "usa": "US",
+  "united kingdom": "GB", "great britain": "GB", "britain": "GB",
+  "bosnia and herz.": "BA", "bosnia and herzegovina": "BA", "bosnia": "BA",
+  "north macedonia": "MK", "macedonia": "MK", "n. macedonia": "MK",
+  "south korea": "KR", "korea": "KR", "republic of korea": "KR",
+  "north korea": "KP", "dem. rep. korea": "KP", "dpr korea": "KP",
+  "democratic republic of the congo": "CD", "dem. rep. congo": "CD", "dr congo": "CD", "drc": "CD",
+  "republic of the congo": "CG", "congo": "CG",
+  "côte d'ivoire": "CI", "ivory coast": "CI", "cote d'ivoire": "CI",
+  "central african republic": "CF", "central african rep.": "CF",
+  "south sudan": "SS", "s. sudan": "SS",
+  "equatorial guinea": "GQ", "eq. guinea": "GQ",
+  "dominican republic": "DO", "dominican rep.": "DO",
+  "united arab emirates": "AE", "uae": "AE",
+  "saudi arabia": "SA", "new zealand": "NZ", "papua new guinea": "PG",
+  "solomon islands": "SB", "solomon is.": "SB",
+  "timor-leste": "TL", "east timor": "TL",
+  "w. sahara": "EH", "western sahara": "EH",
+  "falkland is.": "FK", "falkland islands": "FK",
+  "fr. s. antarctic lands": "TF",
+  "somaliland": "SO", "n. cyprus": "CY", "kosovo": "XK",
+};
+
+// Get ISO2 code from geography properties
+const getIso2Code = (geo: any): string | null => {
+  const id = geo.id;
+  const name = geo.properties?.name || geo.properties?.NAME || "";
+
+  if (id && numericToIso2[id]) return numericToIso2[id];
+
+  const nameLower = name.toLowerCase().trim();
+  if (nameToIso2[nameLower]) return nameToIso2[nameLower];
+
+  const country = countries.find(c =>
+    c.name.toLowerCase() === nameLower ||
+    nameLower.includes(c.name.toLowerCase()) ||
+    c.name.toLowerCase().includes(nameLower)
+  );
+
+  if (country) return country.code;
+  return null;
+};
+
+// Get country fill color based on visa requirement or visited status
+const getCountryFillColor = (
+  iso2: string | null,
+  visitedCountries: string[],
+  userPassportCode?: string,
+  heldVisas?: string[]
+): string => {
+  if (!iso2) return "rgba(60, 60, 60, 0.3)";
+
+  // If visited, show white
+  if (visitedCountries.includes(iso2)) {
+    return "rgba(255, 255, 255, 0.9)";
+  }
+
+  // If user has passport selected, show visa colors
+  if (userPassportCode && userPassportCode !== iso2) {
+    let visaInfo = getVisaRequirementFromMatrix(userPassportCode, iso2);
+
+    // Check for substitutions (Held Visas)
+    if ((!visaInfo || visaInfo.requirement === 'visa-required') && heldVisas && heldVisas.length > 0) {
+      // 1. Direct Visa held for this country
+      if (heldVisas.includes(iso2)) {
+        return "rgba(34, 197, 94, 0.7)";
+      }
+
+      // 2. Visa Substitutions (Power Groups)
+      const powerGroups = getVisaPowerGroups(heldVisas);
+      const hasAccess = powerGroups.some(group => VISA_SUBSTITUTIONS[group]?.includes(iso2));
+      if (hasAccess) {
+        return "rgba(34, 197, 94, 0.7)";
+      }
+    }
+
+    if (visaInfo) {
+      switch (visaInfo.requirement) {
+        case 'visa-free': return "rgba(34, 197, 94, 0.7)"; // Green
+        case 'visa-on-arrival': return "rgba(132, 204, 22, 0.7)"; // Lime
+        case 'e-visa': return "rgba(234, 179, 8, 0.7)"; // Yellow
+        case 'eta': return "rgba(249, 115, 22, 0.7)"; // Orange
+        case 'visa-required': return "rgba(239, 68, 68, 0.6)"; // Red
+      }
+    }
+  }
+
+  // Default unvisited
+  return "rgba(80, 80, 80, 0.5)";
+};
+
+const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas = [] }: WorldMapProps) => {
+  const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
+  const [tooltipContent, setTooltipContent] = useState<{
+    name: string;
+    flag: string;
+    visited: boolean;
+    visaInfo?: { requirement: VisaRequirement; duration?: string };
+  } | null>(null);
+
   const visitedCount = visitedCountries.length;
   const percentage = Math.round((visitedCount / countries.length) * 100);
+  const userPassport = userPassportCode ? getCountryByCode(userPassportCode) : null;
+
+  const handleCountryClick = (geo: any) => {
+    const iso2 = getIso2Code(geo);
+    if (iso2) {
+      toggleVisited(iso2);
+    }
+  };
+
+  const handleCountryHover = (geo: any) => {
+    const iso2 = getIso2Code(geo);
+    const name = geo.properties?.name || "Unknown";
+
+    if (iso2) {
+      const country = getCountryByCode(iso2);
+      let visaInfo = userPassportCode ? getVisaRequirementFromMatrix(userPassportCode, iso2) : null;
+
+      // Check substitutions
+      if (userPassportCode && (!visaInfo || visaInfo.requirement === 'visa-required') && heldVisas.length > 0) {
+        // 1. Direct Visa
+        if (heldVisas.includes(iso2)) {
+          visaInfo = { requirement: 'visa-free', duration: 'Visa Held', notes: 'Direct Visa Access' };
+        } else {
+          // 2. Power Groups
+          const powerGroups = getVisaPowerGroups(heldVisas);
+          const substitutedGroup = powerGroups.find(group => VISA_SUBSTITUTIONS[group]?.includes(iso2));
+
+          if (substitutedGroup) {
+            const label = substitutedGroup === 'SCHENGEN_VISA' ? 'Schengen Visa' :
+              substitutedGroup === 'US_VISA' ? 'US Visa' :
+                substitutedGroup.replace('_VISA', ' Visa');
+            visaInfo = { requirement: 'visa-free', duration: `via ${label}`, notes: 'Visa Substitution' };
+          }
+        }
+      }
+
+      if (country) {
+        setHoveredCountry(iso2);
+        setTooltipContent({
+          name: country.name,
+          flag: country.flagEmoji,
+          visited: visitedCountries.includes(iso2),
+          visaInfo: visaInfo ? { requirement: visaInfo.requirement, duration: visaInfo.duration } : undefined
+        });
+        return;
+      }
+    }
+
+    setHoveredCountry(null);
+    setTooltipContent({ name, flag: "🌍", visited: false });
+  };
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="text-center py-6">
-        <h2 className="font-display text-3xl md:text-4xl font-bold mb-2">
-          World <span className="text-gradient-gold">Explorer</span>
+    <div className="space-y-4 md:space-y-6 animate-fade-in">
+      <div className="text-center py-4 md:py-6">
+        <h2 className="font-display text-2xl md:text-4xl font-bold mb-2 animate-slide-up">
+          World <span className="text-gradient-white">Explorer</span>
         </h2>
-        <p className="text-muted-foreground">
-          Tap countries to mark them as visited
+        <p className="text-sm md:text-base text-muted-foreground animate-slide-up" style={{ animationDelay: "0.1s" }}>
+          {userPassportCode ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="text-lg">{userPassport?.flagEmoji}</span>
+              Showing visa requirements for {userPassport?.name} passport
+            </span>
+          ) : (
+            "Click on countries to mark them as visited"
+          )}
         </p>
       </div>
 
-      {/* Visual Map Representation */}
-      <div className="relative bg-gradient-card rounded-2xl border border-border/50 p-8 overflow-hidden">
-        {/* Globe decoration */}
-        <div className="absolute top-4 right-4 text-8xl opacity-10">🌍</div>
-        
-        <div className="grid grid-cols-5 sm:grid-cols-7 md:grid-cols-10 gap-2">
-          {countries.map((country) => {
-            const isVisited = visitedCountries.includes(country.code);
-            return (
-              <button
-                key={country.code}
-                onClick={() => toggleVisited(country.code)}
-                className={`
-                  relative aspect-square rounded-lg flex items-center justify-center text-2xl
-                  transition-all duration-300 hover:scale-110 hover:z-10
-                  ${isVisited 
-                    ? 'bg-accent/30 ring-2 ring-accent shadow-lg' 
-                    : 'bg-secondary/50 hover:bg-secondary'
-                  }
-                `}
-                title={country.name}
-              >
-                {country.flagEmoji}
-                {isVisited && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-accent rounded-full flex items-center justify-center">
-                    <Check className="w-3 h-3 text-accent-foreground" />
-                  </div>
+      {/* Interactive 2D Map */}
+      <div className="relative bg-gradient-card rounded-xl md:rounded-2xl border border-border/50 p-2 md:p-8 overflow-hidden hover-glow transition-all duration-500">
+        {/* Tooltip */}
+        {tooltipContent && (
+          <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10 bg-black/95 text-white px-3 py-2 md:px-4 md:py-3 rounded-lg md:rounded-xl border border-white/20 shadow-2xl backdrop-blur-sm animate-fade-in max-w-[200px] md:max-w-none">
+            <div className="flex items-center gap-2">
+              <span className="text-xl md:text-2xl">{tooltipContent.flag}</span>
+              <span className="font-semibold text-sm md:text-base truncate">{tooltipContent.name}</span>
+            </div>
+            {tooltipContent.visited && (
+              <span className="text-green-400 text-xs md:text-sm font-medium">✓ Visited</span>
+            )}
+            {tooltipContent.visaInfo && !tooltipContent.visited && (
+              <div className="mt-1 text-xs">
+                <span
+                  className="px-2 py-0.5 rounded-full font-medium"
+                  style={{
+                    backgroundColor: `${getVisaRequirementColor(tooltipContent.visaInfo.requirement)}20`,
+                    color: getVisaRequirementColor(tooltipContent.visaInfo.requirement)
+                  }}
+                >
+                  {getVisaRequirementLabel(tooltipContent.visaInfo.requirement)}
+                </span>
+                {tooltipContent.visaInfo.duration && (
+                  <span className="ml-2 text-muted-foreground">{tooltipContent.visaInfo.duration}</span>
                 )}
-              </button>
-            );
-          })}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="w-full touch-pan-y" style={{ height: "300px", minHeight: "250px" }}>
+          <ComposableMap
+            projection="geoMercator"
+            projectionConfig={{ scale: 100, center: [0, 20] }}
+            style={{ width: "100%", height: "100%" }}
+          >
+            <ZoomableGroup zoom={1} minZoom={0.5} maxZoom={50}>
+              <Geographies geography={worldData}>
+                {({ geographies }) =>
+                  geographies.map((geo) => {
+                    const iso2 = getIso2Code(geo);
+                    const fillColor = getCountryFillColor(iso2, visitedCountries, userPassportCode, heldVisas);
+                    const isVisited = iso2 ? visitedCountries.includes(iso2) : false;
+
+                    return (
+                      <Geography
+                        key={geo.rsmKey}
+                        geography={geo}
+                        onClick={() => handleCountryClick(geo)}
+                        onMouseEnter={() => handleCountryHover(geo)}
+                        onMouseLeave={() => {
+                          setHoveredCountry(null);
+                          setTooltipContent(null);
+                        }}
+                        style={{
+                          default: {
+                            fill: fillColor,
+                            stroke: "rgba(255, 255, 255, 0.2)",
+                            strokeWidth: 0.1,
+                            vectorEffect: "non-scaling-stroke",
+                            outline: "none",
+                            cursor: "pointer",
+                            transition: "all 0.3s ease"
+                          },
+                          hover: {
+                            fill: isVisited ? "rgba(255, 255, 255, 1)" : "rgba(200, 200, 200, 0.8)",
+                            stroke: "rgba(255, 255, 255, 0.5)",
+                            strokeWidth: 0.2,
+                            vectorEffect: "non-scaling-stroke",
+                            outline: "none",
+                            cursor: "pointer",
+                          },
+                          pressed: {
+                            fill: "rgba(255, 255, 255, 0.9)",
+                            strokeWidth: 0.2,
+                            vectorEffect: "non-scaling-stroke",
+                            outline: "none"
+                          }
+                        }}
+                      />
+                    );
+                  })
+                }
+              </Geographies>
+            </ZoomableGroup>
+          </ComposableMap>
         </div>
 
-        {/* Stats overlay */}
-        <div className="mt-8 flex items-center justify-center gap-8">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-accent/30 ring-2 ring-accent" />
-            <span className="text-sm text-muted-foreground">Visited ({visitedCount})</span>
+        {/* Legend */}
+        {userPassportCode && (
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 md:gap-4 text-xs md:text-sm">
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 md:w-4 md:h-4 rounded" style={{ backgroundColor: "rgba(255,255,255,0.9)" }} />
+              <span className="text-muted-foreground">Visited</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 md:w-4 md:h-4 rounded" style={{ backgroundColor: "rgba(34,197,94,0.7)" }} />
+              <span className="text-muted-foreground">Visa Free</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 md:w-4 md:h-4 rounded" style={{ backgroundColor: "rgba(132,204,22,0.7)" }} />
+              <span className="text-muted-foreground">On Arrival</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 md:w-4 md:h-4 rounded" style={{ backgroundColor: "rgba(234,179,8,0.7)" }} />
+              <span className="text-muted-foreground">e-Visa</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-3 h-3 md:w-4 md:h-4 rounded" style={{ backgroundColor: "rgba(239,68,68,0.6)" }} />
+              <span className="text-muted-foreground">Required</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 rounded bg-secondary/50" />
-            <span className="text-sm text-muted-foreground">Not visited ({countries.length - visitedCount})</span>
+        )}
+
+        {!userPassportCode && (
+          <div className="mt-4 flex items-center justify-center gap-4 md:gap-8 flex-wrap text-xs md:text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 md:w-5 md:h-5 rounded-md shadow-lg" style={{ backgroundColor: "rgba(255, 255, 255, 0.9)" }} />
+              <span className="text-muted-foreground font-medium">Visited ({visitedCount})</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 md:w-5 md:h-5 rounded-md shadow-lg" style={{ backgroundColor: "rgba(80, 80, 80, 0.5)" }} />
+              <span className="text-muted-foreground font-medium">Not visited</span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Quick stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-gradient-card rounded-xl border border-border/50 p-4 text-center">
-          <MapPin className="w-6 h-6 text-primary mx-auto mb-2" />
-          <div className="font-display text-2xl font-bold">{visitedCount}</div>
-          <div className="text-xs text-muted-foreground">Countries</div>
+      {/* Quick stats - Mobile optimized */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+        <div className="bg-gradient-card rounded-lg md:rounded-xl border border-border/50 p-3 md:p-5 text-center hover-lift group transition-all duration-300">
+          <MapPin className="w-5 h-5 md:w-7 md:h-7 text-primary mx-auto mb-1 md:mb-2 group-hover:scale-110 transition-transform" />
+          <div className="font-display text-xl md:text-3xl font-bold">{visitedCount}</div>
+          <div className="text-xs text-muted-foreground uppercase tracking-wider">Countries</div>
         </div>
-        <div className="bg-gradient-card rounded-xl border border-border/50 p-4 text-center">
-          <div className="text-2xl mb-2">🎯</div>
-          <div className="font-display text-2xl font-bold">{percentage}%</div>
-          <div className="text-xs text-muted-foreground">World Explored</div>
+        <div className="bg-gradient-card rounded-lg md:rounded-xl border border-border/50 p-3 md:p-5 text-center hover-lift group transition-all duration-300">
+          <Globe className="w-5 h-5 md:w-7 md:h-7 text-primary mx-auto mb-1 md:mb-2 group-hover:scale-110 transition-transform" />
+          <div className="font-display text-xl md:text-3xl font-bold">{percentage}%</div>
+          <div className="text-xs text-muted-foreground uppercase tracking-wider">Explored</div>
         </div>
-        <div className="bg-gradient-card rounded-xl border border-border/50 p-4 text-center">
-          <div className="text-2xl mb-2">🏆</div>
-          <div className="font-display text-2xl font-bold">
-            {visitedCount >= 30 ? 'Explorer' : visitedCount >= 10 ? 'Traveler' : 'Beginner'}
+        <div className="bg-gradient-card rounded-lg md:rounded-xl border border-border/50 p-3 md:p-5 text-center hover-lift group transition-all duration-300">
+          <div className="w-5 h-5 md:w-7 md:h-7 mx-auto mb-1 md:mb-2 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <span className="text-lg md:text-2xl">✈️</span>
           </div>
-          <div className="text-xs text-muted-foreground">Rank</div>
+          <div className="font-display text-xl md:text-3xl font-bold">{countries.length - visitedCount}</div>
+          <div className="text-xs text-muted-foreground uppercase tracking-wider">Remaining</div>
         </div>
-        <div className="bg-gradient-card rounded-xl border border-border/50 p-4 text-center">
-          <div className="text-2xl mb-2">✨</div>
-          <div className="font-display text-2xl font-bold">{countries.length - visitedCount}</div>
-          <div className="text-xs text-muted-foreground">To Explore</div>
+        <div className="bg-gradient-card rounded-lg md:rounded-xl border border-border/50 p-3 md:p-5 text-center hover-lift group transition-all duration-300">
+          <div className="w-5 h-5 md:w-7 md:h-7 mx-auto mb-1 md:mb-2 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <span className="text-lg md:text-2xl">🏆</span>
+          </div>
+          <div className="font-display text-xl md:text-3xl font-bold">{countries.length}</div>
+          <div className="text-xs text-muted-foreground uppercase tracking-wider">Total</div>
         </div>
       </div>
     </div>

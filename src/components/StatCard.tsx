@@ -56,7 +56,7 @@ const StatCard = ({
         
         <div className={cn(
           "font-display text-4xl font-bold mb-1",
-          variant === 'gold' ? "text-gradient-gold" : 
+          variant === 'gold' ? "text-gradient-white" : 
           variant === 'accent' ? "text-accent" : 
           "text-foreground"
         )}>

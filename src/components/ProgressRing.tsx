@@ -68,7 +68,7 @@ const ProgressRing = ({ percentage, visited, total }: ProgressRingProps) => {
       
       {/* Center text */}
       <div className="absolute flex flex-col items-center justify-center">
-        <span className="font-display text-5xl font-bold text-gradient-gold">
+        <span className="font-display text-5xl font-bold text-gradient-white">
           {animatedPercentage}%
         </span>
         <span className="text-muted-foreground text-sm mt-1">

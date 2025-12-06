@@ -1,0 +1,17 @@
+{
+    "name": "ROAMZY",
+    "short_name": "ROAMZY",
+    "description": "Track your global journey and check visa requirements with ROAMZY.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/logo.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
