@@ -24,18 +24,27 @@ export const CountryDetailSheet = ({
 
     if (!country) return null;
 
+    const [snap, setSnap] = useState<number | string | null>(0.25);
+
     return (
-        <Drawer.Root open={isOpen} onOpenChange={onOpenChange} shouldScaleBackground>
+        <Drawer.Root
+            open={isOpen}
+            onOpenChange={onOpenChange}
+            snapPoints={[0.25, 1]}
+            activeSnapPoint={snap}
+            setActiveSnapPoint={setSnap}
+            shouldScaleBackground
+        >
             <Drawer.Portal>
-                <Drawer.Overlay className="fixed inset-0 bg-black/40" />
-                <Drawer.Content className="bg-[#1a1a1a] flex flex-col rounded-t-[10px] h-[96%] mt-24 fixed bottom-0 left-0 right-0 z-50 border-t border-white/10 outline-none">
+                <Drawer.Overlay className="fixed inset-0 bg-black/40 z-[10001]" />
+                <Drawer.Content className="bg-[#1a1a1a] flex flex-col rounded-t-[20px] h-[96%] fixed left-0 right-0 z-[10002] border-t border-white/10 outline-none" style={{ bottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
                     <div className="p-4 bg-[#1a1a1a] rounded-t-[10px] flex-1">
                         <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-zinc-600 mb-8" />
                         <div className="max-w-md mx-auto h-full overflow-y-auto custom-scrollbar">
                             <Drawer.Title className="font-medium mb-4 text-white sr-only">
                                 {country.name} Details
                             </Drawer.Title>
-                            {/* We pass a stripped down onClose for safety, essentially closing the drawer */}
+                            {/* Content */}
                             <CountryDetails
                                 country={country}
                                 userPassportCode={userPassportCode}

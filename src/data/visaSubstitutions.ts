@@ -56,7 +56,7 @@ export const VISA_SUBSTITUTIONS: Record<string, string[]> = {
 
         // South America
         'CO', // Colombia
-        'PE', // Peru
+        // Note: Peru removed - requires separate visa
 
         // Europe
         'AL', // Albania

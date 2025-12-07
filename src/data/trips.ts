@@ -28,15 +28,22 @@ export interface TripStatistics {
 
 // Calculate days between two dates or from a trip entry
 export const calculateDays = (startOrTrip: Date | TripEntry, end?: Date): number => {
+    let s: Date, e: Date;
+
     if (typeof startOrTrip === 'object' && 'startDate' in startOrTrip) {
-        // It's a TripEntry
-        const trip = startOrTrip as TripEntry;
-        const diffTime = Math.abs(new Date(trip.endDate).getTime() - new Date(trip.startDate).getTime());
-        return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Include both start and end day
+        s = new Date(startOrTrip.startDate);
+        e = new Date(startOrTrip.endDate);
+    } else {
+        s = new Date(startOrTrip as Date);
+        e = new Date(end as Date);
     }
-    // It's two dates
-    const diffTime = Math.abs((end as Date).getTime() - (startOrTrip as Date).getTime());
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+    // Normalize to midnight to ignore time differences
+    s.setHours(0, 0, 0, 0);
+    e.setHours(0, 0, 0, 0);
+
+    const diffTime = Math.abs(e.getTime() - s.getTime());
+    return Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1; // Round is safer for normalized dates
 };
 
 // Calculate total days from multiple trips

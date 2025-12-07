@@ -68,8 +68,9 @@ export const AddTripModal = ({ isOpen, onClose, initialCountryCode, initialDate 
             countryCode,
             countryName: country.name,
             cityName: cityName || undefined,
-            startDate: new Date(startDate),
-            endDate: new Date(endDate),
+            // Construct dates using local time components to avoid UTC shifts
+            startDate: new Date(+startDate.split('-')[0], +startDate.split('-')[1] - 1, +startDate.split('-')[2]),
+            endDate: new Date(+endDate.split('-')[0], +endDate.split('-')[1] - 1, +endDate.split('-')[2]),
             transportMode: transportMode as any,
             notes: notes || undefined,
             createdAt: new Date(),

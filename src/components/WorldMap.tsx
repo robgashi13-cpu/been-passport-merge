@@ -252,9 +252,28 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
 
   const [viewMode, setViewMode] = useState<'visited' | 'visa'>('visited');
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [position, setPosition] = useState({ x: 0, y: 0, k: 1 });
 
-  const handleZoomChange = (position: { k: number, x: number, y: number }) => {
-    setZoomLevel(position.k);
+  // Virtual Infinite Scroll Index: Which world copy is closest to the center?
+  const [centerIndex, setCenterIndex] = useState(0);
+
+  const handleMove = (pos: { x: number, y: number, k: number }) => {
+    setZoomLevel(pos.k);
+    setPosition(pos);
+
+    // Calculate world width in current SCALED pixels
+    const scale = isFullScreen ? 300 : 100;
+    const worldWidth = scale * 2 * Math.PI * pos.k;
+
+    // Determine which virtual "world index" the viewport is currently looking at
+    // Panning right (positive x) -> Viewport moves left relative to map -> We need negative index worlds
+    // x = 0 -> Index 0
+    // x = -worldWidth -> Index 1 (Map shifted left creates effect of camera moving right)
+    const newIndex = Math.round(-pos.x / worldWidth);
+
+    if (newIndex !== centerIndex) {
+      setCenterIndex(newIndex);
+    }
   };
 
   const MapContent = (
@@ -318,16 +337,7 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
 
       {/* Interactive 2D Map */}
       <div className={`relative bg-gradient-card rounded-xl md:rounded-2xl border border-border/50 overflow-hidden hover-glow transition-all duration-500 flex-grow flex flex-col ${isFullScreen ? 'h-full rounded-none border-none' : 'p-2 md:p-8'}`}>
-        {/* Full Screen Toggle Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation(); // Prevent map click
-            setInternalIsFullScreen(!internalIsFullScreen);
-          }}
-          className={`absolute z-[10000] p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-black/60 transition-all shadow-xl ${isFullScreen ? 'bottom-32 right-4 scale-125' : 'bottom-4 right-4'}`}
-        >
-          {isFullScreen ? <X className="w-6 h-6" /> : <Maximize2 className="w-5 h-5 md:w-6 md:h-6" />}
-        </button>
+
 
         {/* ... Tooltip ... */}
         {tooltipContent && (
@@ -371,112 +381,124 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
             style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }}
           >
             {/* ... ZoomableGroup ... */}
+            {/* ... ZoomableGroup ... */}
             <ZoomableGroup
               minZoom={1}
               maxZoom={50}
+              /* Explicitly set a massive extent to prevent any default bounding */
               translateExtent={[
-                [-2000, -1000],
-                [4000, 2000]
+                [-100000, -100000],
+                [100000, 100000]
               ]}
-              onMove={handleZoomChange}
+              onMove={handleMove}
             >
-              <Geographies geography={worldData}>
-                {({ geographies }) =>
-                  geographies.map((geo) => {
-                    const iso2 = getIso2Code(geo);
-
-                    // Logic for Fill Color
-                    let fillColor = "rgba(80, 80, 80, 0.3)"; // Base unvisited
-
-                    if (iso2) {
-                      if (viewMode === 'visited') {
-                        if (visitedCountries.includes(iso2)) {
-                          fillColor = "rgba(255, 255, 255, 0.9)"; // White for visited
-                        } else {
-                          fillColor = "rgba(80, 80, 80, 0.5)"; // Dark for unvisited
-                        }
-                      } else if (viewMode === 'visa' && userPassportCode) {
-                        // Visa Mode
-                        if (userPassportCode === iso2) {
-                          fillColor = "rgba(255, 255, 255, 0.9)"; // Your Home/Passport country
-                        } else {
-                          fillColor = getCountryFillColor(iso2, [], userPassportCode, heldVisas);
-                        }
-                      }
-                    }
-
-                    const isVisited = iso2 ? visitedCountries.includes(iso2) : false;
-
-                    return (
-                      <Geography
-                        key={geo.rsmKey}
-                        geography={geo}
-                        onClick={() => handleCountryClick(geo)}
-                        onMouseEnter={() => handleCountryHover(geo)}
-                        onMouseLeave={() => {
-                          setHoveredCountry(null);
-                          setTooltipContent(null);
-                        }}
-                        style={{
-                          default: {
-                            fill: fillColor,
-                            stroke: "rgba(255, 255, 255, 0.2)",
-                            strokeWidth: 0.5 / zoomLevel, // Scale stroke width too
-                            vectorEffect: "non-scaling-stroke",
-                            outline: "none",
-                            cursor: "pointer",
-                            transition: "all 0.3s ease"
-                          },
-                          hover: {
-                            fill: isVisited && viewMode === 'visited' ? "rgba(255, 255, 255, 1)" : "rgba(200, 200, 200, 0.5)",
-                            stroke: "rgba(255, 255, 255, 0.8)",
-                            strokeWidth: 1 / zoomLevel,
-                            vectorEffect: "non-scaling-stroke",
-                            outline: "none",
-                            cursor: "pointer",
-                          },
-                          pressed: {
-                            fill: "rgba(255, 255, 255, 0.9)",
-                            strokeWidth: 1 / zoomLevel,
-                            vectorEffect: "non-scaling-stroke",
-                            outline: "none"
-                          }
-                        }}
-                      />
-                    );
-                  })
-                }
-              </Geographies>
-
-
-              {/* Country Labels - Only show at low zoom levels */}
-              {zoomLevel < 3 && countries.map((country) => {
-                if (!country.coordinates) return null;
-                const coordinates: [number, number] = [country.coordinates[1], country.coordinates[0]];
-                const isVisited = visitedCountries.includes(country.code);
-
-                // Scale labels based on zoom, but hide entirely at high zoom
-                const baseMapUnitSize = 3;
-                const fontSize = baseMapUnitSize / zoomLevel;
+              {/* Virtual Infinite Scroll: Render 5 worlds (Extra buffer for fast swipes) */}
+              {[centerIndex - 2, centerIndex - 1, centerIndex, centerIndex + 1, centerIndex + 2].map((offsetIndex) => {
+                const scale = isFullScreen ? 300 : 100;
+                const worldWidth = scale * 2 * Math.PI;
+                const xOffset = offsetIndex * worldWidth;
 
                 return (
-                  <Marker key={country.code} coordinates={coordinates}>
-                    <text
-                      textAnchor="middle"
-                      y={fontSize / 2}
-                      style={{
-                        fontFamily: "Inter, sans-serif",
-                        fill: isVisited || viewMode === 'visa' ? "#fff" : "rgba(255,255,255,0.7)",
-                        fontSize: `${fontSize}px`,
-                        fontWeight: "500",
-                        pointerEvents: "none",
-                        opacity: zoomLevel > 2 ? 0.5 : 1,
-                        textShadow: `0px 0px ${0.3 / zoomLevel}px rgba(0,0,0,0.9)`
-                      }}
-                    >
-                      {country.name}
-                    </text>
-                  </Marker>
+                  <g key={offsetIndex} transform={`translate(${xOffset}, 0)`}>
+                    <Geographies geography={worldData}>
+                      {({ geographies }) =>
+                        geographies.map((geo) => {
+                          const iso2 = getIso2Code(geo);
+
+                          // Logic for Fill Color
+                          let fillColor = "rgba(80, 80, 80, 0.3)"; // Base unvisited
+
+                          if (iso2) {
+                            if (viewMode === 'visited') {
+                              if (visitedCountries.includes(iso2)) {
+                                fillColor = "rgba(255, 255, 255, 0.9)"; // White for visited
+                              } else {
+                                fillColor = "rgba(80, 80, 80, 0.5)"; // Dark for unvisited
+                              }
+                            } else if (viewMode === 'visa' && userPassportCode) {
+                              // Visa Mode
+                              if (userPassportCode === iso2) {
+                                fillColor = "rgba(255, 255, 255, 0.9)"; // Your Home/Passport country
+                              } else {
+                                fillColor = getCountryFillColor(iso2, [], userPassportCode, heldVisas);
+                              }
+                            }
+                          }
+
+                          const isVisited = iso2 ? visitedCountries.includes(iso2) : false;
+
+                          return (
+                            <Geography
+                              key={geo.rsmKey}
+                              geography={geo}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCountryClick(geo);
+                              }}
+                              onMouseEnter={() => handleCountryHover(geo)}
+                              onMouseLeave={() => {
+                                setHoveredCountry(null);
+                                setTooltipContent(null);
+                              }}
+                              style={{
+                                default: {
+                                  fill: fillColor,
+                                  stroke: "rgba(255, 255, 255, 0.2)",
+                                  strokeWidth: 0.5 / zoomLevel, // Scale stroke width too
+                                  vectorEffect: "non-scaling-stroke",
+                                  outline: "none",
+                                  cursor: "pointer",
+                                  transition: "all 0.3s ease"
+                                },
+                                hover: {
+                                  fill: isVisited && viewMode === 'visited' ? "rgba(255, 255, 255, 1)" : "rgba(200, 200, 200, 0.5)",
+                                  stroke: "rgba(255, 255, 255, 0.8)",
+                                  strokeWidth: 1 / zoomLevel,
+                                  vectorEffect: "non-scaling-stroke",
+                                  outline: "none",
+                                  cursor: "pointer",
+                                },
+                                pressed: {
+                                  fill: "rgba(255, 255, 255, 0.9)",
+                                  strokeWidth: 1 / zoomLevel,
+                                  vectorEffect: "non-scaling-stroke",
+                                  outline: "none"
+                                }
+                              }}
+                            />
+                          );
+                        })
+                      }
+                    </Geographies>
+                    {/* Labels for this offset */}
+                    {zoomLevel < 3 && countries.map((country) => {
+                      if (!country.coordinates) return null;
+                      const coordinates: [number, number] = [country.coordinates[1], country.coordinates[0]];
+                      const isVisited = visitedCountries.includes(country.code);
+                      const baseMapUnitSize = 3;
+                      const fontSize = baseMapUnitSize / zoomLevel;
+
+                      return (
+                        <Marker key={`${country.code}-label`} coordinates={coordinates}>
+                          <text
+                            textAnchor="middle"
+                            y={fontSize / 2}
+                            style={{
+                              fontFamily: "Inter, sans-serif",
+                              fill: isVisited || viewMode === 'visa' ? "#fff" : "rgba(255,255,255,0.7)",
+                              fontSize: `${fontSize}px`,
+                              fontWeight: "500",
+                              pointerEvents: "none",
+                              opacity: zoomLevel > 2 ? 0.5 : 1,
+                              textShadow: `0px 0px ${0.3 / zoomLevel}px rgba(0,0,0,0.9)`
+                            }}
+                          >
+                            {country.name}
+                          </text>
+                        </Marker>
+                      );
+                    })}
+                  </g>
                 );
               })}
             </ZoomableGroup>

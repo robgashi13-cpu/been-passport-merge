@@ -5,11 +5,15 @@ import axios from 'axios';
 interface GoogleWorldMapProps {
     visitedCountries: string[];
     onCountryClick: (countryCode: string) => void;
+    selectedCountry?: string | null;
 }
 
-export const GoogleWorldMap = ({ visitedCountries, onCountryClick }: GoogleWorldMapProps) => {
+export const GoogleWorldMap = ({ visitedCountries, onCountryClick, selectedCountry }: GoogleWorldMapProps) => {
     const mapRef = useRef<HTMLElement>(null);
     const mapInstance = useRef<GoogleMap | null>(null);
+
+    // Cache for GeoJSON features
+    const geoJsonCache = useRef<any[]>([]);
 
     const createMap = async () => {
         if (!mapRef.current) return;
@@ -24,64 +28,73 @@ export const GoogleWorldMap = ({ visitedCountries, onCountryClick }: GoogleWorld
         }
 
         try {
-            const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY_HERE';
+            let apiKey: string | undefined = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
+            // If strictly using Native Config (Info.plist), do not pass an invalid key here.
+            if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
+                apiKey = undefined;
+            }
 
             mapInstance.current = await GoogleMap.create({
                 id: 'my-map',
                 element: mapRef.current,
-                apiKey: apiKey,
+                apiKey: apiKey, // logic: if undefined, plugin looks in Info.plist (iOS) or AndroidManifest (Android)
                 config: {
                     center: {
                         lat: 20,
                         lng: 0,
                     },
                     zoom: 2,
+                    disableDefaultUI: true, // Hide all controls (Zoom, Map Type, Street View) for clean look
                     styles: [
                         {
                             "elementType": "geometry",
-                            "stylers": [{ "color": "#212121" }] // Dark mode base
+                            "stylers": [{ "color": "#121212" }] // Deeper dark background
                         },
                         {
-                            "elementType": "labels.text.stroke",
-                            "stylers": [{ "color": "#212121" }]
+                            "elementType": "labels",
+                            "stylers": [{ "visibility": "off" }] // Hide all labels by default for clean look
                         },
                         {
-                            "elementType": "labels.text.fill",
+                            "elementType": "labels.text.fill", // Restore country names/admin if needed, but Skratch is very clean.
                             "stylers": [{ "color": "#757575" }]
                         },
                         {
                             "featureType": "administrative.country",
                             "elementType": "geometry.stroke",
-                            "stylers": [{ "color": "#424242" }] // Dark borders
+                            "stylers": [{ "color": "#333333" }, { "weight": 1 }] // Subtle borders
+                        },
+                        {
+                            "featureType": "administrative.country",
+                            "elementType": "labels",
+                            "stylers": [{ "visibility": "simplified" }, { "color": "#888888" }] // Only country labels
+                        },
+                        {
+                            "featureType": "water",
+                            "elementType": "geometry",
+                            "stylers": [{ "color": "#000000" }] // Black water for contrast
+                        },
+                        {
+                            "featureType": "road",
+                            "stylers": [{ "visibility": "off" }] // Hide roads
+                        },
+                        {
+                            "featureType": "poi",
+                            "stylers": [{ "visibility": "off" }] // Hide POIs
                         }
-                        // Add more styling as needed
                     ]
                 },
             });
 
-            // Listen for marker clicks? Or polygon clicks?
-            // Polygon clicks are supported in newer versions.
-            // But we primarily want to highlight visited.
-
-            updateVisitedHighlights();
-
-            // Set up listener for clicks
-            // Since we can't easily click "Any" country without polygons for all, 
-            // for unvisited countries, users might just click the map. 
-            // The user wants "Click on any country show info".
-            // Implementation detail: To click *unvisited* countries, we essentially need global polygons.
-            // If native performance allows, we load ALL polygons but transparent fill?
-            // Let's try loading all logic. If slow, we optimize.
-
+            // Load polygons after map creation
             loadPolygons();
 
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error creating map", error);
+            // Alert for debugging on device
+            alert(`Map Error: ${error?.message || JSON.stringify(error)}`);
         }
     };
-
-    // Cache for GeoJSON features
-    const geoJsonCache = useRef<any[]>([]);
 
     const loadPolygons = async () => {
         if (!mapInstance.current) return;
@@ -97,35 +110,30 @@ export const GoogleWorldMap = ({ visitedCountries, onCountryClick }: GoogleWorld
             const features = geoJsonCache.current;
             const polygonsToAdd: any[] = [];
 
-            // Warning: Adding 180+ polygons individually.
             features.forEach((feature: any) => {
-                const countryCode = feature.properties.id || feature.id; // Adjust based on GeoJSON
+                const countryCode = feature.properties.id || feature.id;
                 const isVisited = visitedCountries.includes(countryCode);
+                const isSelected = selectedCountry === countryCode;
 
-                // Geometry mapping needs to handle Polygon and MultiPolygon
+                // Styling Logic
+                let fillColor = '#1E1E1E'; // Default Dark Grey
+                if (isSelected) fillColor = '#FFFFFF'; // Highlight selected country (White)
+                else if (isVisited) fillColor = '#4ade80'; // Visited Green
+
                 const geometry = feature.geometry;
                 const coordsList = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
 
                 coordsList.forEach((coords: any[]) => {
-                    // Flatten structure for Capacitor: [{lat, lng}, ...]
-                    // GeoJSON is [lng, lat]
-
-                    // MultiPolygon: coordinates is [[[lng, lat], ...], ...]
-                    // Polygon: coordinates is [[lng, lat], ...] (first ring is outer)
-
-                    // Simple parser helper needed?
-                    // Usually we take the outer ring (index 0).
                     const outerRing = coords[0];
                     const path = outerRing.map((p: any) => ({ lat: p[1], lng: p[0] }));
 
                     polygonsToAdd.push({
                         paths: path,
-                        fillColor: isVisited ? '#4ade80' : '#212121', // Green if visited, Dark if not
-                        fillOpacity: isVisited ? 0.4 : 0.0, // Transparent for unvisited if needed, or 0.0 to just catch clicks?
-                        // If 0.0 opacity, it might not catch clicks on some platforms. Let's try 0.01.
+                        fillColor: fillColor,
+                        fillOpacity: 1.0,
                         strokeColor: '#333333',
                         strokeWeight: 1,
-                        tag: countryCode, // Store ID to identify click
+                        tag: countryCode,
                         clickable: true
                     });
                 });
@@ -133,7 +141,6 @@ export const GoogleWorldMap = ({ visitedCountries, onCountryClick }: GoogleWorld
 
             await mapInstance.current.addPolygons(polygonsToAdd);
 
-            // Add Listener
             await mapInstance.current.setOnPolygonClickListener((event) => {
                 if (event.tag) {
                     onCountryClick(event.tag);
@@ -145,32 +152,26 @@ export const GoogleWorldMap = ({ visitedCountries, onCountryClick }: GoogleWorld
         }
     };
 
-    const updateVisitedHighlights = () => {
-        // Optimization: Instead of clear/re-add, ideally update style.
-        // Capacitor plugin might not support updatePolygon efficiently.
-        // For now, re-render is only safe bet if `visitedCountries` changes significantly.
-        // Or we just rely on map recreation (expensive).
-        // Let's just createMap once.
-    };
-
     useEffect(() => {
         createMap();
         return () => {
-            // cleanup
+            if (mapInstance.current) {
+                mapInstance.current.destroy().catch(() => { });
+            }
         };
-    }, []); // Empty deps for now, forcing full reload might be heavy.
+    }, []);
 
-    // Watch visited updates?
+    // Re-run polygon logic when visited countries change
     useEffect(() => {
         if (mapInstance.current && geoJsonCache.current.length > 0) {
-            // Re-run color logic? 
-            // Ideally we'd iterate polygons and set color.
-            // Since we can't easily query plugin for polygon by tag, we might have to clear and re-add.
-            // mapInstance.current.clear(); // Clears markers/polys
-            // loadPolygons();
-            // This is safer.
+            // For now, simpler to recreate or just clear polygons if possible.
+            // But existing logic relying on recreate is safer for now.
+            // Or we just re-run loadPolygons which adds NEW polygons properly?
+            // No, duplicate polygons are bad.
+            // Let's just createMap again for simplicity in this phase.
+            createMap();
         }
-    }, [visitedCountries]);
+    }, [visitedCountries, selectedCountry]);
 
     return (
         <div className="w-full h-full">

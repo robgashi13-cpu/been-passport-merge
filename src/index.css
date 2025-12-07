@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -78,76 +78,85 @@ a {
 
 @layer base {
   :root {
-    /* Pure black & white foundation */
-    --background: 0 0% 4%;
+    /* Pure black & white foundation with gold accents */
+    --background: 0 0% 2%;
     --foreground: 0 0% 98%;
 
-    --card: 0 0% 8%;
+    --card: 0 0% 6%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 8%;
+    --popover: 0 0% 5%;
     --popover-foreground: 0 0% 98%;
 
     /* White as primary for high contrast */
     --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 4%;
+    --primary-foreground: 0 0% 2%;
 
     /* Dark grays for secondary */
-    --secondary: 0 0% 12%;
+    --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 98%;
 
     /* Muted grays */
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 55%;
 
-    /* Accent - bright white with glow */
-    --accent: 0 0% 100%;
-    --accent-foreground: 0 0% 4%;
+    /* Gold accent for luxury feel */
+    --accent: 45 85% 55%;
+    --accent-foreground: 0 0% 2%;
+
+    /* Gold color */
+    --gold: 45 85% 55%;
+    --gold-light: 45 90% 75%;
+    --gold-dark: 38 75% 40%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
     /* Subtle borders */
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 0 0% 98%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 45 85% 55%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Custom monochrome tokens */
+    /* Custom premium tokens */
     --pure-black: 0 0% 0%;
     --pure-white: 0 0% 100%;
-    --charcoal: 0 0% 6%;
-    --dark-gray: 0 0% 18%;
-    --mid-gray: 0 0% 45%;
-    --light-gray: 0 0% 85%;
-    --off-white: 0 0% 96%;
+    --charcoal: 0 0% 4%;
+    --dark-gray: 0 0% 12%;
+    --mid-gray: 0 0% 40%;
+    --light-gray: 0 0% 80%;
+    --off-white: 0 0% 95%;
 
-    /* Gradients - black to white */
-    --gradient-dark: linear-gradient(180deg, hsl(0 0% 5%), hsl(0 0% 0%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 8%), hsl(0 0% 0%));
-    --gradient-glow: radial-gradient(circle at center, hsl(0 0% 100% / 0.08), transparent 70%);
-    --gradient-white: linear-gradient(135deg, hsl(0 0% 100%), hsl(0 0% 90%));
-    --gradient-shimmer: linear-gradient(90deg, transparent, hsl(0 0% 100% / 0.1), transparent);
+    /* Premium Gradients */
+    --gradient-dark: linear-gradient(180deg, hsl(0 0% 4%), hsl(0 0% 0%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 8%) 0%, hsl(0 0% 3%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(45 85% 55% / 0.15), transparent 70%);
+    --gradient-white: linear-gradient(135deg, hsl(0 0% 100%), hsl(0 0% 85%));
+    --gradient-shimmer: linear-gradient(90deg, transparent, hsl(45 85% 55% / 0.15), transparent);
+    --gradient-gold: linear-gradient(135deg, hsl(45 85% 55%), hsl(38 75% 45%));
+    --gradient-premium: linear-gradient(135deg, hsl(0 0% 8%) 0%, hsl(0 0% 4%) 50%, hsl(0 0% 6%) 100%);
 
-    /* Shadows - subtle depth */
-    --shadow-white: 0 0 40px hsl(0 0% 100% / 0.1);
-    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.5);
-    --shadow-elevated: 0 20px 50px hsl(0 0% 0% / 0.7);
-    --shadow-glow: 0 0 30px hsl(0 0% 100% / 0.15);
+    /* Premium Shadows */
+    --shadow-white: 0 0 60px hsl(0 0% 100% / 0.08);
+    --shadow-card: 0 8px 40px hsl(0 0% 0% / 0.6), 0 0 1px hsl(0 0% 100% / 0.1);
+    --shadow-elevated: 0 24px 60px hsl(0 0% 0% / 0.8);
+    --shadow-glow: 0 0 40px hsl(45 85% 55% / 0.15);
+    --shadow-gold: 0 0 30px hsl(45 85% 55% / 0.2);
 
-    /* Font families */
-    --font-display: 'Cormorant Garamond', serif;
-    --font-body: 'Inter', sans-serif;
+    /* Premium Font families */
+    --font-display: 'Playfair Display', 'SF Pro Display', Georgia, serif;
+    --font-body: 'DM Sans', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'Space Grotesk', 'SF Mono', monospace;
 
-    --sidebar-background: 0 0% 4%;
+    --sidebar-background: 0 0% 3%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 0 0% 98%;
-    --sidebar-primary-foreground: 0 0% 4%;
-    --sidebar-accent: 0 0% 12%;
+    --sidebar-primary: 45 85% 55%;
+    --sidebar-primary-foreground: 0 0% 2%;
+    --sidebar-accent: 0 0% 10%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 0 0% 98%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 45 85% 55%;
   }
 }
 
@@ -168,16 +177,28 @@ a {
   h5,
   h6 {
     font-family: var(--font-display);
+    letter-spacing: -0.02em;
   }
 }
 
 @layer utilities {
   .font-display {
     font-family: var(--font-display);
+    letter-spacing: -0.02em;
   }
 
   .font-body {
     font-family: var(--font-body);
+  }
+
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  .font-numbers {
+    font-family: var(--font-display);
+    font-variant-numeric: oldstyle-nums;
+    font-feature-settings: "onum", "tnum";
   }
 
   .text-gradient-white {
@@ -185,6 +206,17 @@ a {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  .text-gradient-gold {
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gold {
+    color: hsl(var(--gold));
   }
 
   .bg-gradient-white {
@@ -197,6 +229,14 @@ a {
 
   .bg-gradient-card {
     background: var(--gradient-card);
+  }
+
+  .bg-gradient-gold {
+    background: var(--gradient-gold);
+  }
+
+  .bg-gradient-premium {
+    background: var(--gradient-premium);
   }
 
   .shadow-white {

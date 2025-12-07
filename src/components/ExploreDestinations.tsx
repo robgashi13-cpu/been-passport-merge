@@ -153,7 +153,7 @@ const DestinationCard = ({ destination, rank, onClick }: DestinationCardProps) =
                 </div>
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                        <h4 className="font-bold truncate">{destination.cityName}</h4>
+                        <h4 className="font-display font-bold truncate">{destination.cityName}</h4>
                         <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full">#{rank}</span>
                     </div>
                     <p className="text-sm text-muted-foreground flex items-center gap-1">
@@ -163,13 +163,22 @@ const DestinationCard = ({ destination, rank, onClick }: DestinationCardProps) =
                 </div>
             </div>
 
+            {/* 2025 Visitor Count */}
+            {destination.visitorCount && (
+                <div className="flex items-center gap-2 mt-3 bg-gradient-to-r from-purple-500/10 to-pink-500/10 px-3 py-1.5 rounded-lg border border-purple-500/20">
+                    <Users className="w-3.5 h-3.5 text-purple-400" />
+                    <span className="text-sm font-medium text-purple-300">{destination.visitorCount}</span>
+                    <span className="text-xs text-muted-foreground">visitors 2025</span>
+                </div>
+            )}
+
             <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
-                    Best Season: {destination.bestMonth}
+                    {destination.bestMonth}
                 </span>
                 <span className="flex items-center gap-1 text-yellow-400">
-                    Expensive: {destination.averageCost}
+                    {destination.averageCost}
                 </span>
             </div>
 

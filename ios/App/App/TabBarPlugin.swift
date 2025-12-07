@@ -4,16 +4,39 @@ import WidgetKit
 
 @objc(TabBarPlugin)
 public class TabBarPlugin: CAPPlugin, CAPBridgedPlugin {
-    // ... (rest of class) ...
+    public let identifier = "TabBarPlugin"
+    public let jsName = "TabBar"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "updateWidgetData", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setActiveTab", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getActiveTab", returnType: CAPPluginReturnPromise)
+    ]
+    
+    private var activeTab: String = "dashboard"
 
     @objc func updateWidgetData(_ call: CAPPluginCall) {
-        // ... (data reading) ...
-        
+        // Data reading
+        let visitedCount = call.getInt("visitedCount")
+        let rankTitle = call.getString("rankTitle")
+        let rankLevel = call.getInt("rankLevel")
+        let percentage = call.getInt("percentage")
+        let mapBase64 = call.getString("mapBase64")
+
         if let userDefaults = UserDefaults(suiteName: "group.com.been.passport") {
-            // ... (defaults setting) ...
-            
-            if let mapBase64 = call.getString("mapBase64") {
-                userDefaults.set(mapBase64, forKey: "mapImage")
+            if let count = visitedCount {
+                userDefaults.set(count, forKey: "visitedCount")
+            }
+            if let title = rankTitle {
+                userDefaults.set(title, forKey: "rankTitle")
+            }
+            if let level = rankLevel {
+                userDefaults.set(level, forKey: "rankLevel")
+            }
+            if let pct = percentage {
+                userDefaults.set(pct, forKey: "percentage")
+            }
+            if let base64 = mapBase64 {
+                userDefaults.set(base64, forKey: "mapImage")
             }
             
             // Reload Timelines
@@ -23,8 +46,18 @@ public class TabBarPlugin: CAPPlugin, CAPBridgedPlugin {
             
             call.resolve(["success": true])
         } else {
-           // ...
+           call.reject("Could not access App Group UserDefaults. Make sure App Groups are enabled in Xcode.")
         }
+    }
+    
+    @objc func setActiveTab(_ call: CAPPluginCall) {
+        // Sync from JS to Native if needed, but mainly we listen for Native -> JS
+        if let tab = call.getString("tab") {
+            self.activeTab = tab
+            // Here we might want to tell the Native Controller to switch tabs if JS initiated it?
+            // NotificationCenter.default.post(name: NSNotification.Name("JSTabSelected"), object: nil, userInfo: ["tab": tab])
+        }
+        call.resolve()
     }
     
     @objc func getActiveTab(_ call: CAPPluginCall) {

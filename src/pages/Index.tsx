@@ -25,7 +25,7 @@ import TabBar from '@/plugins/TabBar';
 import { AchievementCelebration, useAchievementTracker } from '@/components/AchievementCelebration';
 import { getLevel, LEVELS } from '@/components/Achievements';
 import { useTravelNotifications } from '@/hooks/useTravelNotifications';
-import { GoogleWorldMap } from '@/components/GoogleWorldMap';
+import GlobeMap from '@/components/GlobeMap';
 import { CountryDetailSheet } from '@/components/CountryDetailSheet';
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -220,16 +220,19 @@ const Index = () => {
         <meta name="description" content="Track your travels, visualize your passport power, and manage your visa requirements with WanderPass." />
       </Helmet>
 
-      <div className="pb-24 lg:pb-8">
-        <Header
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          onLoginClick={() => setShowLoginModal(true)}
-          showDesktopNav={true}
-        />
+      <div className={activeTab === 'map' ? '' : 'pb-24 lg:pb-8'}>
+        {/* Hide header on map tab for fullscreen experience */}
+        {activeTab !== 'map' && (
+          <Header
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            onLoginClick={() => setShowLoginModal(true)}
+            showDesktopNav={true}
+          />
+        )}
 
-        <main className="container mx-auto px-4 pb-32" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 80px)' }}>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <main className={activeTab === 'map' ? '' : "container mx-auto px-4 pb-32"} style={{ paddingTop: activeTab === 'map' ? '0' : 'calc(env(safe-area-inset-top) + 80px)' }}>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className={activeTab === 'map' ? '' : "space-y-6"}>
             <TabsContent value="dashboard" className="space-y-6 animate-fade-in focus-visible:outline-none">
               <Dashboard
                 stats={stats}
@@ -240,13 +243,23 @@ const Index = () => {
                 onCountryClick={(code) => setSelectedCountryCode(code)}
               />
 
+              <div className="pt-4 border-t border-white/10">
+                <h3 className="font-display text-2xl font-bold mb-6">Explore Destinations</h3>
+                <ExploreDestinations
+                  onCountryClick={(code) => setSelectedCountryCode(code)}
+                />
+              </div>
+
             </TabsContent>
 
             <TabsContent value="map" className="h-[calc(100vh-5rem)] md:h-[calc(100vh-4rem)] w-full p-0 m-0 data-[state=inactive]:hidden focus-visible:outline-none">
               <div className="relative w-full h-full">
-                {/* Full Screen Google Map */}
-                <GoogleWorldMap
+                {/* 3D Globe Map */}
+                <GlobeMap
                   visitedCountries={visitedCountries}
+                  toggleVisited={toggleVisited}
+                  userPassportCode={userPassport || undefined}
+                  heldVisas={heldVisas}
                   onCountryClick={(code) => {
                     setSelectedSheetCountry(code);
                     setSheetOpen(true);
@@ -258,7 +271,7 @@ const Index = () => {
                   countryCode={selectedSheetCountry}
                   isOpen={isSheetOpen}
                   onOpenChange={setSheetOpen}
-                  userPassportCode={userPassport}
+                  userPassportCode={userPassport || undefined}
                   isVisited={selectedSheetCountry ? visitedCountries.includes(selectedSheetCountry) : false}
                   onToggleVisited={() => {
                     if (selectedSheetCountry) toggleVisited(selectedSheetCountry);
