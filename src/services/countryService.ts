@@ -49,6 +49,7 @@ export const fetchCountryData = async (code: string): Promise<CountryExtendedDat
             coatOfArms: data.coatOfArms,
             capital: data.capital,
             capitalInfo: data.capitalInfo,
+            idd: data.idd,
             population: data.population,
             region: data.region,
             subregion: data.subregion,

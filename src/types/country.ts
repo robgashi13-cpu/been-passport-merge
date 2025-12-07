@@ -9,6 +9,7 @@ export interface CountryExtendedData {
     coatOfArms?: { png: string; svg: string };
     capital?: string[];
     capitalInfo?: { latlng?: [number, number] };
+    idd?: { root: string; suffixes: string[] };
     population?: number;
     region?: string;
     subregion?: string;

@@ -327,9 +327,9 @@ export const CountryDetails = ({
                     <TabsContent value="transport" className="space-y-6 mt-2 animate-slide-up">
                         <div className="grid grid-cols-1 gap-4">
                             {/* Airports */}
-                            <div className="bg-white/5 rounded-3xl p-6 border border-white/5">
-                                <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2"><Plane className="w-5 h-5 text-white/60" /> Major Airports</h3>
-                                <div className="space-y-3">
+                            <div className="bg-white/5 rounded-3xl p-6 border border-white/5 relative overflow-hidden">
+                                <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2 relative z-10"><Plane className="w-5 h-5 text-white/60" /> Major Airports</h3>
+                                <div className="space-y-3 relative z-10">
                                     {richData?.mainAirports && richData.mainAirports.length > 0 ? (
                                         richData.mainAirports.map(airport => (
                                             <div key={airport.code} className="flex justify-between items-center bg-black/40 p-4 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
@@ -341,9 +341,30 @@ export const CountryDetails = ({
                                             </div>
                                         ))
                                     ) : (
-                                        <div className="text-white/40 italic">Airport data loading...</div>
+                                        <div className="text-center py-6">
+                                            <p className="text-white/40 mb-4 text-sm">Airport details are being updated.</p>
+                                            <a
+                                                href={`https://www.google.com/travel/flights?q=Flights+to+${country.name}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold transition-all shadow-lg shadow-blue-500/20"
+                                            >
+                                                <Plane className="w-4 h-4" />
+                                                Find Flights to {country.name}
+                                            </a>
+                                        </div>
                                     )}
                                 </div>
+                                {richData?.mainAirports && richData.mainAirports.length > 0 && (
+                                    <a
+                                        href={`https://www.google.com/travel/flights?q=Flights+to+${country.name}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="mt-4 flex items-center justify-center gap-2 w-full p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-medium transition-colors"
+                                    >
+                                        Check Flight Prices on Google
+                                    </a>
+                                )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -353,9 +374,9 @@ export const CountryDetails = ({
                                     <div className="font-display text-2xl font-bold capitalize">{extendedData?.car?.side || 'Right'}</div>
                                 </div>
                                 <div className="bg-white/5 rounded-3xl p-6 border border-white/5 flex flex-col items-center justify-center text-center">
-                                    <Phone className="w-8 h-8 text-white/40 mb-3" />
-                                    <div className="text-xs text-white/40 uppercase tracking-wider font-bold mb-1">Rideshare</div>
-                                    <div className="font-display text-lg font-bold">Uber / Bolt</div>
+                                    <MapPin className="w-8 h-8 text-white/40 mb-3" />
+                                    <div className="text-xs text-white/40 uppercase tracking-wider font-bold mb-1">Maps</div>
+                                    <a href={extendedData?.maps?.googleMaps} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline font-bold text-lg">Open Map ↗</a>
                                 </div>
                             </div>
                         </div>
@@ -469,7 +490,7 @@ export const CountryDetails = ({
 
                             <div className="bg-white/5 rounded-3xl p-5 border border-white/5 hover:bg-white/10 transition-colors">
                                 <div className="text-white/40 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" /> Dial Code</div>
-                                <div className="font-numbers text-2xl font-bold">{richData?.dialCode || '--'}</div>
+                                <div className="font-numbers text-2xl font-bold">{richData?.dialCode && richData.dialCode !== 'N/A' ? richData.dialCode : (extendedData?.idd?.root ? `${extendedData.idd.root}${extendedData.idd.suffixes?.length === 1 ? extendedData.idd.suffixes[0] : ''}` : '--')}</div>
                             </div>
 
                             <div className="bg-white/5 rounded-3xl p-5 border border-white/5 hover:bg-white/10 transition-colors col-span-2 lg:col-span-1">
