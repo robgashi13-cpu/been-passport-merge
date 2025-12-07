@@ -1,83 +1,54 @@
 import UIKit
-import WebKit
 import Capacitor
 
-class WanderPassTabBarController: UITabBarController, UITabBarControllerDelegate {
+class WanderPassTabBarController: CAPBridgeViewController, UITabBarDelegate {
     
-    private var capacitorVC: CAPBridgeViewController?
-    
-    private let tabItems: [(id: String, title: String, icon: String, selectedIcon: String)] = [
-        ("dashboard", "Home", "house", "house.fill"),
-        ("map", "Map", "globe", "globe.americas.fill"),
-        ("calendar", "Calendar", "calendar", "calendar.circle.fill"),
-        ("passport", "Passport", "creditcard", "creditcard.fill")
-    ]
+    private let tabBar = UITabBar()
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        delegate = self
-        setupAppearance()
-        setupTabs()
-        setupCapacitorBridge()  // Setup AFTER tabs so WebView is on top
+        setupTabBar()
         
         // Listen for web tab changes
         NotificationCenter.default.addObserver(self, selector: #selector(handleWebTabChange(_:)), name: NSNotification.Name("WebTabChanged"), object: nil)
     }
     
-    private func setupCapacitorBridge() {
-        // Create the Capacitor WebView
-        let bridgeVC = CAPBridgeViewController()
-        self.capacitorVC = bridgeVC
+    private func setupTabBar() {
+        view.addSubview(tabBar)
+        tabBar.translatesAutoresizingMaskIntoConstraints = false
+        tabBar.delegate = self
         
-        // Add the WebView as a child of THIS controller (not a tab)
-        // This keeps it always visible regardless of selected tab
-        addChild(bridgeVC)
-        // Insert WebView BELOW the tab bar explicitly
-        view.insertSubview(bridgeVC.view, belowSubview: tabBar)
+        // Items
+        let items: [UITabBarItem] = [
+            UITabBarItem(title: "Home", image: UIImage(systemName: "house"), selectedImage: UIImage(systemName: "house.fill")),
+            UITabBarItem(title: "Map", image: UIImage(systemName: "globe"), selectedImage: UIImage(systemName: "globe.americas.fill")),
+            UITabBarItem(title: "Calendar", image: UIImage(systemName: "calendar"), selectedImage: UIImage(systemName: "calendar.circle.fill")),
+            UITabBarItem(title: "Passport", image: UIImage(systemName: "creditcard"), selectedImage: UIImage(systemName: "creditcard.fill"))
+        ]
+        // Assign tags for identification
+        items[0].tag = 0
+        items[1].tag = 1
+        items[2].tag = 2
+        items[3].tag = 3
         
-        // Position WebView to fill the screen
-        bridgeVC.view.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            bridgeVC.view.topAnchor.constraint(equalTo: view.topAnchor),
-            bridgeVC.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            bridgeVC.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            bridgeVC.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-        ])
+        tabBar.setItems(items, animated: false)
+        tabBar.selectedItem = items[0]
         
-        bridgeVC.didMove(toParent: self)
-        
-        // Ensure WebView is behind the tab bar but in front of tab content
-        view.bringSubviewToFront(tabBar)
-    }
-    
-    private func setupAppearance() {
-        // iOS 26 Liquid Glass Style Tab Bar
+        // Appearance
         let appearance = UITabBarAppearance()
-        
-        // Translucent background with blur
         appearance.configureWithDefaultBackground()
-        appearance.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+        // Translucent dark background
+        appearance.backgroundColor = UIColor.black.withAlphaComponent(0.85)
+        let blur = UIBlurEffect(style: .systemThickMaterialDark)
+        appearance.backgroundEffect = blur
         
-        // Add blur effect
-        let blurEffect = UIBlurEffect(style: .systemUltraThinMaterialDark)
-        appearance.backgroundEffect = blurEffect
-        
-        // Item appearance
+        // Item Appearance
         let itemAppearance = UITabBarItemAppearance()
-        
-        // Normal state
         itemAppearance.normal.iconColor = UIColor.white.withAlphaComponent(0.5)
-        itemAppearance.normal.titleTextAttributes = [
-            .foregroundColor: UIColor.white.withAlphaComponent(0.5),
-            .font: UIFont.systemFont(ofSize: 10, weight: .medium)
-        ]
+        itemAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.white.withAlphaComponent(0.5)]
         
-        // Selected state
         itemAppearance.selected.iconColor = .white
-        itemAppearance.selected.titleTextAttributes = [
-            .foregroundColor: UIColor.white,
-            .font: UIFont.systemFont(ofSize: 10, weight: .semibold)
-        ]
+        itemAppearance.selected.titleTextAttributes = [.foregroundColor: UIColor.white]
         
         appearance.stackedLayoutAppearance = itemAppearance
         appearance.inlineLayoutAppearance = itemAppearance
@@ -88,71 +59,46 @@ class WanderPassTabBarController: UITabBarController, UITabBarControllerDelegate
             tabBar.scrollEdgeAppearance = appearance
         }
         
-        // Add shadow
-        tabBar.layer.shadowColor = UIColor.black.cgColor
-        tabBar.layer.shadowOffset = CGSize(width: 0, height: -4)
-        tabBar.layer.shadowRadius = 16
-        tabBar.layer.shadowOpacity = 0.5
-        
-        // Rounded corners
-        tabBar.layer.cornerRadius = 24
-        tabBar.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+        // Constraints - Pin to bottom
+        NSLayoutConstraint.activate([
+            tabBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tabBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tabBar.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
     }
     
-    private func setupTabs() {
-        // Create dummy VCs for each tab - their views won't be visible
-        // because WebView will be layered on top
-        var viewControllers: [UIViewController] = []
+    // MARK: - UITabBarDelegate
+    func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
+        let tabs = ["dashboard", "map", "calendar", "passport"]
+        let index = item.tag
         
-        for item in tabItems {
-            let vc = UIViewController()
-            vc.view.backgroundColor = .black
+        if index < tabs.count {
+            let tabId = tabs[index]
+            print("⚡️ Custom TabBar: Selected \(tabId)")
             
-            let tabItem = UITabBarItem(
-                title: item.title,
-                image: UIImage(systemName: item.icon),
-                selectedImage: UIImage(systemName: item.selectedIcon)
-            )
-            vc.tabBarItem = tabItem
+            // Haptic Feedback
+            let generator = UIImpactFeedbackGenerator(style: .light)
+            generator.impactOccurred()
             
-            viewControllers.append(vc)
+            // Notify Web Context
+            NotificationCenter.default.post(name: NSNotification.Name("NativeTabSelected"), object: nil, userInfo: ["tab": tabId])
         }
-        
-        self.viewControllers = viewControllers
-        selectedIndex = 0
     }
     
-    // MARK: - UITabBarControllerDelegate
-    
-    func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
-        guard let index = tabBarController.viewControllers?.firstIndex(of: viewController),
-              index < tabItems.count else { return }
+    // Handle Web -> Native Sync
+    @objc func handleWebTabChange(_ notification: Notification) {
+        guard let tabId = notification.userInfo?["tab"] as? String else { return }
+        let tabs = ["dashboard", "map", "calendar", "passport"]
         
-        let tabId = tabItems[index].id
-        
-        print("⚡️ Native Tab Bar: User selected tab \(index) = \(tabId)")
-        
-        // Haptic feedback
-        let generator = UIImpactFeedbackGenerator(style: .light)
-        generator.impactOccurred()
-        
-        // Notify the Capacitor plugin via NotificationCenter
-        NotificationCenter.default.post(name: NSNotification.Name("NativeTabSelected"), object: nil, userInfo: ["tab": tabId])
+        if let index = tabs.firstIndex(of: tabId) {
+            DispatchQueue.main.async {
+                self.tabBar.selectedItem = self.tabBar.items?[index]
+            }
+        }
     }
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        // Ensure tab bar stays on top and visible
-        tabBar.isHidden = false
         view.bringSubviewToFront(tabBar)
-    }
-
-    @objc func handleWebTabChange(_ notification: Notification) {
-        guard let tabId = notification.userInfo?["tab"] as? String,
-              let index = tabItems.firstIndex(where: { $0.id == tabId }) else { return }
-        
-        DispatchQueue.main.async {
-            self.selectedIndex = index
-        }
     }
 }
