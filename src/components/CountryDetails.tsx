@@ -3,7 +3,7 @@ import { fetchCountrySummary, WikiSummary } from '@/services/wikiService';
 import { useEffect, useState } from 'react';
 import { Country, getCountryByCode, countries } from '@/data/countries';
 import { getVisaRequirementFromMatrix, getVisaRequirementColor, getVisaRequirementLabel } from '@/data/visaMatrix';
-import { X, Globe, Users, MapPin, Plane, CreditCard, Check, AlertCircle, Phone, Plug, AlertTriangle, Calendar as CalendarIcon, Tag, Heart, DollarSign, CloudSun, Sparkles, Car } from 'lucide-react';
+import { X, Globe, Users, MapPin, Plane, CreditCard, Check, AlertCircle, Phone, Plug, AlertTriangle, Calendar as CalendarIcon, Tag, Heart, DollarSign, CloudSun, Sparkles, Car, Droplet, Syringe, Beer } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface CountryDetailsProps {
@@ -410,20 +410,23 @@ export const CountryDetails = ({
                     <TabsContent value="details" className="space-y-6 mt-2 animate-slide-up">
                         {/* Emergency Grid */}
                         <div className="grid grid-cols-1 gap-4">
-                            <div className="bg-red-500/10 border border-red-500/20 rounded-3xl p-6">
-                                <h3 className="text-red-400 font-bold uppercase tracking-wider text-xs mb-4 flex items-center gap-2">
+                            <div className="bg-red-500/10 border border-red-500/20 rounded-3xl p-6 relative overflow-hidden">
+                                <div className="absolute right-0 top-0 p-4 opacity-5 pointer-events-none">
+                                    <AlertCertificate className="w-32 h-32" />
+                                </div>
+                                <h3 className="text-red-400 font-bold uppercase tracking-wider text-xs mb-4 flex items-center gap-2 relative z-10">
                                     <AlertCertificate className="w-4 h-4" /> Emergency Contacts
                                 </h3>
-                                <div className="grid grid-cols-3 gap-3">
-                                    <div className="bg-red-500/10 rounded-2xl p-3 text-center">
+                                <div className="grid grid-cols-3 gap-3 relative z-10">
+                                    <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-3 text-center border border-red-500/10">
                                         <div className="font-numbers text-xl font-bold text-red-100">{richData?.emergency.police || '112'}</div>
                                         <div className="text-[10px] text-red-300/60 uppercase font-bold mt-1">Police</div>
                                     </div>
-                                    <div className="bg-red-500/10 rounded-2xl p-3 text-center">
+                                    <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-3 text-center border border-red-500/10">
                                         <div className="font-numbers text-xl font-bold text-red-100">{richData?.emergency.ambulance || '112'}</div>
                                         <div className="text-[10px] text-red-300/60 uppercase font-bold mt-1">Ambulance</div>
                                     </div>
-                                    <div className="bg-red-500/10 rounded-2xl p-3 text-center">
+                                    <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-3 text-center border border-red-500/10">
                                         <div className="font-numbers text-xl font-bold text-red-100">{richData?.emergency.fire || '112'}</div>
                                         <div className="text-[10px] text-red-300/60 uppercase font-bold mt-1">Fire</div>
                                     </div>
@@ -431,25 +434,58 @@ export const CountryDetails = ({
                             </div>
                         </div>
 
+                        {/* Health & Safety Grid */}
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-white/5 rounded-3xl p-5 border border-white/5">
-                                <div className="text-white/40 text-xs font-bold uppercase tracking-wider mb-2">Dial Code</div>
-                                <div className="font-numbers text-2xl font-bold">{richData?.dialCode}</div>
+                            <div className="bg-blue-500/10 border border-blue-500/20 rounded-3xl p-5 relative overflow-hidden group">
+                                <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                    <Droplet className="w-16 h-16" />
+                                </div>
+                                <div className="relative z-10">
+                                    <div className="text-blue-300 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5"><Droplet className="w-3.5 h-3.5" /> Water</div>
+                                    <div className="font-display text-lg font-bold text-white">{richData?.waterRating || 'Check Local Advice'}</div>
+                                </div>
                             </div>
-                            <div className="bg-white/5 rounded-3xl p-5 border border-white/5">
-                                <div className="text-white/40 text-xs font-bold uppercase tracking-wider mb-2">Plugs</div>
-                                <div className="font-display text-xl font-bold">{richData?.plugs.map(p => p.type).join(' / ')}</div>
+
+                            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-3xl p-5 relative overflow-hidden group">
+                                <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                    <Syringe className="w-16 h-16" />
+                                </div>
+                                <div className="relative z-10">
+                                    <div className="text-yellow-300 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5"><Syringe className="w-3.5 h-3.5" /> Vaccinations</div>
+                                    <div className="font-display text-lg font-bold text-white">{richData?.vaccinations || 'Routine'}</div>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Currency Mini */}
-                        <div className="bg-white/5 rounded-3xl p-6 border border-white/5 flex items-center justify-between">
-                            <div>
-                                <div className="text-white/40 text-xs font-bold uppercase tracking-wider mb-1">Currency</div>
-                                <div className="font-display text-xl font-bold">{currencyStr}</div>
+                        {/* Local Law & Tech */}
+                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="bg-white/5 rounded-3xl p-5 border border-white/5 hover:bg-white/10 transition-colors">
+                                <div className="text-white/40 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5"><Beer className="w-3.5 h-3.5" /> Alcohol Age</div>
+                                <div className="flex items-baseline gap-1">
+                                    <div className="font-numbers text-2xl font-bold">{richData?.alcohol ? richData.alcohol.drinkingAge : '18'}</div>
+                                    <div className="text-xs text-white/40">Drinking</div>
+                                </div>
                             </div>
-                            <div className="bg-white/10 p-3 rounded-full">
-                                <DollarSign className="w-6 h-6 text-white/60" />
+
+                            <div className="bg-white/5 rounded-3xl p-5 border border-white/5 hover:bg-white/10 transition-colors">
+                                <div className="text-white/40 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" /> Dial Code</div>
+                                <div className="font-numbers text-2xl font-bold">{richData?.dialCode || '--'}</div>
+                            </div>
+
+                            <div className="bg-white/5 rounded-3xl p-5 border border-white/5 hover:bg-white/10 transition-colors col-span-2 lg:col-span-1">
+                                <div className="text-white/40 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5"><Plug className="w-3.5 h-3.5" /> Plugs</div>
+                                <div className="font-display text-lg font-bold">{richData?.plugs ? richData.plugs.map(p => p.type).join(' + ') : '--'}</div>
+                            </div>
+                        </div>
+
+                        {/* Currency */}
+                        <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-3xl p-6 border border-emerald-500/20 flex items-center justify-between">
+                            <div>
+                                <div className="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5"><DollarSign className="w-3.5 h-3.5" /> Currency</div>
+                                <div className="font-display text-xl font-bold text-white flex items-center gap-2">
+                                    {currencyStr}
+                                    {exchangeRate && <span className="text-sm font-normal text-white/50 bg-black/20 px-2 py-0.5 rounded-lg border border-white/10">1 USD = {exchangeRate.toFixed(2)}</span>}
+                                </div>
                             </div>
                         </div>
 
