@@ -60,31 +60,26 @@ const Index = () => {
   useEffect(() => {
     if (!isNative) return;
 
-    // Listen for tab changes from native side
-    // Listen for tab changes from native side (CustomEvent)
-    const handleNativeTabChange = (e: any) => {
-      const tab = e.detail?.tab;
-      if (tab && !skipNativeSync.current) {
-        console.log('Native tab changed to:', tab);
+    // Global handler for Swift to call
+    (window as any).onNativeTabChange = (tabId: string) => {
+      console.log('Native tab request:', tabId);
+      if (!skipNativeSync.current) {
         skipNativeSync.current = true;
-        setActiveTab(tab);
+        setActiveTab(tabId);
         setTimeout(() => {
           skipNativeSync.current = false;
         }, 50);
       }
     };
 
-    window.addEventListener('nativeTabChange', handleNativeTabChange);
-
-    return () => {
-      window.removeEventListener('nativeTabChange', handleNativeTabChange);
-    };
-
-    // Initial sync - get current native tab
+    // Initial sync
     TabBar.getActiveTab().then(({ tab }) => {
       if (tab) setActiveTab(tab);
     }).catch(() => { });
 
+    return () => {
+      delete (window as any).onNativeTabChange;
+    };
   }, [isNative]);
 
   // Sync React State -> Native
