@@ -259,46 +259,48 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
 
   const MapContent = (
     <div className={`space-y-4 md:space-y-6 animate-fade-in flex flex-col transition-all duration-500 ${isFullScreen ? 'fixed inset-0 z-[9999] bg-black w-screen h-screen touch-none' : 'h-full'}`}>
-      <div className={`text-center py-4 md:py-6 flex-shrink-0 relative pointer-events-none ${isFullScreen ? 'absolute top-0 left-0 right-0 z-10 pt-safe bg-gradient-to-b from-black/80 to-transparent' : ''}`}>
+      <div className={`text-center py-4 md:py-6 flex-shrink-0 relative pointer-events-none ${isFullScreen ? 'hidden' : ''}`}>
         {!isFullScreen && (
           <h2 className="font-display text-2xl md:text-4xl font-bold mb-2 animate-slide-up">
             World <span className="text-gradient-white">Explorer</span>
           </h2>
         )}
 
-        {/* View Mode Toggle */}
-        <div className={`flex justify-center mt-4 mb-2 animate-slide-up pointer-events-auto ${isFullScreen ? 'mt-12' : ''}`} style={{ animationDelay: "0.1s" }}>
-          <div className="bg-white/10 p-1 rounded-xl flex gap-1 border border-white/10 backdrop-blur-md relative">
-            <button
-              onClick={() => setViewMode('visited')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === 'visited'
-                ? 'bg-white text-black shadow-lg'
-                : 'text-white/60 hover:text-white hover:bg-white/5'
-                }`}
-            >
-              <span className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                Visited
-              </span>
-            </button>
-            <button
-              onClick={() => {
-                if (userPassportCode) setViewMode('visa');
-                else alert("Please select a passport first (Header > Passport Icon)");
-              }}
-              disabled={!userPassportCode}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === 'visa'
-                ? 'bg-[#D4AF37] text-black shadow-lg shadow-gold/20'
-                : 'text-white/60 hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed'
-                }`}
-            >
-              <span className="flex items-center gap-2">
-                <CreditCard className="w-4 h-4" />
-                Visa Power
-              </span>
-            </button>
+        {/* View Mode Toggle - Only show if NOT fullscreen */}
+        {!isFullScreen && (
+          <div className="flex justify-center mt-4 mb-2 animate-slide-up pointer-events-auto" style={{ animationDelay: "0.1s" }}>
+            <div className="bg-white/10 p-1 rounded-xl flex gap-1 border border-white/10 backdrop-blur-md relative">
+              <button
+                onClick={() => setViewMode('visited')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === 'visited'
+                  ? 'bg-white text-black shadow-lg'
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+                  }`}
+              >
+                <span className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  Visited
+                </span>
+              </button>
+              <button
+                onClick={() => {
+                  if (userPassportCode) setViewMode('visa');
+                  else alert("Please select a passport first (Header > Passport Icon)");
+                }}
+                disabled={!userPassportCode}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === 'visa'
+                  ? 'bg-[#D4AF37] text-black shadow-lg shadow-gold/20'
+                  : 'text-white/60 hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed'
+                  }`}
+              >
+                <span className="flex items-center gap-2">
+                  <CreditCard className="w-4 h-4" />
+                  Visa Power
+                </span>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {!isFullScreen && (
           <p className="text-sm md:text-base text-muted-foreground animate-slide-up" style={{ animationDelay: "0.2s" }}>
@@ -327,8 +329,9 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
           {isFullScreen ? <Minimize2 className="w-5 h-5 md:w-6 md:h-6" /> : <Maximize2 className="w-5 h-5 md:w-6 md:h-6" />}
         </button>
 
-        {/* Tooltip */}
+        {/* ... Tooltip ... */}
         {tooltipContent && (
+          // ... existing tooltip ...
           <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10 bg-black/95 text-white px-3 py-2 md:px-4 md:py-3 rounded-lg md:rounded-xl border border-white/20 shadow-2xl backdrop-blur-sm animate-fade-in max-w-[200px] md:max-w-none pointer-events-none">
             <div className="flex items-center gap-2">
               <span className="text-xl md:text-2xl">{tooltipContent.flag}</span>
@@ -360,11 +363,14 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
           className="w-full flex-grow relative cursor-pointer transition-all"
           style={{ minHeight: isFullScreen ? "100%" : "400px" }}
         >
+
+          {/* ... Map Component ... */}
           <ComposableMap
             projection="geoMercator"
             projectionConfig={{ scale: 100, center: [0, 0] }}
             style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }}
           >
+            {/* ... ZoomableGroup ... */}
             <ZoomableGroup
               zoom={1}
               minZoom={1}
@@ -478,13 +484,14 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
           </ComposableMap>
         </div>
 
-        {/* Legend */}
-        {viewMode === 'visa' && userPassportCode ? (
+        {/* Legend - Hide in FullScreen */}
+        {!isFullScreen && viewMode === 'visa' && userPassportCode ? (
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2 md:gap-4 text-xs md:text-sm flex-shrink-0 animate-fade-in">
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 md:w-4 md:h-4 rounded" style={{ backgroundColor: "rgba(34,197,94,0.7)" }} />
               <span className="text-muted-foreground">Visa Free</span>
             </div>
+            {/* ... other legend items ... same as before */}
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 md:w-4 md:h-4 rounded" style={{ backgroundColor: "rgba(132,204,22,0.7)" }} />
               <span className="text-muted-foreground">On Arrival</span>
@@ -502,7 +509,7 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
               <span className="text-muted-foreground">Required</span>
             </div>
           </div>
-        ) : (
+        ) : !isFullScreen && (
           <div className="mt-4 flex items-center justify-center gap-4 md:gap-8 flex-wrap text-xs md:text-sm flex-shrink-0 animate-fade-in">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 md:w-5 md:h-5 rounded-md shadow-lg" style={{ backgroundColor: "rgba(255, 255, 255, 0.9)" }} />
@@ -516,8 +523,8 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
         )}
       </div>
 
-      {/* Quick stats - Mobile optimized - HIDE IN VISA MODE? Or Keep? Keep. */}
-      {viewMode === 'visited' && (
+      {/* Quick stats - Hide in FullScreen */}
+      {!isFullScreen && viewMode === 'visited' && (
         <div className="grid grid-cols-4 gap-2 flex-shrink-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
           <div className="bg-gradient-card rounded-lg border border-border/50 p-2 text-center hover-lift group transition-all duration-300">
             <MapPin className="w-4 h-4 text-primary mx-auto mb-1 group-hover:scale-110 transition-transform" />

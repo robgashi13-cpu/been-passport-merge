@@ -43,46 +43,27 @@ export const AVAILABLE_ADDITIONAL_VISAS: AdditionalVisa[] = [
 // Based on reliable 2025 travel data
 export const VISA_SUBSTITUTIONS: Record<string, string[]> = {
     'US_VISA': [
-        // Americas / Caribbean
+        // North & Central America
         'MX', // Mexico
-        'CR', // Costa Rica
-        'DO', // Dominican Republic
         'PA', // Panama
-        'BZ', // Belize
+        'CR', // Costa Rica
         'GT', // Guatemala
         'HN', // Honduras
+        'SV', // El Salvador
         'NI', // Nicaragua
+        'BZ', // Belize
+        'DO', // Dominican Republic
+
+        // South America
         'CO', // Colombia
-        'BS', // Bahamas
-        'BM', // Bermuda
-        'AW', // Aruba
-        'AI', // Anguilla
-        'BQ', // Bonaire, Sint Eustatius and Saba
-        'CW', // Curaçao
-        'MF', // Saint Martin
-        'JM', // Jamaica
-        'TC', // Turks and Caicos
-        'AG', // Antigua and Barbuda
-        'PR', // Puerto Rico (US Territory - Direct Access)
-        'VI', // US Virgin Islands (US Territory - Direct Access)
+        'PE', // Peru
 
         // Europe
-        'GE', // Georgia
-        'RS', // Serbia
-        'ME', // Montenegro
         'AL', // Albania
+        'BA', // Bosnia & Herzegovina
         'MK', // North Macedonia
-        'BA', // Bosnia and Herzegovina
-
-        // Asia / Middle East
-        'PH', // Philippines (7 days)
-        'KR', // South Korea (Transit/ETA exemptions)
-        'TW', // Taiwan (Travel Auth)
-        'QA', // Qatar (ETA)
-        'SA', // Saudi Arabia (e-Visa eligible)
-
-        // Africa
-        'ST'  // Sao Tome
+        'ME', // Montenegro
+        'RS'  // Serbia
     ],
 
     'SCHENGEN_VISA': [
@@ -136,19 +117,27 @@ export const VISA_SUBSTITUTIONS: Record<string, string[]> = {
     ],
 
     'CANADA_VISA': [
+        // North & Central America
         'MX', // Mexico
-        'CR', // Costa Rica
         'PA', // Panama
+        'CR', // Costa Rica
+        'GT', // Guatemala
+        'HN', // Honduras
+        'SV', // El Salvador
+        'NI', // Nicaragua
+        'BZ', // Belize
         'DO', // Dominican Republic
-        'MK', // North Macedonia
-        'KR', // South Korea
-        'TW', // Taiwan
-        'PH', // Philippines
+
+        // South America
+        'CO', // Colombia
+        'PE', // Peru
+
+        // Europe
         'AL', // Albania
-        'BA', // Bosnia
-        'GE', // Georgia
-        'ST', // Sao Tome
-        'MA'  // Morocco
+        'BA', // Bosnia & Herzegovina
+        'MK', // North Macedonia
+        'ME', // Montenegro
+        'RS'  // Serbia
     ]
 };
 
