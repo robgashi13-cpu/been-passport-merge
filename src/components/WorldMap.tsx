@@ -8,6 +8,7 @@ import { StatusBar } from '@capacitor/status-bar';
 
 // Import TopoJSON data
 import worldData from '@/data/world-110m.json';
+import { createPortal } from "react-dom";
 
 interface WorldMapProps {
   visitedCountries: string[];
@@ -256,8 +257,8 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
     setZoomLevel(position.k);
   };
 
-  return (
-    <div className={`space-y-4 md:space-y-6 animate-fade-in flex flex-col transition-all duration-500 ${isFullScreen ? 'fixed inset-0 z-[100] bg-black w-screen h-screen' : 'h-full'}`}>
+  const MapContent = (
+    <div className={`space-y-4 md:space-y-6 animate-fade-in flex flex-col transition-all duration-500 ${isFullScreen ? 'fixed inset-0 z-[9999] bg-black w-screen h-screen touch-none' : 'h-full'}`}>
       <div className={`text-center py-4 md:py-6 flex-shrink-0 relative pointer-events-none ${isFullScreen ? 'absolute top-0 left-0 right-0 z-10 pt-safe bg-gradient-to-b from-black/80 to-transparent' : ''}`}>
         {!isFullScreen && (
           <h2 className="font-display text-2xl md:text-4xl font-bold mb-2 animate-slide-up">
@@ -546,6 +547,12 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
       )}
     </div >
   );
+
+  if (isFullScreen) {
+    return createPortal(MapContent, document.body);
+  }
+
+  return MapContent;
 };
 
 export default WorldMap;
