@@ -112,8 +112,8 @@ export const useTravelData = () => {
           const req = getVisaRequirementFromMatrix(passport.code, dest.code)?.requirement;
           const isSubstituted = substitutedDestinations.has(dest.code);
 
-          // If originally required but now substituted, we add 1 to score
-          if (req === 'visa-required' && isSubstituted) {
+          // If originally required but now substituted or directly held, we add 1 to score
+          if (req === 'visa-required' && (isSubstituted || heldVisas.includes(dest.code))) {
             dynamicScore++;
           }
         });

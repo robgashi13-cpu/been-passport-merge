@@ -54,7 +54,7 @@ export const PassportDetailsModal = ({ isOpen, onClose, userPassportCode, passpo
             let note = matrixReq?.notes;
 
             // Check substitution
-            if (effectiveReq === 'visa-required' && substitutedDestinations.has(c.code)) {
+            if (effectiveReq === 'visa-required' && (substitutedDestinations.has(c.code) || heldVisas.includes(c.code))) {
                 effectiveReq = 'visa-free'; // Treat as visa-free (or equivalent accessible status)
                 note = 'Unlocked by Held Visa';
             }

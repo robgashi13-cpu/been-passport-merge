@@ -40,7 +40,7 @@ const VisaCountryList = ({ passportCode, heldVisas }: { passportCode: string, he
       let note = baseInfo?.notes;
 
       // Check for substitution
-      if (effectiveRequirement === 'visa-required' && substitutedDestinations.has(country.code)) {
+      if (effectiveRequirement === 'visa-required' && (substitutedDestinations.has(country.code) || heldVisas.includes(country.code))) {
         effectiveRequirement = 'visa-free';
         note = 'Unlocked by your held visa';
       }
@@ -198,8 +198,8 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
       const baseReq = getVisaRequirementFromMatrix(passportCode, destCode)?.requirement;
       const isSubstituted = substitutedDestinations.has(destCode);
 
-      // If substituted, it becomes effectively visa-free (or similar benefit)
-      if (baseReq === 'visa-required' && isSubstituted) {
+      // If substituted or directly held, it becomes effectively visa-free
+      if (baseReq === 'visa-required' && (isSubstituted || heldVisas.includes(destCode))) {
         newStats.visaRequired--;
         newStats.visaFree++;
         additionalAccess++;
