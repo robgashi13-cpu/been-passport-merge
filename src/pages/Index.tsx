@@ -164,7 +164,7 @@ const Index = () => {
           showDesktopNav={true}
         />
 
-        <main className="container mx-auto px-4 pb-32" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 80px)' }}>
+        <main className="container mx-auto px-4 pb-48" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 80px)' }}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsContent value="dashboard" className="space-y-6 animate-fade-in focus-visible:outline-none">
               <Dashboard stats={stats} visitedCountries={visitedCountries} />
@@ -199,7 +199,7 @@ const Index = () => {
               </div>
             </TabsContent>
 
-            <TabsContent value="calendar" className="pb-24 lg:pb-8 focus-visible:outline-none">
+            <TabsContent value="calendar" className="pb-48 lg:pb-8 focus-visible:outline-none">
               <Tabs defaultValue="calendar" className="w-full">
                 <div className="flex justify-between items-center mb-4">
                   <TabsList className="grid w-64 grid-cols-2">
@@ -225,7 +225,7 @@ const Index = () => {
               </Tabs>
             </TabsContent>
 
-            <TabsContent value="passport" className="space-y-6 pb-24 lg:pb-8 animate-fade-in focus-visible:outline-none">
+            <TabsContent value="passport" className="space-y-6 pb-48 lg:pb-8 animate-fade-in focus-visible:outline-none">
               <PassportPower
                 userPassport={effectivePassport}
                 setUserPassport={setUserPassport}
