@@ -94,10 +94,11 @@ export const WidgetMapGenerator = ({ visitedCountries, onSnapshotReady }: Widget
                 left: -9999,
                 width: '400px',
                 height: '200px',
-                background: '#1a1a1a', // Match widget bg
+                background: '#eaddcf', // Vintage sea/paper color
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                border: '4px solid #8b4513' // Optional vintage border frame
             }}
         >
             <ComposableMap
@@ -117,8 +118,9 @@ export const WidgetMapGenerator = ({ visitedCountries, onSnapshotReady }: Widget
                                     geography={geo}
                                     style={{
                                         default: {
-                                            fill: isVisited ? "rgba(255, 255, 255, 0.9)" : "rgba(80, 80, 80, 0.5)",
-                                            stroke: "rgba(0,0,0,0)",
+                                            fill: isVisited ? "#8b4513" : "#d6c6b0", // Ink Brown vs Dark Parchment
+                                            stroke: "#5e503f", // Dark Coffee stroke
+                                            strokeWidth: 0.5,
                                             outline: "none",
                                         },
                                     }}
