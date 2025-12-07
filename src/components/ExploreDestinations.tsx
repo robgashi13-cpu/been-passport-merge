@@ -88,11 +88,11 @@ export const ExploreDestinations = ({ onCountryClick }: ExploreDestinationsProps
                         <div className="flex items-center gap-6 mt-4 text-sm">
                             <span className="flex items-center gap-1 text-green-400">
                                 <Calendar className="w-4 h-4" />
-                                Favorite Season: {topDestinations[0].bestMonth}
+                                Best Season: {topDestinations[0].bestMonth}
                             </span>
                             <span className="flex items-center gap-1 text-yellow-400">
                                 <DollarSign className="w-4 h-4" />
-                                {getCostLabel(topDestinations[0].averageCost)}
+                                Expensive: {topDestinations[0].averageCost}
                             </span>
                         </div>
                     </div>
@@ -164,14 +164,14 @@ const DestinationCard = ({ destination, rank, onClick }: DestinationCardProps) =
                 </div>
             </div>
 
-            <div className="flex items-center justify-between mt-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
-                    Season: {destination.bestMonth}
+                    Best Season: {destination.bestMonth}
                 </span>
                 <span className="flex items-center gap-1 text-yellow-400">
-                    <Users className="w-3 h-3" />
-                    {destination.visitorCount} visitors
+                    <DollarSign className="w-3 h-3" />
+                    Expensive: {destination.averageCost}
                 </span>
             </div>
 
