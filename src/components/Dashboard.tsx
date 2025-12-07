@@ -164,7 +164,7 @@ const Dashboard = ({ stats, visitedCountries }: DashboardProps) => {
               <span>Passport</span>
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="font-display font-bold text-2xl md:text-3xl">#{stats.userPassport?.passportRank || '-'}</span>
+              <span className="font-display font-bold text-2xl md:text-3xl">{stats.userPassport?.passportRank || '-'}</span>
             </div>
             <p className="text-xs text-white/40 mt-1 leading-tight">{stats.userPassport?.name || 'Select Passport'}</p>
           </div>
