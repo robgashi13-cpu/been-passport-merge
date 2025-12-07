@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { Capacitor } from '@capacitor/core';
 import { useUser } from '@/contexts/UserContext';
 import { countries, getCountryByCode } from '@/data/countries';
 import { availablePassports } from '@/data/visaMatrix';
@@ -42,8 +43,10 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
         }
     };
 
-    // Body scroll lock
+    // Body scroll lock (Web only - Native handles this differently and might freeze)
     useEffect(() => {
+        if (Capacitor.isNativePlatform()) return;
+
         if (isOpen) {
             document.body.style.overflow = 'hidden';
             document.body.classList.add('modal-open');
@@ -242,148 +245,152 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
 
             {/* Modal */}
-            <div className="relative glass-panel rounded-2xl w-full max-w-md p-8 animate-zoom-in shadow-2xl border border-white/10 bg-black/40">
-                <div className="flex justify-center mb-6">
-                    <div className="w-20 h-20 bg-gradient-to-br from-gold via-gold-dark to-transparent rounded-full p-[1px]">
-                        <div className="w-full h-full bg-black rounded-full flex items-center justify-center overflow-hidden">
-                            <img src="/logo.png" alt="WanderPass" className="w-14 h-14 object-contain" />
+            <div className="relative bg-[#0a0a0a] w-full max-w-md rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col animate-zoom-in">
+                {/* Header */}
+                <div className="bg-white/5 p-4 flex items-center justify-between border-b border-white/10">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gradient-to-br from-gold via-gold-dark to-transparent rounded-full p-[1px]">
+                            <div className="w-full h-full bg-black rounded-full flex items-center justify-center overflow-hidden">
+                                <img src="/logo.png" alt="WanderPass" className="w-6 h-6 object-contain" />
+                            </div>
                         </div>
+                        <h2 className="font-display font-bold text-xl text-white">
+                            {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+                        </h2>
                     </div>
-                </div>
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="font-display text-2xl font-bold">
-                        {mode === 'login' ? 'Welcome Back' : 'Create Account'}
-                    </h2>
-                    <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
-                        <X className="w-5 h-5" />
+                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                        <X className="w-5 h-5 text-white/60" />
                     </button>
                 </div>
 
-                {/* Mode Toggle */}
-                <div className="flex gap-2 mb-6">
-                    <button
-                        onClick={() => setMode('login')}
-                        className={`flex-1 py-2 rounded-lg transition-colors ${mode === 'login' ? 'bg-white text-black' : 'bg-white/10'
-                            }`}
-                    >
-                        Sign In
-                    </button>
-                    <button
-                        onClick={() => setMode('signup')}
-                        className={`flex-1 py-2 rounded-lg transition-colors ${mode === 'signup' ? 'bg-white text-black' : 'bg-white/10'
-                            }`}
-                    >
-                        Sign Up
-                    </button>
-                </div>
+                <div className="p-6 overflow-y-auto custom-scrollbar">
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    {mode === 'signup' && (
+                    {/* Mode Toggle */}
+                    <div className="flex gap-2 mb-6">
+                        <button
+                            onClick={() => setMode('login')}
+                            className={`flex-1 py-2 rounded-lg transition-colors ${mode === 'login' ? 'bg-white text-black' : 'bg-white/10'
+                                }`}
+                        >
+                            Sign In
+                        </button>
+                        <button
+                            onClick={() => setMode('signup')}
+                            className={`flex-1 py-2 rounded-lg transition-colors ${mode === 'signup' ? 'bg-white text-black' : 'bg-white/10'
+                                }`}
+                        >
+                            Sign Up
+                        </button>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {mode === 'signup' && (
+                            <div className="relative">
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                                <input
+                                    type="text"
+                                    placeholder="Your name"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    className="w-full bg-white/5 border border-border/50 rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-white/20"
+                                    required
+                                />
+                            </div>
+                        )}
+
                         <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                             <input
-                                type="text"
-                                placeholder="Your name"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
+                                type="email"
+                                placeholder="Email address"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                                 className="w-full bg-white/5 border border-border/50 rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-white/20"
                                 required
                             />
                         </div>
-                    )}
 
-                    <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                        <input
-                            type="email"
-                            placeholder="Email address"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full bg-white/5 border border-border/50 rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-white/20"
-                            required
-                        />
-                    </div>
+                        <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                            <input
+                                type="password"
+                                placeholder="Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full bg-white/5 border border-border/50 rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-white/20"
+                                required
+                            />
+                        </div>
 
-                    <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full bg-white/5 border border-border/50 rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-white/20"
-                            required
-                        />
-                    </div>
-
-                    {mode === 'signup' && (
-                        <div>
-                            <label className="block text-sm text-muted-foreground mb-2">
-                                Select Your Passport
-                            </label>
-                            <div className="relative">
-                                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
-                                <select
-                                    value={passportCode}
-                                    onChange={(e) => setPassportCode(e.target.value)}
-                                    className="w-full bg-white/5 border border-border/50 rounded-xl py-3 pl-11 pr-10 appearance-none focus:outline-none focus:ring-2 focus:ring-white/20 cursor-pointer"
-                                >
-                                    {availablePassports
-                                        .map(code => getCountryByCode(code))
-                                        .filter((c): c is NonNullable<typeof c> => !!c)
-                                        .sort((a, b) => a.name.localeCompare(b.name))
-                                        .map(country => (
-                                            <option key={country.code} value={country.code} className="text-black">
-                                                {country.flagEmoji} {country.name}
-                                            </option>
-                                        ))
-                                    }
-                                </select>
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                        {mode === 'signup' && (
+                            <div>
+                                <label className="block text-sm text-muted-foreground mb-2">
+                                    Select Your Passport
+                                </label>
+                                <div className="relative">
+                                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+                                    <select
+                                        value={passportCode}
+                                        onChange={(e) => setPassportCode(e.target.value)}
+                                        className="w-full bg-white/5 border border-border/50 rounded-xl py-3 pl-11 pr-10 appearance-none focus:outline-none focus:ring-2 focus:ring-white/20 cursor-pointer"
+                                    >
+                                        {availablePassports
+                                            .map(code => getCountryByCode(code))
+                                            .filter((c): c is NonNullable<typeof c> => !!c)
+                                            .sort((a, b) => a.name.localeCompare(b.name))
+                                            .map(country => (
+                                                <option key={country.code} value={country.code} className="text-black">
+                                                    {country.flagEmoji} {country.name}
+                                                </option>
+                                            ))
+                                        }
+                                    </select>
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    )}
-
-                    {error && (
-                        <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-sm text-red-400">
-                            {error}
-                        </div>
-                    )}
-                    {successMessage && (
-                        <div className="p-3 bg-green-500/20 border border-green-500/30 rounded-lg text-sm text-green-400 text-center animate-fade-in">
-                            {successMessage}
-                        </div>
-                    )}
-
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white text-black font-medium hover:bg-white/90 transition-colors disabled:opacity-50"
-                    >
-                        {isLoading ? (
-                            <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                        ) : mode === 'login' ? (
-                            <>
-                                <LogIn className="w-5 h-5" />
-                                Sign In
-                            </>
-                        ) : (
-                            <>
-                                <UserPlus className="w-5 h-5" />
-                                Create Account
-                            </>
                         )}
-                    </button>
-                </form>
 
-                <p className="text-center text-xs text-muted-foreground mt-4">
-                    {mode === 'login'
-                        ? "Don't have an account? Click Sign Up above"
-                        : "Already have an account? Click Sign In above"
-                    }
-                </p>
+                        {error && (
+                            <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-sm text-red-400">
+                                {error}
+                            </div>
+                        )}
+                        {successMessage && (
+                            <div className="p-3 bg-green-500/20 border border-green-500/30 rounded-lg text-sm text-green-400 text-center animate-fade-in">
+                                {successMessage}
+                            </div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white text-black font-medium hover:bg-white/90 transition-colors disabled:opacity-50"
+                        >
+                            {isLoading ? (
+                                <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                            ) : mode === 'login' ? (
+                                <>
+                                    <LogIn className="w-5 h-5" />
+                                    Sign In
+                                </>
+                            ) : (
+                                <>
+                                    <UserPlus className="w-5 h-5" />
+                                    Create Account
+                                </>
+                            )}
+                        </button>
+                    </form>
+
+                    <p className="text-center text-xs text-muted-foreground mt-4">
+                        {mode === 'login'
+                            ? "Don't have an account? Click Sign Up above"
+                            : "Already have an account? Click Sign In above"
+                        }
+                    </p>
+                </div>
             </div>
         </div>,
         document.body

@@ -56,7 +56,45 @@ const Index = () => {
   // Ref to prevent echo loops
   const skipNativeSync = useRef(false);
 
-  // ... (native sync effects remain same, omitting for brevity in replace) ...
+  // Sync with Native Tab Bar
+  useEffect(() => {
+    if (!isNative) return;
+
+    // Listen for tab changes from native side
+    const setupListener = async () => {
+      try {
+        await TabBar.addListener('tabChange', (data: { tab: string }) => {
+          if (skipNativeSync.current) return;
+          console.log('Native tab changed to:', data.tab);
+          // Set internal state without triggering echo
+          skipNativeSync.current = true;
+          setActiveTab(data.tab);
+          // Reset echo block after short delay
+          setTimeout(() => {
+            skipNativeSync.current = false;
+          }, 50);
+        });
+      } catch (err) {
+        console.error('Failed to setup tab listener:', err);
+      }
+    };
+
+    setupListener();
+
+    // Initial sync - get current native tab
+    TabBar.getActiveTab().then(({ tab }) => {
+      if (tab) setActiveTab(tab);
+    }).catch(() => { });
+
+  }, [isNative]);
+
+  // Sync React State -> Native
+  useEffect(() => {
+    if (!isNative) return;
+    if (skipNativeSync.current) return;
+
+    TabBar.setActiveTab({ tab: activeTab }).catch(() => { });
+  }, [activeTab, isNative]);
 
   const handleTripsDetected = (newTrips: Partial<TripEntry>[]) => {
     // Convert partial trips to full trips with IDs
