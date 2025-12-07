@@ -169,7 +169,14 @@ const Index = () => {
         <main className="container mx-auto px-4 pb-32" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 80px)' }}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsContent value="dashboard" className="space-y-6 animate-fade-in focus-visible:outline-none">
-              <Dashboard stats={stats} visitedCountries={visitedCountries} />
+              <Dashboard
+                stats={stats}
+                visitedCountries={visitedCountries}
+                toggleVisited={toggleVisited}
+                bucketList={bucketList || []}
+                heldVisas={heldVisas}
+                onCountryClick={(code) => setSelectedCountryCode(code)}
+              />
 
               <div className="pt-4 border-t border-white/10">
                 <h3 className="font-display text-2xl font-bold mb-6">Explore Destinations</h3>
