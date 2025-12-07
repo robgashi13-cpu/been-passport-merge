@@ -258,7 +258,7 @@ const Index = () => {
                   countryCode={selectedSheetCountry}
                   isOpen={isSheetOpen}
                   onOpenChange={setSheetOpen}
-                  userPassportCode={userPassport?.code}
+                  userPassportCode={userPassport}
                   isVisited={selectedSheetCountry ? visitedCountries.includes(selectedSheetCountry) : false}
                   onToggleVisited={() => {
                     if (selectedSheetCountry) toggleVisited(selectedSheetCountry);
