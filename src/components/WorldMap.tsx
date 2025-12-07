@@ -319,7 +319,7 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
         >
           <ComposableMap
             projection="geoMercator"
-            projectionConfig={{ scale: 100, center: [0, 20] }}
+            projectionConfig={{ scale: 100, center: [0, 0] }}
             style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }}
           >
             <ZoomableGroup
