@@ -240,12 +240,12 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
     }
 
     return createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity" onClick={onClose} />
 
             {/* Modal */}
-            <div className="relative bg-[#0a0a0a] w-full max-w-md rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col animate-zoom-in">
+            <div className="relative bg-[#0a0a0a] w-full max-w-md max-h-[85vh] rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col animate-zoom-in">
                 {/* Header */}
                 <div className="bg-white/5 p-4 flex items-center justify-between border-b border-white/10">
                     <div className="flex items-center gap-3">
