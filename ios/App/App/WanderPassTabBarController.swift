@@ -80,8 +80,11 @@ class WanderPassTabBarController: CAPBridgeViewController, UITabBarDelegate {
             let generator = UIImpactFeedbackGenerator(style: .light)
             generator.impactOccurred()
             
-            // Notify Web Context
-            NotificationCenter.default.post(name: NSNotification.Name("NativeTabSelected"), object: nil, userInfo: ["tab": tabId])
+            // Notify Web Context via Custom Event
+            let js = "window.dispatchEvent(new CustomEvent('nativeTabChange', { detail: { tab: '\(tabId)' } }))"
+            DispatchQueue.main.async {
+                self.bridge?.webView?.evaluateJavaScript(js, completionHandler: nil)
+            }
         }
     }
     

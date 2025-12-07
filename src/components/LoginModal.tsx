@@ -107,7 +107,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
 
         return createPortal(
             <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
-                <div className="bg-gradient-card border border-border/50 rounded-2xl w-full max-w-md p-6 animate-scale-in max-h-[85vh] overflow-y-auto">
+                <div className="bg-gradient-card border border-border/50 rounded-2xl w-full max-w-2xl p-6 animate-scale-in max-h-[85vh] overflow-y-auto">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="font-display text-2xl font-bold">Profile</h2>
                         <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
@@ -245,7 +245,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
             <div className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity" onClick={onClose} />
 
             {/* Modal */}
-            <div className="relative bg-[#0a0a0a] w-full max-w-md max-h-[85vh] rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col animate-zoom-in">
+            <div className="relative bg-[#0a0a0a] w-full max-w-2xl max-h-[85vh] rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col animate-zoom-in">
                 {/* Header */}
                 <div className="bg-white/5 p-4 flex items-center justify-between border-b border-white/10">
                     <div className="flex items-center gap-3">

@@ -17,7 +17,7 @@ const Header = ({ activeTab, setActiveTab, onLoginClick, showDesktopNav = true }
   // Web: Fixed at top, large padding to clear safe area + spacing
   // Native: Floating below safe area (visual gap), internal padding normal
   const headerStyle = isNative
-    ? { top: 'calc(env(safe-area-inset-top) + 60px)', paddingTop: '12px' }
+    ? { top: 'env(safe-area-inset-top)', paddingTop: '12px' }
     : { top: '60px', paddingTop: '12px' };
 
   const navItems = [

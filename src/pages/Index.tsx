@@ -61,25 +61,24 @@ const Index = () => {
     if (!isNative) return;
 
     // Listen for tab changes from native side
-    const setupListener = async () => {
-      try {
-        await TabBar.addListener('tabChange', (data: { tab: string }) => {
-          if (skipNativeSync.current) return;
-          console.log('Native tab changed to:', data.tab);
-          // Set internal state without triggering echo
-          skipNativeSync.current = true;
-          setActiveTab(data.tab);
-          // Reset echo block after short delay
-          setTimeout(() => {
-            skipNativeSync.current = false;
-          }, 50);
-        });
-      } catch (err) {
-        console.error('Failed to setup tab listener:', err);
+    // Listen for tab changes from native side (CustomEvent)
+    const handleNativeTabChange = (e: any) => {
+      const tab = e.detail?.tab;
+      if (tab && !skipNativeSync.current) {
+        console.log('Native tab changed to:', tab);
+        skipNativeSync.current = true;
+        setActiveTab(tab);
+        setTimeout(() => {
+          skipNativeSync.current = false;
+        }, 50);
       }
     };
 
-    setupListener();
+    window.addEventListener('nativeTabChange', handleNativeTabChange);
+
+    return () => {
+      window.removeEventListener('nativeTabChange', handleNativeTabChange);
+    };
 
     // Initial sync - get current native tab
     TabBar.getActiveTab().then(({ tab }) => {
