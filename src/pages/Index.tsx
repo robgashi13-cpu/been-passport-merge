@@ -168,18 +168,38 @@ const Index = () => {
 
         <main className="container mx-auto px-4 pb-32" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 80px)' }}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsContent value="dashboard" className="space-y-0 animate-fade-in focus-visible:outline-none -mx-4 -mt-6">
-              <Dashboard
-                stats={stats}
-                visitedCountries={visitedCountries}
-                toggleVisited={toggleVisited}
-                bucketList={bucketList || []}
-                heldVisas={effectiveHeldVisas}
-                onCountryClick={(code) => setSelectedCountryCode(code)}
-              />
+            <TabsContent value="dashboard" className="space-y-6 animate-fade-in focus-visible:outline-none">
+              <Dashboard stats={stats} visitedCountries={visitedCountries} />
+
+              <div className="pt-4 border-t border-white/10">
+                <h3 className="font-display text-2xl font-bold mb-6">Explore Destinations</h3>
+                <ExploreDestinations
+                  onCountryClick={(code) => setSelectedCountryCode(code)}
+                />
+              </div>
             </TabsContent>
 
-            {/* Map tab removed as it is now integrated into Dashboard */}
+            <TabsContent value="map" className="h-[calc(100vh-12rem)] animate-fade-in focus-visible:outline-none pb-48">
+              <div className="h-full rounded-2xl border border-white/10 bg-white/5 overflow-hidden backdrop-blur-sm">
+                <WorldMap
+                  visitedCountries={visitedCountries}
+                  bucketList={bucketList || []}
+                  onCountryClick={(code) => setSelectedCountryCode(code)}
+                  userPassportCode={userPassport}
+                  heldVisas={heldVisas}
+                />
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-white/10">
+                <CountryList
+                  visitedCountries={visitedCountries}
+                  bucketList={bucketList || []}
+                  toggleVisited={toggleVisited}
+                  toggleBucketList={toggleBucketList}
+                  onCountryClick={(code) => setSelectedCountryCode(code)}
+                />
+              </div>
+            </TabsContent>
 
             <TabsContent value="calendar" className="pb-24 lg:pb-8 focus-visible:outline-none">
               <Tabs defaultValue="calendar" className="w-full">

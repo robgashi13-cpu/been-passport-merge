@@ -3,7 +3,7 @@ import { ComposableMap, Geographies, Geography, ZoomableGroup, Marker } from "re
 import { countries, getCountryByCode } from '@/data/countries';
 import { getVisaRequirementFromMatrix, getVisaRequirementColor, getVisaRequirementLabel, VisaRequirement } from '@/data/visaMatrix';
 import { VISA_SUBSTITUTIONS, AVAILABLE_ADDITIONAL_VISAS, getVisaPowerGroups } from '@/data/visaSubstitutions';
-import { MapPin, Globe, CreditCard } from 'lucide-react';
+import { MapPin, Globe, CreditCard, Maximize2, Minimize2 } from 'lucide-react';
 
 // Import TopoJSON data
 import worldData from '@/data/world-110m.json';
@@ -155,8 +155,11 @@ const getCountryFillColor = (
   return "rgba(80, 80, 80, 0.5)";
 };
 
-const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas = [], onCountryClick, isFullScreen = false }: WorldMapProps) => {
+const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas = [], onCountryClick, isFullScreen: externalIsFullScreen = false }: WorldMapProps) => {
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
+  const [internalIsFullScreen, setInternalIsFullScreen] = useState(false);
+  const isFullScreen = externalIsFullScreen || internalIsFullScreen;
+
   const [tooltipContent, setTooltipContent] = useState<{
     name: string;
     flag: string;
@@ -224,15 +227,14 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
 
   const [viewMode, setViewMode] = useState<'visited' | 'visa'>('visited');
   const [zoomLevel, setZoomLevel] = useState(1);
-  // Removed mapActive state to specific user request - Map is always active
 
   const handleZoomChange = (position: { k: number, x: number, y: number }) => {
     setZoomLevel(position.k);
   };
 
   return (
-    <div className="space-y-4 md:space-y-6 animate-fade-in h-full flex flex-col">
-      <div className={`text-center py-4 md:py-6 flex-shrink-0 relative pointer-events-none ${isFullScreen ? 'absolute top-0 left-0 right-0 z-10 pt-safe' : ''}`}>
+    <div className={`space-y-4 md:space-y-6 animate-fade-in flex flex-col transition-all duration-500 ${isFullScreen ? 'fixed inset-0 z-[100] bg-black' : 'h-full'}`}>
+      <div className={`text-center py-4 md:py-6 flex-shrink-0 relative pointer-events-none ${isFullScreen ? 'absolute top-0 left-0 right-0 z-10 pt-safe bg-gradient-to-b from-black/80 to-transparent' : ''}`}>
         {!isFullScreen && (
           <h2 className="font-display text-2xl md:text-4xl font-bold mb-2 animate-slide-up">
             World <span className="text-gradient-white">Explorer</span>
@@ -240,8 +242,8 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
         )}
 
         {/* View Mode Toggle */}
-        <div className={`flex justify-center mt-4 mb-2 animate-slide-up pointer-events-auto ${isFullScreen ? 'mt-2' : ''}`} style={{ animationDelay: "0.1s" }}>
-          <div className="bg-white/10 p-1 rounded-xl flex gap-1 border border-white/10 backdrop-blur-md">
+        <div className={`flex justify-center mt-4 mb-2 animate-slide-up pointer-events-auto ${isFullScreen ? 'mt-12' : ''}`} style={{ animationDelay: "0.1s" }}>
+          <div className="bg-white/10 p-1 rounded-xl flex gap-1 border border-white/10 backdrop-blur-md relative">
             <button
               onClick={() => setViewMode('visited')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === 'visited'
@@ -257,7 +259,7 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
             <button
               onClick={() => {
                 if (userPassportCode) setViewMode('visa');
-                else alert("Please select a passport first (Header > Passport Icon)"); // Or just disable
+                else alert("Please select a passport first (Header > Passport Icon)");
               }}
               disabled={!userPassportCode}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === 'visa'
@@ -286,6 +288,14 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
           </p>
         )}
       </div>
+
+      {/* Full Screen Toggle Button */}
+      <button
+        onClick={() => setInternalIsFullScreen(!internalIsFullScreen)}
+        className={`absolute z-50 p-3 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-white hover:bg-white/20 transition-all shadow-xl ${isFullScreen ? 'bottom-8 right-4' : 'bottom-4 right-4'}`}
+      >
+        {isFullScreen ? <Minimize2 className="w-6 h-6" /> : <Maximize2 className="w-6 h-6" />}
+      </button>
 
       {/* Interactive 2D Map */}
       <div className={`relative bg-gradient-card rounded-xl md:rounded-2xl border border-border/50 overflow-hidden hover-glow transition-all duration-500 flex-grow flex flex-col ${isFullScreen ? 'h-full rounded-none border-none' : 'p-2 md:p-8'}`}>
