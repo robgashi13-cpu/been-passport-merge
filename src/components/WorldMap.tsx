@@ -324,7 +324,7 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
             e.stopPropagation(); // Prevent map click
             setInternalIsFullScreen(!internalIsFullScreen);
           }}
-          className="absolute bottom-4 right-4 z-50 p-2 md:p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-black/60 transition-all shadow-xl"
+          className={`absolute z-[10000] p-2 md:p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-black/60 transition-all shadow-xl ${isFullScreen ? 'bottom-10 right-4' : 'bottom-4 right-4'}`}
         >
           {isFullScreen ? <Minimize2 className="w-5 h-5 md:w-6 md:h-6" /> : <Maximize2 className="w-5 h-5 md:w-6 md:h-6" />}
         </button>
@@ -367,7 +367,7 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
           {/* ... Map Component ... */}
           <ComposableMap
             projection="geoMercator"
-            projectionConfig={{ scale: 100, center: [0, 0] }}
+            projectionConfig={{ scale: isFullScreen ? 140 : 100, center: [0, 0] }}
             style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }}
           >
             {/* ... ZoomableGroup ... */}
