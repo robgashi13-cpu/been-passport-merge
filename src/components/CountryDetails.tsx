@@ -155,13 +155,13 @@ export const CountryDetails = ({
 
                 <div className="p-4 pt-2">
                     <Tabs defaultValue="overview" className="w-full space-y-4">
-                        <div className="sticky top-0 z-40 bg-black/95 pt-2 pb-2 -mx-4 px-4 border-b border-white/5 shadow-xl backdrop-blur-xl">
+                        <div className="sticky top-0 z-40 bg-black/60 pt-2 pb-2 -mx-4 px-4 border-b border-white/5 shadow-xl backdrop-blur-xl">
                             <TabsList className="flex w-full overflow-x-auto no-scrollbar gap-2 bg-transparent p-0 border-none h-auto">
-                                <TabsTrigger value="overview" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white hover:bg-white/5 border border-transparent">Overview</TabsTrigger>
-                                <TabsTrigger value="visa" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white hover:bg-white/5 border border-transparent">Visa</TabsTrigger>
-                                <TabsTrigger value="transport" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white hover:bg-white/5 border border-transparent">Transport</TabsTrigger>
-                                <TabsTrigger value="weather" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white hover:bg-white/5 border border-transparent">Weather</TabsTrigger>
-                                <TabsTrigger value="details" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white hover:bg-white/5 border border-transparent">Details</TabsTrigger>
+                                <TabsTrigger value="overview" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:backdrop-blur-md data-[state=active]:border-white/20 text-white/50 hover:text-white/80 border border-transparent">Overview</TabsTrigger>
+                                <TabsTrigger value="visa" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:backdrop-blur-md data-[state=active]:border-white/20 text-white/50 hover:text-white/80 border border-transparent">Visa</TabsTrigger>
+                                <TabsTrigger value="transport" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:backdrop-blur-md data-[state=active]:border-white/20 text-white/50 hover:text-white/80 border border-transparent">Transport</TabsTrigger>
+                                <TabsTrigger value="weather" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:backdrop-blur-md data-[state=active]:border-white/20 text-white/50 hover:text-white/80 border border-transparent">Weather</TabsTrigger>
+                                <TabsTrigger value="details" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:backdrop-blur-md data-[state=active]:border-white/20 text-white/50 hover:text-white/80 border border-transparent">Details</TabsTrigger>
                             </TabsList>
                         </div>
 
@@ -391,7 +391,7 @@ export const CountryDetails = ({
                         {/* WEATHER TAB */}
                         <TabsContent value="weather" className="space-y-6 mt-2 animate-slide-up">
                             {/* Live Weather Card */}
-                            <div className="relative bg-gradient-to-br from-blue-500 to-cyan-400 rounded-3xl p-8 border border-white/10 shadow-glow text-white overflow-hidden">
+                            <div className="relative bg-gradient-to-br from-blue-500/80 to-cyan-400/80 rounded-3xl p-8 border border-white/10 shadow-glow text-white overflow-hidden backdrop-blur-md">
                                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
                                 <div className="relative z-10 flex justify-between items-start">
@@ -409,9 +409,19 @@ export const CountryDetails = ({
                                         <div className="mt-4 text-xl font-medium flex items-center gap-2">
                                             {weatherDesc?.emoji} {weatherDesc?.text || 'Loading...'}
                                         </div>
+
+                                        {/* Google Weather Link */}
+                                        <a
+                                            href={`https://www.google.com/search?q=weather+in+${extendedData?.capital?.[0] || country.name}+${country.name}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="mt-6 inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-xs font-bold transition-colors border border-white/10"
+                                        >
+                                            View Daily Forecast on Google ↗
+                                        </a>
                                     </div>
 
-                                    <CloudSun className="w-20 h-20 text-white/30" />
+                                    <CloudSun className="w-20 h-20 text-white/40" />
                                 </div>
                             </div>
 
