@@ -15,7 +15,6 @@ import { PassportDetailsModal } from './PassportDetailsModal';
 import { FlightBoardModal } from './FlightBoardModal';
 import { CountryBrowserModal } from './CountryBrowserModal';
 import { ContinentModal } from './ContinentModal';
-import { AchievementCelebration, useAchievementTracker } from './AchievementCelebration';
 import { useState, useMemo } from 'react';
 import { useTravelData } from '@/hooks/useTravelData';
 
@@ -59,9 +58,6 @@ const Dashboard = ({ stats, visitedCountries }: DashboardProps) => {
   // Get toggleVisited from travel data
   const { toggleVisited } = useTravelData();
 
-  // Achievement celebration tracker
-  const { newAchievement, clearAchievement, duration } = useAchievementTracker(visitedCountries);
-
   // Get safety data from country info
   const currentCountry = location.countryCode ? getCountryByCode(location.countryCode) : null;
   const safetyScore = currentCountry?.safetyScore || 83; // Fallback to global average
@@ -94,23 +90,10 @@ const Dashboard = ({ stats, visitedCountries }: DashboardProps) => {
       {/* Header is global in Index */}
       <GeoPassport />
 
-      {/* Main Stats Area - 2 columns */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Left Column: Level Card */}
-        <LevelCard visitedCountries={visitedCountries} />
+      {/* Level Card */}
+      <LevelCard visitedCountries={visitedCountries} />
 
-        {/* Right Column: Safety + Rank (already merged in SafetyWidget) */}
-        <SafetyWidget
-          countryName={location.countryName || currentCountry?.name || "Detecting..."}
-          safetyScore={safetyScore}
-          safetyRank={safetyRank}
-          nightScore={nightScore}
-          personalScore={personalScore}
-          womenScore={womenScore}
-        />
-      </div>
-
-      {/* Second Row: Stats Merged Card */}
+      {/* Stats Merged Card */}
       <div className="bg-gradient-card rounded-2xl border border-white/10 p-4">
         <div className="grid grid-cols-2 sm:flex sm:items-center gap-4">
 
@@ -188,6 +171,16 @@ const Dashboard = ({ stats, visitedCountries }: DashboardProps) => {
         </div>
       </div>
 
+      {/* Safety Widget (Moved Below Stats) */}
+      <SafetyWidget
+        countryName={location.countryName || currentCountry?.name || "Detecting..."}
+        safetyScore={safetyScore}
+        safetyRank={safetyRank}
+        nightScore={nightScore}
+        personalScore={personalScore}
+        womenScore={womenScore}
+      />
+
       {/* Local Airport Traffic Button */}
       <button
         onClick={() => setShowFlightModal(true)}
@@ -236,13 +229,6 @@ const Dashboard = ({ stats, visitedCountries }: DashboardProps) => {
         isOpen={showContinentModal}
         onClose={() => setShowContinentModal(false)}
         continentStats={stats.continentStats}
-      />
-
-      {/* Achievement Celebration */}
-      <AchievementCelebration
-        achievement={newAchievement}
-        onClose={clearAchievement}
-        duration={duration}
       />
     </div>
   );

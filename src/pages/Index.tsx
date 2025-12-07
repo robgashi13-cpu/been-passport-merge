@@ -22,6 +22,7 @@ import { AddTripModal } from '@/components/AddTripModal';
 import { CountryDetailsModal } from '@/components/CountryDetailsModal';
 import { useSwipeable } from 'react-swipeable';
 import TabBar from '@/plugins/TabBar';
+import { AchievementCelebration, useAchievementTracker } from '@/components/AchievementCelebration';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -46,6 +47,9 @@ const Index = () => {
   } = useTravelData();
 
   const stats = getStats();
+
+  // Achievement Tracker (Global) - Hoisted from Dashboard to persist across tab switches
+  const { newAchievement, clearAchievement, duration } = useAchievementTracker(visitedCountries);
 
   const tabOrder = ['dashboard', 'map', 'calendar', 'passport'];
 
@@ -128,7 +132,7 @@ const Index = () => {
           showDesktopNav={true}
         />
 
-        <main className="container mx-auto px-4 pb-12" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 120px)' }}>
+        <main className="container mx-auto px-4 pb-12" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 140px)' }}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsContent value="dashboard" className="space-y-6 animate-fade-in focus-visible:outline-none">
               <Dashboard stats={stats} visitedCountries={visitedCountries} />
@@ -216,6 +220,13 @@ const Index = () => {
         <CountryDetailsModal
           countryCode={selectedCountryCode}
           onClose={() => setSelectedCountryCode(null)}
+        />
+
+        {/* Achievement Celebration (Global) */}
+        <AchievementCelebration
+          achievement={newAchievement}
+          onClose={clearAchievement}
+          duration={duration}
         />
       </div>
     </div>

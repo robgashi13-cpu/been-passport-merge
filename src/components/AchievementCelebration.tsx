@@ -43,7 +43,7 @@ export const AchievementCelebration = ({ achievement, onClose, duration = 3000 }
             />
 
             {/* Celebration content */}
-            <div className={`relative bg-[#0a0a0a] w-full max-w-sm rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col transition-all duration-500 ${isVisible ? 'scale-100 translate-y-0 opacity-100' : 'scale-90 translate-y-8 opacity-0'
+            <div className={`relative bg-[#0a0a0a] w-full max-w-md rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col transition-all duration-500 ${isVisible ? 'scale-100 translate-y-0 opacity-100' : 'scale-90 translate-y-8 opacity-0'
                 }`}>
 
                 {/* Header - Consistent with standard Modals */}
@@ -100,6 +100,9 @@ export const AchievementCelebration = ({ achievement, onClose, duration = 3000 }
 export const useAchievementTracker = (visitedCountries: string[]) => {
     const [queue, setQueue] = useState<Achievement[]>([]);
 
+    // Ref to track achievements queued in this session to prevent race conditions/duplicates
+    const recentlyQueued = useState(() => new Set<string>())[0];
+
     // Initialize from local storage to prevent re-celebrating
     const [previouslyUnlocked, setPreviouslyUnlocked] = useState<Set<string>>(() => {
         try {
@@ -121,10 +124,19 @@ export const useAchievementTracker = (visitedCountries: string[]) => {
         let hasNew = false;
 
         // Check for newly unlocked achievements
+        // Double check fresh LocalStorage to be absolutely sure we didn't miss a write or state update
+        const freshStorage = localStorage.getItem('celebrated_achievements');
+        const freshSet = freshStorage ? new Set(JSON.parse(freshStorage)) : new Set();
+
         for (const achievement of currentlyUnlocked) {
-            if (!nextUnlocked.has(achievement.id)) {
+            // Check against permanent history (State & Storage) AND temporary session queue
+            if (!nextUnlocked.has(achievement.id) &&
+                !recentlyQueued.has(achievement.id) &&
+                !freshSet.has(achievement.id)) {
+
                 newBatch.push(achievement);
                 nextUnlocked.add(achievement.id);
+                recentlyQueued.add(achievement.id);
                 hasNew = true;
             }
         }
@@ -138,7 +150,7 @@ export const useAchievementTracker = (visitedCountries: string[]) => {
             localStorage.setItem('celebrated_achievements', JSON.stringify([...nextUnlocked]));
         }
 
-    }, [visitedCountries]);
+    }, [visitedCountries, previouslyUnlocked, recentlyQueued]);
     // removed previouslyUnlocked from dependency
 
     const clearAchievement = () => {

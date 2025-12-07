@@ -1,6 +1,7 @@
 import { Globe2, Map, LayoutDashboard, Flag, CreditCard, CalendarDays, User, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/contexts/UserContext';
+import { Capacitor } from '@capacitor/core';
 
 interface HeaderProps {
   activeTab: string;
@@ -11,6 +12,13 @@ interface HeaderProps {
 
 const Header = ({ activeTab, setActiveTab, onLoginClick, showDesktopNav = true }: HeaderProps) => {
   const { user, isLoggedIn } = useUser();
+  const isNative = Capacitor.isNativePlatform();
+
+  // Web: Fixed at top, large padding to clear safe area + spacing
+  // Native: Floating below safe area (visual gap), internal padding normal
+  const headerStyle = isNative
+    ? { top: 'calc(env(safe-area-inset-top) + 60px)', paddingTop: '12px' }
+    : { top: '60px', paddingTop: '12px' };
 
   const navItems = [
     { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
@@ -22,8 +30,8 @@ const Header = ({ activeTab, setActiveTab, onLoginClick, showDesktopNav = true }
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-black/40 backdrop-blur-xl supports-[backdrop-filter]:bg-black/20 pb-3"
-      style={{ paddingTop: 'calc(env(safe-area-inset-top) + 48px)' }}
+      className="fixed left-0 right-0 z-50 border-b border-white/10 bg-black/40 backdrop-blur-xl supports-[backdrop-filter]:bg-black/20 pb-3 transition-all duration-300"
+      style={headerStyle}
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between">
