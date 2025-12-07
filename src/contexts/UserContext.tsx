@@ -40,8 +40,6 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | null>(null);
 
-const STORAGE_KEY = 'wanderlust_user';
-
 export const UserProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<UserData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -111,73 +109,35 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         }
     }, [user]);
 
-    const fetchProfile = async (userId: string, email?: string, metadata?: any) => {
+    const fetchUserData = async (userId: string, email?: string, metadata?: any) => {
         try {
-            // Try enabling offline support / specific error handling
-            const { data, error } = await supabase
-                .from('user_profiles')
-                .select('*')
-                .eq('id', userId)
-                .single();
+            // Fetch profile and travel data separately
+            const [profileResult, travelResult] = await Promise.all([
+                supabase.from('profiles').select('*').eq('user_id', userId).single(),
+                supabase.from('user_travel_data').select('*').eq('user_id', userId).single()
+            ]);
 
-            // If profile not found, try to create it from metadata (Self-Healing)
-            if (error && (error.code === 'PGRST116' || error.message.includes('JSON')) && metadata) {
-                console.log("Profile missing, attempting auto-creation...");
-                const newProfile = {
-                    id: userId,
-                    name: metadata.name || 'Traveler',
-                    passport_code: metadata.passport_code || 'US',
-                    visited_countries: [],
-                    bucket_list: [],
-                    visited_cities: [],
-                    held_visas: []
-                };
+            const profile = profileResult.data;
+            const travelData = travelResult.data;
 
-                const { error: insertError } = await supabase
-                    .from('user_profiles')
-                    .upsert(newProfile, { onConflict: 'id' });
-
-                if (!insertError) {
-                    // Start with basic profile
-                    const userData: UserData = {
-                        id: userId,
-                        name: newProfile.name,
-                        email: email || '',
-                        passportCode: newProfile.passport_code,
-                        visitedCountries: [],
-                        bucketList: [],
-                        visitedCities: [],
-                        heldVisas: [],
-                        createdAt: new Date()
-                    };
-                    setUser(userData);
-                    return; // Success
-                }
-            }
-
-            if (error) throw error;
-
-            if (data) {
-                // If email not passed, try to get from current user or cache
-                let userEmail = email || '';
-                if (!userEmail && user?.email) userEmail = user.email;
-
+            // If data exists, set user
+            if (profile || travelData) {
                 const userData: UserData = {
-                    id: data.id,
-                    name: data.name,
-                    email: userEmail,
-                    passportCode: data.passport_code,
-                    visitedCountries: data.visited_countries || [],
-                    bucketList: data.bucket_list || [],
-                    visitedCities: data.visited_cities || [],
-                    heldVisas: data.held_visas || [],
-                    createdAt: new Date(data.created_at)
+                    id: userId,
+                    name: profile?.display_name || metadata?.name || 'Traveler',
+                    email: email || '',
+                    passportCode: travelData?.passport_code || metadata?.passport_code || 'US',
+                    visitedCountries: travelData?.visited_countries || [],
+                    bucketList: travelData?.bucket_list || [],
+                    visitedCities: travelData?.visited_cities || [],
+                    heldVisas: travelData?.held_visas || [],
+                    createdAt: new Date(profile?.created_at || travelData?.created_at || Date.now())
                 };
                 setUser(userData);
             }
         } catch (error) {
-            console.error('Error fetching profile:', error);
-            // If fetch fails (offline), try loading from cache if IDs match
+            console.error('Error fetching user data:', error);
+            // Try loading from cache if offline
             if (!user) {
                 try {
                     const cached = localStorage.getItem('cached_user_profile');
@@ -204,7 +164,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             if (error) throw error;
 
             if (data.user) {
-                await fetchProfile(data.user.id, data.user.email, data.user.user_metadata);
+                await fetchUserData(data.user.id, data.user.email || undefined, data.user.user_metadata);
                 return true;
             }
             return false;
@@ -216,10 +176,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     const signup = async (name: string, email: string, password: string, passportCode: string): Promise<{ success: boolean; message?: string }> => {
         try {
+            const redirectUrl = `${window.location.origin}/`;
+            
             const { data, error } = await supabase.auth.signUp({
                 email,
                 password,
                 options: {
+                    emailRedirectTo: redirectUrl,
                     data: {
                         name,
                         passport_code: passportCode,
@@ -232,23 +195,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             }
 
             if (data.user) {
-                // Explicitly ensure profile exists in database to support full login experience
-                try {
-                    await supabase.from('user_profiles').upsert({
-                        id: data.user.id,
-                        name: name,
-                        passport_code: passportCode,
-                        visited_countries: [],
-                        bucket_list: [],
-                        visited_cities: [],
-                        held_visas: []
-                    }, { onConflict: 'id', ignoreDuplicates: true });
-                } catch (e) {
-                    console.error("Profile auto-creation fallback error:", e);
-                }
-
                 if (data.session) {
-                    await fetchProfile(data.user.id, data.user.email, data.user.user_metadata);
+                    await fetchUserData(data.user.id, data.user.email || undefined, data.user.user_metadata);
                     return { success: true };
                 } else {
                     return { success: true, message: 'Account created! Please check your email to confirm before logging in.' };
@@ -280,22 +228,21 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     // Check active session on mount
     useEffect(() => {
-        const checkSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                await fetchProfile(session.user.id, session.user.email, session.user.user_metadata);
-            } else {
-                setIsLoading(false);
-            }
-        };
-
-        checkSession();
-
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             if (session) {
-                fetchProfile(session.user.id, session.user.email, session.user.user_metadata);
+                setTimeout(() => {
+                    fetchUserData(session.user.id, session.user.email || undefined, session.user.user_metadata);
+                }, 0);
             } else {
                 setUser(null);
+                setIsLoading(false);
+            }
+        });
+
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                fetchUserData(session.user.id, session.user.email || undefined, session.user.user_metadata);
+            } else {
                 setIsLoading(false);
             }
         });
@@ -307,7 +254,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (user) {
             setUser(prev => prev ? { ...prev, passportCode } : null);
             try {
-                await supabase.from('user_profiles').update({ passport_code: passportCode }).eq('id', user.id);
+                await supabase.from('user_travel_data').update({ passport_code: passportCode }).eq('user_id', user.id);
             } catch (e) { console.error(e); }
         } else {
             setGuestPassport(passportCode);
@@ -318,7 +265,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (user) {
             setUser(prev => prev ? { ...prev, visitedCountries: countries } : null);
             try {
-                await supabase.from('user_profiles').update({ visited_countries: countries }).eq('id', user.id);
+                await supabase.from('user_travel_data').update({ visited_countries: countries }).eq('user_id', user.id);
             } catch (e) { console.error(e); }
         } else {
             setGuestVisited(countries);
@@ -329,7 +276,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (user) {
             setUser(prev => prev ? { ...prev, visitedCities: cities } : null);
             try {
-                await supabase.from('user_profiles').update({ visited_cities: cities }).eq('id', user.id);
+                await supabase.from('user_travel_data').update({ visited_cities: cities }).eq('user_id', user.id);
             } catch (e) { console.error(e); }
         } else {
             setGuestCities(cities);
@@ -340,7 +287,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (user) {
             setUser(prev => prev ? { ...prev, bucketList: list } : null);
             try {
-                await supabase.from('user_profiles').update({ bucket_list: list }).eq('id', user.id);
+                await supabase.from('user_travel_data').update({ bucket_list: list }).eq('user_id', user.id);
             } catch (e) { console.error(e); }
         } else {
             setGuestBucket(list);
@@ -351,7 +298,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (user) {
             setUser(prev => prev ? { ...prev, heldVisas: visas } : null);
             try {
-                await supabase.from('user_profiles').update({ held_visas: visas }).eq('id', user.id);
+                await supabase.from('user_travel_data').update({ held_visas: visas }).eq('user_id', user.id);
             } catch (e) { console.error(e); }
         } else {
             setGuestHeld(visas);

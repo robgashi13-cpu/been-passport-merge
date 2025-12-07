@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { visas, getCountriesUnlockedByVisas } from '@/data/visas';
+import { commonVisas, getCountriesWithVisa } from '@/data/visas';
 import { countries } from '@/data/countries';
-import { Check, Plus, X } from 'lucide-react';
+import { Check, Plus } from 'lucide-react';
 
 interface VisaManagerProps {
     selectedVisas: string[];
@@ -11,7 +11,17 @@ interface VisaManagerProps {
 export const VisaManager = ({ selectedVisas, onVisaToggle }: VisaManagerProps) => {
     const [expanded, setExpanded] = useState(true);
 
-    const unlockedCountries = getCountriesUnlockedByVisas(selectedVisas);
+    // Calculate unlocked countries from selected visas
+    const getUnlockedCountries = () => {
+        const unlocked = new Set<string>();
+        selectedVisas.forEach(visaId => {
+            const countries = getCountriesWithVisa(visaId);
+            countries.forEach(c => unlocked.add(c));
+        });
+        return Array.from(unlocked);
+    };
+
+    const unlockedCountries = getUnlockedCountries();
     const unlockedCount = unlockedCountries.length;
 
     return (
@@ -39,7 +49,7 @@ export const VisaManager = ({ selectedVisas, onVisaToggle }: VisaManagerProps) =
             {/* Visa Selection Grid */}
             {expanded && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {visas.map((visa) => {
+                    {commonVisas.map((visa) => {
                         const isSelected = selectedVisas.includes(visa.id);
 
                         return (
@@ -84,11 +94,8 @@ export const VisaManager = ({ selectedVisas, onVisaToggle }: VisaManagerProps) =
                                         <div className="flex items-center gap-1">
                                             <span className="text-muted-foreground">Unlocks:</span>
                                             <span className="font-bold text-primary">
-                                                {visa.unlocksCountries.length}
+                                                {visa.grantsAccessTo.length}
                                             </span>
-                                        </div>
-                                        <div className="text-muted-foreground">
-                                            {visa.validityPeriod}
                                         </div>
                                     </div>
                                 </div>
