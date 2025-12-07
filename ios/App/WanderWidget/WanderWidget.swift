@@ -58,95 +58,77 @@ struct WanderWidgetEntryView : View {
 
     var body: some View {
         ZStack {
-            // Background
-            Color(red: 0.1, green: 0.1, blue: 0.1)
+            // 1. Background: Vintage Map or Parchment Color
+            Color(red: 0.92, green: 0.87, blue: 0.81) // #eaddcf Parchment
                 .edgesIgnoringSafeArea(.all)
             
-            // Texture/Gradient
-            LinearGradient(gradient: Gradient(colors: [Color.black, Color(red: 0.15, green: 0.15, blue: 0.15)]), startPoint: .topLeading, endPoint: .bottomTrailing)
-            
-            // Dynamic Map Background if available
+            // 2. Full-bleed Map Image
             if let image = entry.mapImage {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .opacity(0.3) // Faint background map
-                    .blendMode(.overlay)
             }
             
-            HStack(spacing: 15) {
-                // Left Side: Map Representation
-                ZStack {
-                    Circle()
-                        .fill(Color(red: 0.2, green: 0.2, blue: 0.2))
-                        .frame(width: 100, height: 100)
-                    
-                    if let image = entry.mapImage {
-                         Image(uiImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 90, height: 90)
-                            .clipShape(Circle())
-                    } else {
-                        // Fallback SAFE SYMBOL: "globe" works on iOS 13+.
-                        Image(systemName: "globe")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 80, height: 80)
-                            .foregroundColor(Color.blue.opacity(0.6))
-                            .shadow(color: .blue.opacity(0.4), radius: 10, x: 0, y: 0)
-                    }
-                }
+            // 3. Subtle Grain/Overlay for readability
+            // Gradient from bottom to allow text to pop, or just subtle vignette
+            LinearGradient(gradient: Gradient(colors: [
+                Color.clear,
+                Color(red: 0.92, green: 0.87, blue: 0.81).opacity(0.3),
+                Color(red: 0.92, green: 0.87, blue: 0.81).opacity(0.8)
+            ]), startPoint: .top, endPoint: .bottom)
+            
+            // 4. Content Overlay
+            VStack(alignment: .leading) {
+                Spacer()
                 
-                // Right Side: Stats
-                VStack(alignment: .leading, spacing: 8) {
-                    // ... existing stats ...
+                HStack(alignment: .bottom) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("VISITED")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.gray)
-                        Text("\(entry.visitedCount)")
-                            .font(.system(size: 32, weight: .bold))
-                            .foregroundColor(.white)
-                        Text("COUNTRIES")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.gray)
+                        Text("VISITED WORLD")
+                            .font(.system(size: 10, weight: .bold, design: .serif))
+                            .foregroundColor(Color(red: 0.4, green: 0.3, blue: 0.2)) // Dark Coffee
+                            .kerning(1.0)
+                        
+                        HStack(alignment: .firstTextBaseline, spacing: 4) {
+                            Text("\(entry.visitedCount)")
+                                .font(.system(size: 42, weight: .black, design: .serif))
+                                .foregroundColor(Color(red: 0.35, green: 0.2, blue: 0.05)) // Deep Ink
+                            
+                            Text("COUNTRIES")
+                                .font(.system(size: 12, weight: .bold, design: .serif))
+                                .foregroundColor(Color(red: 0.5, green: 0.4, blue: 0.3))
+                                .padding(.bottom, 6)
+                        }
                     }
                     
-                    Spacer().frame(height: 5)
+                    Spacer()
                     
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("RANK")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.gray)
-                        Text(entry.rankTitle)
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(Color(red: 0.83, green: 0.68, blue: 0.21)) // Gold
+                    // Rank Stamp
+                    VStack(spacing: 2) {
+                        Image(systemName: "laurel.leading")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(red: 0.6, green: 0.4, blue: 0.2))
+                        
+                        Text(entry.rankTitle.uppercased())
+                            .font(.system(size: 10, weight: .bold, design: .serif))
+                            .foregroundColor(Color(red: 0.4, green: 0.3, blue: 0.2))
+                            .multilineTextAlignment(.center)
+                            .lineLimit(1)
+                            .padding(.horizontal, 4)
+                        
+                         Image(systemName: "laurel.trailing")
+                             .font(.system(size: 14))
+                             .foregroundColor(Color(red: 0.6, green: 0.4, blue: 0.2))
                     }
-                    
-                    // Small Progress Bar
-                    VStack(alignment: .leading) {
-                         GeometryReader { geometry in
-                             ZStack(alignment: .leading) {
-                                 Rectangle()
-                                     .frame(width: geometry.size.width, height: 4)
-                                     .opacity(0.3)
-                                     .foregroundColor(.gray)
-                                     .cornerRadius(2)
-                                 
-                                 Rectangle()
-                                     .frame(width: min(CGFloat(Float(entry.percentage)) / 100.0 * geometry.size.width, geometry.size.width), height: 4)
-                                     .foregroundColor(.blue)
-                                     .cornerRadius(2)
-                             }
-                         }
-                         .frame(height: 4)
-                    }
-                    .frame(width: 80)
+                    .padding(8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color(red: 0.5, green: 0.4, blue: 0.3), lineWidth: 1.5)
+                            .background(Color.white.opacity(0.4))
+                    )
                 }
             }
-            .padding()
+            .padding(16)
         }
     }
 }

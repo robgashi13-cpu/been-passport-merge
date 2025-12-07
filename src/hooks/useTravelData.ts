@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useUser } from '@/contexts/UserContext';
 import { countries, Country } from '@/data/countries';
-import { getVisaRequirementFromMatrix, getPassportStats } from '@/data/visaMatrix';
+import { getVisaRequirementFromMatrix, getPassportStats, availablePassports } from '@/data/visaMatrix';
 import { VISA_SUBSTITUTIONS, getVisaPowerGroups } from '@/data/visaSubstitutions';
 
 export interface TravelStats {
@@ -14,6 +14,8 @@ export interface TravelStats {
     total: number;
   }[];
   passportScore: number;
+  passportRank: number;
+  heldVisas: string[];
   userPassport: (Country & { code: string }) | null;
 }
 
@@ -118,12 +120,35 @@ export const useTravelData = () => {
       }
     }
 
+    // 3. Calculate Global Rank with Dynamic Score
+    let myRank = 0;
+    if (passport) {
+      const allScores = availablePassports.map(code => {
+        if (code === passport.code) return { code, score: dynamicScore };
+        const stats = getPassportStats(code);
+        return { code, score: stats ? (stats.visaFree + stats.visaOnArrival + stats.eta) : 0 };
+      }).sort((a, b) => b.score - a.score);
+
+      let currentRank = 1;
+      for (let i = 0; i < allScores.length; i++) {
+        if (i > 0 && allScores[i].score < allScores[i - 1].score) {
+          currentRank++;
+        }
+        if (allScores[i].code === passport.code) {
+          myRank = currentRank;
+          break;
+        }
+      }
+    }
+
     return {
       visitedCount: visitedCountries.length,
       totalCountries: countries.length,
       percentage: Math.round((visitedCountries.length / countries.length) * 100),
       continentStats: continentData,
       passportScore: dynamicScore,
+      passportRank: myRank || (passport?.passportRank ?? 0),
+      heldVisas: heldVisas || [],
       userPassport: passport ? { ...passport, code: passport.code } : null,
     };
   };

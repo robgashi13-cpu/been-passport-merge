@@ -3,6 +3,7 @@ import { X, Trophy, Globe, Lock, CheckCircle2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getCountryByCode, countries, getTopPassports } from '@/data/countries';
 import { getVisaRequirementFromMatrix, availablePassports } from '@/data/visaMatrix';
+import { VISA_SUBSTITUTIONS, getVisaPowerGroups } from '@/data/visaSubstitutions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface PassportDetailsModalProps {
@@ -11,9 +12,10 @@ interface PassportDetailsModalProps {
     userPassportCode?: string | null;
     passportScore: number;
     passportRank?: number;
+    heldVisas?: string[];
 }
 
-export const PassportDetailsModal = ({ isOpen, onClose, userPassportCode, passportScore, passportRank }: PassportDetailsModalProps) => {
+export const PassportDetailsModal = ({ isOpen, onClose, userPassportCode, passportScore, passportRank, heldVisas = [] }: PassportDetailsModalProps) => {
     // Body scroll lock when modal is open
     useEffect(() => {
         if (isOpen) {
@@ -34,13 +36,30 @@ export const PassportDetailsModal = ({ isOpen, onClose, userPassportCode, passpo
     const passportCountry = userPassportCode ? getCountryByCode(userPassportCode) : null;
     const topPassports = getTopPassports(100); // Get more to find user rank context if needed
 
+    // Calculate substitutions
+    const powerGroups = getVisaPowerGroups(heldVisas || []);
+    const substitutedDestinations = new Set<string>();
+    powerGroups.forEach(group => {
+        const dests = VISA_SUBSTITUTIONS[group] || [];
+        dests.forEach(d => substitutedDestinations.add(d));
+    });
+
     // Filter visa free and voa
     const accessList = countries
         .map(c => {
             if (!userPassportCode) return null;
             if (c.code === userPassportCode) return null;
-            const req = getVisaRequirementFromMatrix(userPassportCode, c.code);
-            return { country: c, req };
+            const matrixReq = getVisaRequirementFromMatrix(userPassportCode, c.code);
+            let effectiveReq = matrixReq?.requirement;
+            let note = matrixReq?.notes;
+
+            // Check substitution
+            if (effectiveReq === 'visa-required' && substitutedDestinations.has(c.code)) {
+                effectiveReq = 'visa-free'; // Treat as visa-free (or equivalent accessible status)
+                note = 'Unlocked by Held Visa';
+            }
+
+            return { country: c, req: { requirement: effectiveReq, notes: note } };
         })
         .filter(item => item && (item.req?.requirement === 'visa-free' || item.req?.requirement === 'visa-on-arrival' || item.req?.requirement === 'eta'))
         .sort((a, b) => (a?.country.name || '').localeCompare(b?.country.name || ''));

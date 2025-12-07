@@ -162,7 +162,7 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
               <span>Passport</span>
             </div>
             <div className="flex items-baseline gap-1">
-              <span className="font-display font-bold text-xl md:text-2xl">{stats.userPassport?.passportRank || '-'}</span>
+              <span className="font-display font-bold text-xl md:text-2xl">{stats.passportRank || '-'}</span>
             </div>
             <p className="text-[9px] text-white/40 mt-0.5 leading-tight truncate max-w-[80px]">{stats.userPassport?.name || 'Select'}</p>
           </div>
@@ -209,7 +209,8 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
         onClose={() => setShowPassportModal(false)}
         userPassportCode={stats.userPassport?.code || null}
         passportScore={stats.passportScore}
-        passportRank={stats.userPassport?.passportRank}
+        passportRank={stats.passportRank}
+        heldVisas={stats.heldVisas}
       />
       <FlightBoardModal
         isOpen={showFlightModal}
