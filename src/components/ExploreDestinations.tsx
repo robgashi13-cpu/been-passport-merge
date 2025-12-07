@@ -1,6 +1,6 @@
 import { getTopDestinations, PopularDestination } from '@/data/destinations';
 import { getCountryByCode } from '@/data/countries';
-import { MapPin, Star, Calendar, DollarSign, TrendingUp, Sparkles, Plane, Globe, ArrowRight } from 'lucide-react';
+import { MapPin, Star, Calendar, DollarSign, TrendingUp, Sparkles, Plane, Globe, ArrowRight, Users } from 'lucide-react';
 
 interface ExploreDestinationsProps {
     onCountryClick?: (countryCode: string) => void;
@@ -94,17 +94,17 @@ export const ExploreDestinations = ({ onCountryClick }: ExploreDestinationsProps
 
             {/* Quick Stats */}
             <div className="grid grid-cols-3 gap-3">
-                <div className="bg-gradient-card rounded-xl p-4 text-center hover-lift">
+                <div className="bg-gradient-card rounded-xl p-4 text-center hover-lift flex flex-col justify-center">
                     <Globe className="w-6 h-6 text-blue-400 mx-auto mb-2" />
                     <div className="font-display text-2xl font-bold">{topDestinations.length}</div>
                     <div className="text-xs text-muted-foreground">Top Cities</div>
                 </div>
-                <div className="bg-gradient-card rounded-xl p-4 text-center hover-lift">
+                <div className="bg-gradient-card rounded-xl p-4 text-center hover-lift flex flex-col justify-center">
                     <TrendingUp className="w-6 h-6 text-green-400 mx-auto mb-2" />
                     <div className="font-display text-2xl font-bold">2025</div>
                     <div className="text-xs text-muted-foreground">Trending Now</div>
                 </div>
-                <div className="bg-gradient-card rounded-xl p-4 text-center hover-lift">
+                <div className="bg-gradient-card rounded-xl p-4 text-center hover-lift flex flex-col justify-center">
                     <Plane className="w-6 h-6 text-purple-400 mx-auto mb-2" />
                     <div className="font-display text-2xl font-bold">12+</div>
                     <div className="text-xs text-muted-foreground">Countries</div>
@@ -162,7 +162,8 @@ const DestinationCard = ({ destination, rank, onClick }: DestinationCardProps) =
                     {destination.bestMonth}
                 </span>
                 <span className="flex items-center gap-1 text-yellow-400">
-                    {destination.averageCost}
+                    <Users className="w-3 h-3" />
+                    {destination.visitorCount} visitors
                 </span>
             </div>
 

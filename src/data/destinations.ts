@@ -12,6 +12,7 @@ export interface PopularDestination {
     visitorRank: number;
     bestMonth: string;
     averageCost: string; // $ to $$$$
+    visitorCount?: string; // e.g. "19.5M"
 }
 
 export const popularDestinations: PopularDestination[] = [
@@ -26,6 +27,7 @@ export const popularDestinations: PopularDestination[] = [
         visitorRank: 1,
         bestMonth: "April-June",
         averageCost: "$$$",
+        visitorCount: "19.5M"
     },
     {
         id: "dubai",
@@ -38,6 +40,7 @@ export const popularDestinations: PopularDestination[] = [
         visitorRank: 2,
         bestMonth: "Nov-March",
         averageCost: "$$$$",
+        visitorCount: "17.1M"
     },
     {
         id: "tokyo",
@@ -50,6 +53,7 @@ export const popularDestinations: PopularDestination[] = [
         visitorRank: 3,
         bestMonth: "March-May",
         averageCost: "$$$",
+        visitorCount: "19.8M"
     },
     {
         id: "istanbul",
@@ -62,6 +66,7 @@ export const popularDestinations: PopularDestination[] = [
         visitorRank: 4,
         bestMonth: "April-May",
         averageCost: "$$",
+        visitorCount: "20.2M"
     },
     {
         id: "london",
@@ -74,6 +79,7 @@ export const popularDestinations: PopularDestination[] = [
         visitorRank: 5,
         bestMonth: "May-Sept",
         averageCost: "$$$$",
+        visitorCount: "18.8M"
     },
     {
         id: "singapore",
@@ -86,6 +92,7 @@ export const popularDestinations: PopularDestination[] = [
         visitorRank: 6,
         bestMonth: "Feb-April",
         averageCost: "$$$",
+        visitorCount: "13.6M"
     },
     {
         id: "bangkok",
@@ -98,6 +105,7 @@ export const popularDestinations: PopularDestination[] = [
         visitorRank: 7,
         bestMonth: "Nov-Feb",
         averageCost: "$",
+        visitorCount: "22.7M"
     },
     {
         id: "barcelona",
@@ -110,6 +118,7 @@ export const popularDestinations: PopularDestination[] = [
         visitorRank: 8,
         bestMonth: "May-June",
         averageCost: "$$$",
+        visitorCount: "12.4M"
     },
     {
         id: "newyork",
@@ -122,6 +131,7 @@ export const popularDestinations: PopularDestination[] = [
         visitorRank: 9,
         bestMonth: "April-June",
         averageCost: "$$$$",
+        visitorCount: "11.1M"
     },
     {
         id: "rome",
@@ -134,6 +144,7 @@ export const popularDestinations: PopularDestination[] = [
         visitorRank: 10,
         bestMonth: "April-May",
         averageCost: "$$$",
+        visitorCount: "14.5M"
     },
     {
         id: "bali",
@@ -146,6 +157,7 @@ export const popularDestinations: PopularDestination[] = [
         visitorRank: 11,
         bestMonth: "April-Oct",
         averageCost: "$$",
+        visitorCount: "6.3M"
     },
     {
         id: "amsterdam",
@@ -158,13 +170,24 @@ export const popularDestinations: PopularDestination[] = [
         visitorRank: 12,
         bestMonth: "April-May",
         averageCost: "$$$",
+        visitorCount: "9.2M"
     },
 ];
 
-// Get destinations sorted by popularity
+// Helper to parse "19.5M", "20M", etc.
+const parseVisitorCount = (countStr?: string): number => {
+    if (!countStr) return 0;
+    const clean = countStr.replace(/[^0-9.]/g, '');
+    const num = parseFloat(clean);
+    if (countStr.toUpperCase().includes('M')) return num * 1000000;
+    if (countStr.toUpperCase().includes('K')) return num * 1000;
+    return num;
+};
+
+// Get destinations sorted by visitor numbers (highest first)
 export const getTopDestinations = (count = 6): PopularDestination[] => {
     return [...popularDestinations]
-        .sort((a, b) => a.visitorRank - b.visitorRank)
+        .sort((a, b) => parseVisitorCount(b.visitorCount) - parseVisitorCount(a.visitorCount))
         .slice(0, count);
 };
 

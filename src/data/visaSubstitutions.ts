@@ -67,33 +67,22 @@ export const VISA_SUBSTITUTIONS: Record<string, string[]> = {
         'VI', // US Virgin Islands (US Territory - Direct Access)
 
         // Europe
-        'TR', // Turkey (e-Visa)
         'GE', // Georgia
         'RS', // Serbia
         'ME', // Montenegro
         'AL', // Albania
         'MK', // North Macedonia
-        'MD', // Moldova
         'BA', // Bosnia and Herzegovina
 
         // Asia / Middle East
-        'PH', // Philippines
-        'SG', // Singapore
-        'KR', // South Korea
-        'QA', // Qatar
-        'AE', // UAE (Visa on Arrival eligibility)
-        'TW', // Taiwan
-        'MY', // Malaysia (Transit/VOA specifics vary)
-        'AM', // Armenia
-        'OM', // Oman
-        'BH', // Bahrain
-        'IL', // Israel
-        'TH', // Thailand
+        'PH', // Philippines (7 days)
+        'KR', // South Korea (Transit/ETA exemptions)
+        'TW', // Taiwan (Travel Auth)
+        'QA', // Qatar (ETA)
+        'SA', // Saudi Arabia (e-Visa eligible)
 
         // Africa
-        'MA', // Morocco
-        'EG', // Egypt
-        'KE'  // Kenya (eTA)
+        'ST'  // Sao Tome
     ],
 
     'SCHENGEN_VISA': [

@@ -167,7 +167,7 @@ export const TravelCalendar = ({ trips }: TravelCalendarProps) => {
                             <div
                                 key={idx}
                                 className={`
-                  aspect-square rounded-lg flex flex-col items-center justify-center p-1 transition-all duration-200
+                  aspect-square rounded-lg flex flex-col items-center justify-center p-1 transition-all duration-200 relative
                   ${dayData.day ? 'hover:bg-white/10 cursor-pointer' : ''}
                   ${hasTrips ? 'bg-white/20 ring-1 ring-white/30' : 'bg-white/5'}
                   ${isToday ? 'ring-2 ring-primary' : ''}
@@ -179,12 +179,29 @@ export const TravelCalendar = ({ trips }: TravelCalendarProps) => {
                                             {dayData.day}
                                         </span>
                                         {hasTrips && (
-                                            <div className="flex gap-0.5 mt-1 flex-wrap justify-center">
-                                                {([...new Set(dayData.trips.map(t => t.countryCode))] as string[]).slice(0, 2).map((code: string) => (
-                                                    <span key={code} className="text-xs">
-                                                        {getCountryByCode(code)?.flagEmoji}
-                                                    </span>
-                                                ))}
+                                            <div className="flex gap-1 mt-1 flex-wrap justify-center">
+                                                {dayData.trips.slice(0, 1).map((trip: TripEntry) => {
+                                                    const start = new Date(trip.startDate);
+                                                    start.setHours(0, 0, 0, 0);
+                                                    const current = new Date(currentYear, currentMonth, dayData.day);
+                                                    current.setHours(0, 0, 0, 0);
+                                                    const diffTime = current.getTime() - start.getTime();
+                                                    const dayNum = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+                                                    return (
+                                                        <div key={trip.id} className="flex flex-col items-center">
+                                                            <span className="text-xs">
+                                                                {getCountryByCode(trip.countryCode)?.flagEmoji}
+                                                            </span>
+                                                            <span className="text-[10px] text-luxury-gold font-bold leading-none">
+                                                                {dayNum}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
+                                                {dayData.trips.length > 1 && (
+                                                    <span className="text-[10px] text-white/50">+</span>
+                                                )}
                                             </div>
                                         )}
                                     </>

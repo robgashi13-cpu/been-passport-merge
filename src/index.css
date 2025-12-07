@@ -1,8 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+/* iOS Safe Area Fixes & Native Feel */
+body {
+  padding-bottom: env(safe-area-inset-bottom);
+  background-color: black;
+  /* Prevent white bar at bottom */
+  -webkit-tap-highlight-color: transparent;
+  /* Remove tap highlight */
+  -webkit-touch-callout: none;
+  /* Disable long-press menu */
+  user-select: none;
+  /* Disable text selection */
+  -webkit-user-select: none;
+  /* 120fps Optimization */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  will-change: opacity, transform;
+  /* Hardware Acceleration hint */
+}
+
+/* Allow selection in inputs */
+input,
+textarea {
+  user-select: text;
+  -webkit-user-select: text;
+  font-size: 16px;
+  /* Prevent zoom on focus */
+}
+
+/* GPU Acceleration for main elements */
+header,
+nav,
+main,
+.bottom-nav,
+.modal-overlay,
+.modal-container {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Performance optimizations for smooth animations */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Smooth scrolling throughout the app */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Optimized transitions */
+.transition-transform,
+.hover-lift,
+button,
+a {
+  will-change: transform;
+}
+
+/* Reduce animation work on low-power devices */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 
 @layer base {
   :root {
@@ -52,8 +124,8 @@
     --off-white: 0 0% 96%;
 
     /* Gradients - black to white */
-    --gradient-dark: linear-gradient(180deg, hsl(0 0% 8%), hsl(0 0% 2%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 10%), hsl(0 0% 6%));
+    --gradient-dark: linear-gradient(180deg, hsl(0 0% 5%), hsl(0 0% 0%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 8%), hsl(0 0% 0%));
     --gradient-glow: radial-gradient(circle at center, hsl(0 0% 100% / 0.08), transparent 70%);
     --gradient-white: linear-gradient(135deg, hsl(0 0% 100%), hsl(0 0% 90%));
     --gradient-shimmer: linear-gradient(90deg, transparent, hsl(0 0% 100% / 0.1), transparent);
@@ -419,12 +491,18 @@
     text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
   }
 
-  .ios-safe-padding-top {
+  .ios-safe-padding-top,
+  .pt-safe-top {
     padding-top: env(safe-area-inset-top);
   }
 
-  .ios-safe-padding-bottom {
+  .ios-safe-padding-bottom,
+  .pb-safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mt-safe-top {
+    margin-top: env(safe-area-inset-top);
   }
 }
 
@@ -436,4 +514,44 @@
 
 body {
   overscroll-behavior-y: none;
+}
+
+/* Modal overlay - always centered on viewport */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  /* Use dvh for mobile browsers that have dynamic toolbars */
+  height: 100dvh;
+  height: 100vh;
+  /* Fallback */
+  z-index: 9999;
+}
+
+/* Modal container - properly sized */
+.modal-container {
+  position: relative;
+  width: 100%;
+  max-height: 85vh;
+  max-height: 85dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 1rem;
+  /* Ensure it's above the backdrop */
+  z-index: 1;
+}
+
+/* Prevent body scroll when modal is open */
+body.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
 }

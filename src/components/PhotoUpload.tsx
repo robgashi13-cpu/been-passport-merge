@@ -235,7 +235,7 @@ export const PhotoUpload = ({ onTripsDetected }: PhotoUploadProps) => {
                     Import from <span className="text-gradient-white">Photos</span>
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                    Upload photos to automatically extract location data and create trips
+                    We only read location metadata from your photos - nothing is uploaded
                 </p>
             </div>
 

@@ -129658,7 +129658,7 @@ export const getPassportStats = (passportCode: string) => {
   const passportData = visaMatrix[passportCode];
   if (!passportData) return null;
 
-  let stats = { visaFree: 0, visaOnArrival: 0, eVisa: 0, visaRequired: 0 };
+  const stats = { visaFree: 0, visaOnArrival: 0, eVisa: 0, eta: 0, visaRequired: 0 };
   let total = 0;
 
   // Use countries list from matrix keys to ensure we count valid destinations
@@ -129676,8 +129676,8 @@ export const getPassportStats = (passportCode: string) => {
     switch (req) {
       case 'visa-free': stats.visaFree++; break;
       case 'visa-on-arrival': stats.visaOnArrival++; break;
-      case 'e-visa':
-      case 'eta': stats.eVisa++; break;
+      case 'e-visa': stats.eVisa++; break;
+      case 'eta': stats.eta++; break;
       case 'visa-required': stats.visaRequired++; break;
     }
   });

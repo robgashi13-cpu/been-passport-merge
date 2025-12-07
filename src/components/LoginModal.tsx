@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useUser } from '@/contexts/UserContext';
 import { countries, getCountryByCode } from '@/data/countries';
 import { availablePassports } from '@/data/visaMatrix';
 import { User, Mail, Lock, Globe, LogIn, UserPlus, LogOut, X } from 'lucide-react';
+import { AchievementList } from './Achievements';
 
 interface LoginModalProps {
     isOpen: boolean;
@@ -10,7 +12,7 @@ interface LoginModalProps {
 }
 
 export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
-    const { login, signup, isLoggedIn, user, logout } = useUser();
+    const { login, signup, isLoggedIn, user, logout, updatePassword } = useUser();
     const [mode, setMode] = useState<'login' | 'signup'>('login');
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -19,26 +21,70 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
+    // Profile View States (Hoisted)
+    const [activeTab, setActiveTab] = useState<'stats' | 'achievements'>('stats');
+    const [newPassword, setNewPassword] = useState('');
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+
+    const handleChangePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+        const success = await updatePassword(newPassword);
+        setIsLoading(false);
+        if (success) {
+            setNewPassword('');
+            setIsChangingPassword(false);
+            setSuccessMessage('Password updated successfully');
+            setTimeout(() => setSuccessMessage(''), 3000);
+        } else {
+            setError('Failed to update password');
+        }
+    };
+
+    // Body scroll lock
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+            document.body.classList.add('modal-open');
+        } else {
+            document.body.style.overflow = '';
+            document.body.classList.remove('modal-open');
+        }
+        return () => {
+            document.body.style.overflow = '';
+            document.body.classList.remove('modal-open');
+        };
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setSuccessMessage('');
         setIsLoading(true);
 
         try {
-            let success = false;
-
             if (mode === 'login') {
-                success = await login(email, password);
+                const success = await login(email, password);
+                if (success) {
+                    onClose();
+                } else {
+                    setError('Invalid credentials. Please try again.');
+                }
             } else {
-                success = await signup(name, email, password, passportCode);
-            }
-
-            if (success) {
-                onClose();
-            } else {
-                setError('Invalid credentials. Please try again.');
+                const result = await signup(name, email, password, passportCode);
+                if (result.success) {
+                    if (result.message) {
+                        setMode('login');
+                        setSuccessMessage(result.message);
+                    } else {
+                        onClose();
+                    }
+                } else {
+                    setError(result.message || 'Signup failed. Please try again.');
+                }
             }
         } catch (err) {
             setError('An error occurred. Please try again.');
@@ -56,9 +102,9 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
     if (isLoggedIn && user) {
         const passport = getCountryByCode(user.passportCode);
 
-        return (
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                <div className="bg-gradient-card border border-border/50 rounded-2xl w-full max-w-md p-6 animate-scale-in">
+        return createPortal(
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+                <div className="bg-gradient-card border border-border/50 rounded-2xl w-full max-w-md p-6 animate-scale-in max-h-[85vh] overflow-y-auto">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="font-display text-2xl font-bold">Profile</h2>
                         <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
@@ -74,46 +120,135 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                         <p className="text-muted-foreground">{user.email}</p>
                     </div>
 
-                    <div className="bg-white/5 rounded-xl p-4 mb-6">
-                        <div className="flex items-center gap-3">
-                            <span className="text-3xl">{passport?.flagEmoji}</span>
-                            <div>
-                                <div className="font-medium">{passport?.name} Passport</div>
-                                <div className="text-sm text-muted-foreground">
-                                    {user.visitedCountries.length} countries visited
-                                </div>
-                            </div>
-                        </div>
+                    {/* Tabs */}
+                    <div className="flex gap-2 mb-6 p-1 bg-white/5 rounded-xl">
+                        <button
+                            onClick={() => setActiveTab('stats')}
+                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'stats' ? 'bg-white text-black shadow-lg' : 'text-white/60 hover:text-white'}`}
+                        >
+                            Stats
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('achievements')}
+                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'achievements' ? 'bg-white text-black shadow-lg' : 'text-white/60 hover:text-white'}`}
+                        >
+                            Achievements
+                        </button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                        <div className="bg-white/5 rounded-xl p-4 text-center">
-                            <div className="font-display text-2xl font-bold">{user.visitedCountries.length}</div>
-                            <div className="text-xs text-muted-foreground">Countries</div>
+                    {activeTab === 'stats' ? (
+                        <>
+                            <div className="bg-white/5 rounded-xl p-4 mb-6">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-3xl">{passport?.flagEmoji}</span>
+                                    <div>
+                                        <div className="font-medium">{passport?.name} Passport</div>
+                                        <div className="text-sm text-muted-foreground">
+                                            {user.visitedCountries.length} countries visited
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 mb-6">
+                                <div className="bg-white/5 rounded-xl p-4 text-center">
+                                    <div className="font-display text-2xl font-bold">{user.visitedCountries.length}</div>
+                                    <div className="text-xs text-muted-foreground">Countries</div>
+                                </div>
+                                <div className="bg-white/5 rounded-xl p-4 text-center">
+                                    <div className="font-display text-2xl font-bold">{user.bucketList.length}</div>
+                                    <div className="text-xs text-muted-foreground">Bucket List</div>
+                                </div>
+                            </div>
+
+                            {/* Account Settings / Change Password */}
+                            <div className="mb-6 border-t border-white/10 pt-6">
+                                <h4 className="text-sm font-bold text-white mb-3">Account Settings</h4>
+                                {isChangingPassword ? (
+                                    <form onSubmit={handleChangePassword} className="space-y-3 bg-white/5 p-4 rounded-xl border border-white/10">
+                                        <div className="relative">
+                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                            <input
+                                                type="password"
+                                                placeholder="New Password"
+                                                value={newPassword}
+                                                onChange={(e) => setNewPassword(e.target.value)}
+                                                className="w-full bg-black/40 border border-white/10 rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none focus:border-white/30"
+                                                required
+                                                minLength={6}
+                                            />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setIsChangingPassword(false);
+                                                    setNewPassword('');
+                                                    setError('');
+                                                }}
+                                                className="flex-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition-colors"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                disabled={isLoading}
+                                                className="flex-1 py-2 rounded-lg bg-white text-black text-sm font-medium hover:bg-white/90 transition-colors disabled:opacity-50"
+                                            >
+                                                {isLoading ? 'Saving...' : 'Save'}
+                                            </button>
+                                        </div>
+                                    </form>
+                                ) : (
+                                    <button
+                                        onClick={() => setIsChangingPassword(true)}
+                                        className="w-full flex items-center gap-2 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-left"
+                                    >
+                                        <div className="p-2 bg-white/5 rounded-lg">
+                                            <Lock className="w-4 h-4 text-white/60" />
+                                        </div>
+                                        <span className="text-sm font-medium">Change Password</span>
+                                    </button>
+                                )}
+                                {successMessage && (
+                                    <div className="mt-3 p-3 bg-green-500/20 border border-green-500/30 rounded-lg text-sm text-green-400 text-center animate-fade-in">
+                                        {successMessage}
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    ) : (
+                        <div className="mb-6">
+                            <AchievementList visitedCountries={user.visitedCountries} />
                         </div>
-                        <div className="bg-white/5 rounded-xl p-4 text-center">
-                            <div className="font-display text-2xl font-bold">{user.bucketList.length}</div>
-                            <div className="text-xs text-muted-foreground">Bucket List</div>
-                        </div>
-                    </div>
+                    )}
 
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
+                        className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors border border-red-500/20"
                     >
                         <LogOut className="w-5 h-5" />
                         Sign Out
                     </button>
                 </div>
-            </div>
+            </div>,
+            document.body
         );
     }
 
-    return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-gradient-card border border-border/50 rounded-2xl w-full max-w-md p-6 animate-scale-in">
-                <div className="flex justify-center mb-2">
-                    <img src="/logo.png" alt="WanderPass" className="w-16 h-16 object-contain" />
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
+
+            {/* Modal */}
+            <div className="relative glass-panel rounded-2xl w-full max-w-md p-8 animate-zoom-in shadow-2xl border border-white/10 bg-black/40">
+                <div className="flex justify-center mb-6">
+                    <div className="w-20 h-20 bg-gradient-to-br from-gold via-gold-dark to-transparent rounded-full p-[1px]">
+                        <div className="w-full h-full bg-black rounded-full flex items-center justify-center overflow-hidden">
+                            <img src="/logo.png" alt="WanderPass" className="w-14 h-14 object-contain" />
+                        </div>
+                    </div>
                 </div>
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="font-display text-2xl font-bold">
@@ -216,6 +351,11 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                             {error}
                         </div>
                     )}
+                    {successMessage && (
+                        <div className="p-3 bg-green-500/20 border border-green-500/30 rounded-lg text-sm text-green-400 text-center animate-fade-in">
+                            {successMessage}
+                        </div>
+                    )}
 
                     <button
                         type="submit"
@@ -245,6 +385,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                     }
                 </p>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };

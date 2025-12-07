@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { countries, Country, getCountryByCode } from '@/data/countries';
 import { useUser } from '@/contexts/UserContext';
 import {
@@ -9,7 +9,7 @@ import {
   availablePassports,
   VisaRequirement
 } from '@/data/visaMatrix';
-import { AVAILABLE_ADDITIONAL_VISAS, SCHENGEN_COUNTRIES } from '@/data/visaSubstitutions';
+import { AVAILABLE_ADDITIONAL_VISAS, SCHENGEN_COUNTRIES, VISA_SUBSTITUTIONS, getVisaPowerGroups } from '@/data/visaSubstitutions';
 import {
   Crown, Globe, Plane, TrendingUp, Search, MapPin, Users,
   CreditCard, Building, Landmark, Check, AlertCircle, ChevronDown, ChevronRight, X, Plus
@@ -19,17 +19,41 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // VisaCountryList Component - Shows all countries grouped by visa type
-const VisaCountryList = ({ passportCode }: { passportCode: string }) => {
+const VisaCountryList = ({ passportCode, heldVisas }: { passportCode: string, heldVisas: string[] }) => {
   const [expandedSection, setExpandedSection] = useState<string | null>('visa-free');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Get power groups from held visas
+  const powerGroups = getVisaPowerGroups(heldVisas);
+  const substitutedDestinations = new Set<string>();
+  powerGroups.forEach(group => {
+    const dests = VISA_SUBSTITUTIONS[group] || [];
+    dests.forEach(d => substitutedDestinations.add(d));
+  });
 
   // Get all countries with their visa requirements
   const allCountries = countries
     .filter(c => c.code !== passportCode)
-    .map(country => ({
-      ...country,
-      visaInfo: getVisaRequirementFromMatrix(passportCode, country.code)
-    }))
+    .map(country => {
+      const baseInfo = getVisaRequirementFromMatrix(passportCode, country.code);
+      let effectiveRequirement = baseInfo?.requirement;
+      let note = baseInfo?.notes;
+
+      // Check for substitution
+      if (effectiveRequirement === 'visa-required' && substitutedDestinations.has(country.code)) {
+        effectiveRequirement = 'visa-free';
+        note = 'Unlocked by your held visa';
+      }
+
+      return {
+        ...country,
+        visaInfo: {
+          ...baseInfo,
+          requirement: effectiveRequirement,
+          notes: note
+        }
+      };
+    })
     .filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   // Group by requirement type
@@ -75,6 +99,7 @@ const VisaCountryList = ({ passportCode }: { passportCode: string }) => {
               <button
                 onClick={() => setExpandedSection(isExpanded ? null : section.key)}
                 className="w-full flex items-center justify-between p-3 hover:bg-white/5 transition-colors"
+                style={{ backgroundColor: isExpanded ? 'rgba(255,255,255,0.05)' : 'transparent' }}
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -84,7 +109,7 @@ const VisaCountryList = ({ passportCode }: { passportCode: string }) => {
                   <span className="font-medium">{section.label}</span>
                   <span
                     className="text-xs px-2 py-0.5 rounded-full"
-                    style={{ backgroundColor: `${section.color}20`, color: section.color }}
+                    style={{ backgroundColor: `${section.color} 20`, color: section.color }}
                   >
                     {sectionCountries.length}
                   </span>
@@ -100,10 +125,17 @@ const VisaCountryList = ({ passportCode }: { passportCode: string }) => {
                       className="flex items-center gap-2 p-2 rounded-lg bg-white/5 text-sm"
                     >
                       <span className="text-lg">{country.flagEmoji}</span>
-                      <span className="flex-1 truncate">{country.name}</span>
-                      {country.visaInfo?.duration && (
-                        <span className="text-xs text-muted-foreground">{country.visaInfo.duration}</span>
-                      )}
+                      <div className="flex flex-col min-w-0">
+                        <span className="truncate font-medium">{country.name}</span>
+                        {country.visaInfo.notes === 'Unlocked by your held visa' && (
+                          <span className="text-[10px] text-green-400 flex items-center gap-1">
+                            <Check className="w-3 h-3" /> Unlocked
+                          </span>
+                        )}
+                        {country.visaInfo.duration && country.visaInfo.notes !== 'Unlocked by your held visa' && (
+                          <span className="text-xs text-muted-foreground">{country.visaInfo.duration}</span>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -138,19 +170,90 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
 
   const { user, isLoggedIn } = useUser();
   const effectivePassport = isLoggedIn && user ? user.passportCode : userPassport;
+  const effectiveHeldVisas = isLoggedIn && user ? (user.heldVisas || []) : heldVisas;
   const selectedPassport = countries.find(c => c.code === effectivePassport);
-  const stats = selectedPassport ? getPassportStats(effectivePassport) : null;
+
+  // Calculate dynamic stats including held visas
+  const calculateDynamicStats = (passportCode: string, heldVisas: string[]) => {
+    const baseStats = getPassportStats(passportCode);
+    if (!baseStats) return null;
+
+    // If no held visas, return base stats
+    if (!heldVisas || heldVisas.length === 0) return { ...baseStats, totalScore: baseStats.visaFree + baseStats.visaOnArrival + baseStats.eta };
+
+    // Get substituted destinations
+    const powerGroups = getVisaPowerGroups(heldVisas);
+    const substitutedDestinations = new Set<string>();
+    powerGroups.forEach(group => {
+      const dests = VISA_SUBSTITUTIONS[group] || [];
+      dests.forEach(d => substitutedDestinations.add(d));
+    });
+
+    let newStats = { ...baseStats };
+    let additionalAccess = 0;
+
+    // Recalculate based on substitutions
+    availablePassports.forEach(destCode => {
+      if (destCode === passportCode) return;
+      const baseReq = getVisaRequirementFromMatrix(passportCode, destCode)?.requirement;
+      const isSubstituted = substitutedDestinations.has(destCode);
+
+      // If substituted, it becomes effectively visa-free (or similar benefit)
+      if (baseReq === 'visa-required' && isSubstituted) {
+        newStats.visaRequired--;
+        newStats.visaFree++;
+        additionalAccess++;
+      }
+    });
+
+    return { ...newStats, totalScore: newStats.visaFree + newStats.visaOnArrival + newStats.eta };
+  };
+
+  const dynamicStats = selectedPassport ? calculateDynamicStats(effectivePassport, effectiveHeldVisas) : null;
+
+  // Calculate all scores and ranks once
+  const allPassportRanks = useMemo(() => {
+    const scores = availablePassports.map(code => {
+      const stats = getPassportStats(code);
+      let score = stats.visaFree + stats.visaOnArrival + stats.eta;
+
+      // If this is the user's passport, use their dynamic score (with extra visas)
+      if (code === effectivePassport && dynamicStats) {
+        score = dynamicStats.totalScore;
+      }
+      return { code, score };
+    }).sort((a, b) => b.score - a.score);
+
+    const rankMap = new Map<string, number>();
+    let currentRank = 1;
+
+    for (let i = 0; i < scores.length; i++) {
+      if (i > 0 && scores[i].score < scores[i - 1].score) {
+        currentRank++;
+      }
+      rankMap.set(scores[i].code, currentRank);
+    }
+    return rankMap;
+  }, [effectivePassport, dynamicStats]);
+
+  const dynamicRank = allPassportRanks.get(effectivePassport) || (selectedPassport?.passportRank || 100);
 
   const filteredCountries = availablePassports
     .map(code => {
       const country = getCountryByCode(code);
       if (!country) return null;
-      let score = getPassportStats(code).visaFree;
+      let stats = getPassportStats(code);
+      let score = stats.visaFree + stats.visaOnArrival + stats.eta;
 
-      if (code === effectivePassport && userPassportScore) {
-        score = userPassportScore;
+      if (code === effectivePassport && dynamicStats) {
+        score = dynamicStats.totalScore;
       }
-      return { ...country, dynamicScore: score };
+
+      return {
+        ...country,
+        dynamicScore: score,
+        currentRank: allPassportRanks.get(code) || 999
+      };
     })
     .filter((c): c is NonNullable<typeof c> => !!c)
     // Filter search
@@ -162,7 +265,7 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
     if (rank === 1) return '🥇';
     if (rank === 2) return '🥈';
     if (rank === 3) return '🥉';
-    return `#${rank}`;
+    return `#${rank} `;
   };
 
   const getRatingText = (rank: number) => {
@@ -206,57 +309,68 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
                     <span className="uppercase tracking-wider font-medium">Your Passport</span>
                   </div>
 
-                  <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
-                    <div className="text-7xl md:text-8xl">{selectedPassport.flagEmoji}</div>
+                  <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
+                    {/* Flag & Name */}
                     <div className="flex-1 text-center md:text-left">
+                      <div className="text-6xl md:text-7xl mb-2">{selectedPassport.flagEmoji}</div>
                       <h3 className="font-display text-2xl md:text-3xl font-bold">{selectedPassport.name}</h3>
                       <p className="text-muted-foreground">{selectedPassport.continent}</p>
-                      <div className={`mt-2 text-sm font-medium ${getRatingText(selectedPassport.passportRank || 100).color}`}>
-                        {getRatingText(selectedPassport.passportRank || 100).text} Passport
+                      <div className={`mt - 2 text - sm font - medium ${getRatingText(dynamicRank).color} `}>
+                        {getRatingText(dynamicRank).text} Power
                       </div>
                     </div>
-                    <div className="text-center">
-                      <div className="font-display text-5xl md:text-6xl font-bold text-gradient-white">
-                        {getRankBadge(selectedPassport.passportRank || 100)}
+
+                    {/* Unified Stats Board */}
+                    <div className="flex gap-4 md:gap-8 items-center bg-black/20 p-4 rounded-xl backdrop-blur-sm border border-white/10">
+                      {/* Rank */}
+                      <div className="text-center">
+                        <div className="font-display text-4xl md:text-5xl font-bold text-gradient-white">
+                          {getRankBadge(dynamicRank)}
+                        </div>
+                        <p className="text-xs md:text-sm text-muted-foreground uppercase tracking-widest mt-1">Global Rank</p>
                       </div>
-                      <p className="text-sm text-muted-foreground">Global Rank</p>
+
+                      <div className="w-px h-12 bg-white/20"></div>
+
+                      {/* Progress */}
+                      <div className="text-center">
+                        <div className="font-display text-4xl md:text-5xl font-bold text-blue-400">
+                          {Math.round(((dynamicStats?.totalScore || 0) / 199) * 100)}%
+                        </div>
+                        <p className="text-xs md:text-sm text-muted-foreground uppercase tracking-widest mt-1">World Access</p>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Country Details Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-                <div className="bg-gradient-card rounded-xl p-4 text-center hover-lift">
-                  <Plane className="w-6 h-6 text-green-400 mx-auto mb-2" />
-                  <div className="font-display text-2xl md:text-3xl font-bold text-green-400">
-                    {stats?.visaFree || 0}
+              {/* Change Passport Section */}
+              <div className="bg-gradient-card rounded-2xl border border-border/50 p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
+                    <Globe className="w-5 h-5 text-white/60" />
                   </div>
-                  <div className="text-xs text-muted-foreground">Visa-Free Access</div>
-                </div>
-                <div className="bg-gradient-card rounded-xl p-4 text-center hover-lift">
-                  <Globe className="w-6 h-6 text-blue-400 mx-auto mb-2" />
-                  <div className="font-display text-2xl md:text-3xl font-bold text-blue-400">
-                    {Math.round(((stats?.visaFree || 0) + (stats?.visaOnArrival || 0)) / 199 * 100)}%
-                  </div>
-                  <div className="text-xs text-muted-foreground">World Access</div>
-                </div>
-                {selectedPassport.capital && (
-                  <div className="bg-gradient-card rounded-xl p-4 text-center hover-lift">
-                    <Landmark className="w-6 h-6 text-purple-400 mx-auto mb-2" />
-                    <div className="font-display text-lg md:text-xl font-bold truncate">{selectedPassport.capital}</div>
-                    <div className="text-xs text-muted-foreground">Capital</div>
-                  </div>
-                )}
-                {selectedPassport.population && (
-                  <div className="bg-gradient-card rounded-xl p-4 text-center hover-lift">
-                    <Users className="w-6 h-6 text-orange-400 mx-auto mb-2" />
-                    <div className="font-display text-xl md:text-2xl font-bold">
-                      {(selectedPassport.population / 1000000).toFixed(1)}M
+                  <div className="flex-1">
+                    <label className="text-sm text-white/60 block mb-1">Change Passport</label>
+                    <div className="relative">
+                      <select
+                        value={effectivePassport}
+                        onChange={(e) => setUserPassport(e.target.value)}
+                        className="w-full bg-black/40 border border-white/20 rounded-lg px-3 py-2 text-white appearance-none focus:outline-none focus:ring-2 focus:ring-white/30 text-sm [color-scheme:dark]"
+                      >
+                        {countries
+                          .slice()
+                          .sort((a, b) => a.name.localeCompare(b.name))
+                          .map(c => (
+                            <option key={c.code} value={c.code} className="bg-black text-white">
+                              {c.flagEmoji} {c.name}
+                            </option>
+                          ))}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
                     </div>
-                    <div className="text-xs text-muted-foreground">Population</div>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Additional Visas Section */}
@@ -270,7 +384,7 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
                 </p>
 
                 <div className="flex flex-wrap gap-3 mb-4">
-                  {heldVisas.map(visaId => {
+                  {effectiveHeldVisas.map(visaId => {
                     const country = countries.find(c => c.code === visaId);
                     if (!country) return null;
                     const isSchengen = SCHENGEN_COUNTRIES.includes(visaId);
@@ -289,7 +403,7 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
                       </div>
                     );
                   })}
-                  {heldVisas.length === 0 && (
+                  {effectiveHeldVisas.length === 0 && (
                     <span className="text-sm text-muted-foreground italic">No additional visas added</span>
                   )}
                 </div>
@@ -310,10 +424,10 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
                           <option
                             key={c.code}
                             value={c.code}
-                            disabled={heldVisas.includes(c.code)}
+                            disabled={effectiveHeldVisas.includes(c.code)}
                             className="text-black"
                           >
-                            {c.flagEmoji} {c.name} {heldVisas.includes(c.code) ? '(Added)' : ''}
+                            {c.flagEmoji} {c.name} {effectiveHeldVisas.includes(c.code) ? '(Added)' : ''}
                           </option>
                         ))}
                     </select>
@@ -337,7 +451,7 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
               </div>
 
               {/* Visa Statistics */}
-              {stats && (
+              {dynamicStats && (
                 <div className="bg-gradient-card rounded-2xl border border-border/50 p-6">
                   <h3 className="font-display text-lg font-bold mb-4 flex items-center gap-2">
                     <CreditCard className="w-5 h-5" />
@@ -346,58 +460,67 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="text-center">
                       <div className="font-display text-3xl font-bold" style={{ color: '#22c55e' }}>
-                        {stats.visaFree}
+                        {dynamicStats.visaFree}
                       </div>
                       <div className="text-xs text-muted-foreground">Visa Free</div>
                       <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full"
-                          style={{ width: `${(stats.visaFree / stats.total) * 100}%`, backgroundColor: '#22c55e' }}
+                          style={{ width: `${(dynamicStats.visaFree / dynamicStats.total) * 100}% `, backgroundColor: '#22c55e' }}
                         />
                       </div>
                     </div>
                     <div className="text-center">
                       <div className="font-display text-3xl font-bold" style={{ color: '#166534' }}>
-                        {stats.visaOnArrival}
+                        {dynamicStats.visaOnArrival}
                       </div>
                       <div className="text-xs text-muted-foreground">On Arrival</div>
                       <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full"
-                          style={{ width: `${(stats.visaOnArrival / stats.total) * 100}%`, backgroundColor: '#166534' }}
+                          style={{ width: `${(dynamicStats.visaOnArrival / dynamicStats.total) * 100}% `, backgroundColor: '#166534' }}
                         />
                       </div>
                     </div>
                     <div className="text-center">
                       <div className="font-display text-3xl font-bold" style={{ color: '#eab308' }}>
-                        {stats.eVisa}
+                        {dynamicStats.eVisa}
                       </div>
                       <div className="text-xs text-muted-foreground">e-Visa / ETA</div>
                       <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full"
-                          style={{ width: `${(stats.eVisa / stats.total) * 100}%`, backgroundColor: '#eab308' }}
+                          style={{ width: `${(dynamicStats.eVisa / dynamicStats.total) * 100}% `, backgroundColor: '#eab308' }}
                         />
                       </div>
                     </div>
                     <div className="text-center">
                       <div className="font-display text-3xl font-bold" style={{ color: '#ef4444' }}>
-                        {stats.visaRequired}
+                        {dynamicStats.visaRequired}
                       </div>
                       <div className="text-xs text-muted-foreground">Visa Required</div>
                       <div className="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
                         <div
                           className="h-full rounded-full"
-                          style={{ width: `${(stats.visaRequired / stats.total) * 100}%`, backgroundColor: '#ef4444' }}
+                          style={{ width: `${(dynamicStats.visaRequired / dynamicStats.total) * 100}% `, backgroundColor: '#ef4444' }}
                         />
                       </div>
                     </div>
                   </div>
+                  {/* SHOW GAINS */}
+                  {dynamicStats.visaFree > (getPassportStats(effectivePassport)?.visaFree || 0) && (
+                    <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center justify-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-green-400" />
+                      <span className="text-green-400 font-medium">
+                        Your held visas unlocked {dynamicStats.visaFree - (getPassportStats(effectivePassport)?.visaFree || 0)} new destinations!
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* Complete Visa List */}
-              <VisaCountryList passportCode={effectivePassport} />
+              <VisaCountryList passportCode={effectivePassport} heldVisas={effectiveHeldVisas} />
 
               {/* Change Passport */}
               <div className="bg-gradient-card rounded-xl border border-border/50 p-4">
@@ -406,7 +529,7 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
                   className="w-full flex items-center justify-between"
                 >
                   <span className="font-medium">Change Your Passport</span>
-                  <ChevronDown className={`w-5 h-5 transition-transform ${showAllVisas ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w - 5 h - 5 transition - transform ${showAllVisas ? 'rotate-180' : ''} `} />
                 </button>
 
                 {showAllVisas && (
@@ -424,10 +547,10 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
                       <button
                         key={country.code}
                         onClick={() => setUserPassport(country.code)}
-                        className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${effectivePassport === country.code
+                        className={`w - full flex items - center gap - 3 p - 2 rounded - lg transition - colors ${effectivePassport === country.code
                           ? 'bg-white/20 ring-1 ring-white/30'
                           : 'hover:bg-white/10'
-                          }`}
+                          } `}
                       >
                         <span className="text-xl">{country.flagEmoji}</span>
                         <span className="flex-1 text-left text-sm">{country.name}</span>
@@ -463,13 +586,13 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
                 <button
                   key={country.code}
                   onClick={() => setUserPassport(country.code)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${effectivePassport === country.code
+                  className={`w - full flex items - center gap - 3 p - 3 rounded - xl transition - all ${effectivePassport === country.code
                     ? 'bg-white/20 ring-2 ring-white/30'
                     : 'bg-white/5 hover:bg-white/10'
-                    }`}
+                    } `}
                 >
                   <div className="w-10 text-center font-display font-bold">
-                    {getRankBadge(country.passportRank || 999)}
+                    {getRankBadge(country.currentRank)}
                   </div>
                   <span className="text-2xl">{country.flagEmoji}</span>
                   <div className="flex-1 text-left">
@@ -477,7 +600,7 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
                     <div className="text-xs text-muted-foreground">{country.continent}</div>
                   </div>
                   <div className="text-right">
-                    <div className={`font-display font-bold ${country.code === effectivePassport ? "text-blue-400" : "text-green-400"}`}>
+                    <div className={`font - display font - bold ${country.code === effectivePassport ? "text-blue-400" : "text-green-400"} `}>
                       {country.dynamicScore}
                     </div>
                     <div className="text-xs text-muted-foreground">visa-free</div>

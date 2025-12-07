@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ComposableMap, Geographies, Geography, ZoomableGroup } from "react-simple-maps";
+import { useState, useEffect } from "react";
+import { ComposableMap, Geographies, Geography, ZoomableGroup, Marker } from "react-simple-maps";
 import { countries, getCountryByCode } from '@/data/countries';
 import { getVisaRequirementFromMatrix, getVisaRequirementColor, getVisaRequirementLabel, VisaRequirement } from '@/data/visaMatrix';
 import { VISA_SUBSTITUTIONS, AVAILABLE_ADDITIONAL_VISAS, getVisaPowerGroups } from '@/data/visaSubstitutions';
@@ -10,9 +10,11 @@ import worldData from '@/data/world-110m.json';
 
 interface WorldMapProps {
   visitedCountries: string[];
-  toggleVisited: (code: string) => void;
+  toggleVisited?: (code: string) => void;
   userPassportCode?: string; // Add passport to show visa colors
   heldVisas?: string[];
+  bucketList?: string[];
+  onCountryClick?: (code: string) => void;
 }
 
 // Comprehensive numeric ID to ISO2 mapping from Natural Earth / world-110m.json
@@ -152,7 +154,7 @@ const getCountryFillColor = (
   return "rgba(80, 80, 80, 0.5)";
 };
 
-const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas = [] }: WorldMapProps) => {
+const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas = [], onCountryClick }: WorldMapProps) => {
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
   const [tooltipContent, setTooltipContent] = useState<{
     name: string;
@@ -168,7 +170,11 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
   const handleCountryClick = (geo: any) => {
     const iso2 = getIso2Code(geo);
     if (iso2) {
-      toggleVisited(iso2);
+      if (onCountryClick) {
+        onCountryClick(iso2);
+      } else if (toggleVisited) {
+        toggleVisited(iso2);
+      }
     }
   };
 
@@ -215,29 +221,84 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
     setTooltipContent({ name, flag: "🌍", visited: false });
   };
 
+  const [viewMode, setViewMode] = useState<'visited' | 'visa'>('visited');
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [mapActive, setMapActive] = useState(false); // Click-to-zoom feature
+
+  // Lock body scroll when map is active
+  useEffect(() => {
+    if (mapActive) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mapActive]);
+
+  const handleZoomChange = (position: { k: number, x: number, y: number }) => {
+    setZoomLevel(position.k);
+  };
+
   return (
-    <div className="space-y-4 md:space-y-6 animate-fade-in">
-      <div className="text-center py-4 md:py-6">
+    <div className="space-y-4 md:space-y-6 animate-fade-in h-full flex flex-col">
+      <div className="text-center py-4 md:py-6 flex-shrink-0 relative">
         <h2 className="font-display text-2xl md:text-4xl font-bold mb-2 animate-slide-up">
           World <span className="text-gradient-white">Explorer</span>
         </h2>
-        <p className="text-sm md:text-base text-muted-foreground animate-slide-up" style={{ animationDelay: "0.1s" }}>
-          {userPassportCode ? (
-            <span className="flex items-center justify-center gap-2">
+
+        {/* View Mode Toggle */}
+        <div className="flex justify-center mt-4 mb-2 animate-slide-up" style={{ animationDelay: "0.1s" }}>
+          <div className="bg-white/10 p-1 rounded-xl flex gap-1 border border-white/10 backdrop-blur-md">
+            <button
+              onClick={() => setViewMode('visited')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === 'visited'
+                ? 'bg-white text-black shadow-lg'
+                : 'text-white/60 hover:text-white hover:bg-white/5'
+                }`}
+            >
+              <span className="flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                Visited
+              </span>
+            </button>
+            <button
+              onClick={() => {
+                if (userPassportCode) setViewMode('visa');
+                else alert("Please select a passport first (Header > Passport Icon)"); // Or just disable
+              }}
+              disabled={!userPassportCode}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === 'visa'
+                ? 'bg-[#D4AF37] text-black shadow-lg shadow-gold/20'
+                : 'text-white/60 hover:text-white hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed'
+                }`}
+            >
+              <span className="flex items-center gap-2">
+                <CreditCard className="w-4 h-4" />
+                Visa Power
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <p className="text-sm md:text-base text-muted-foreground animate-slide-up" style={{ animationDelay: "0.2s" }}>
+          {viewMode === 'visa' && userPassportCode ? (
+            <span className="flex items-center justify-center gap-2 text-gold">
               <span className="text-lg">{userPassport?.flagEmoji}</span>
               Showing visa requirements for {userPassport?.name} passport
             </span>
           ) : (
-            "Click on countries to mark them as visited"
+            "Mark your travels and explore the world"
           )}
         </p>
       </div>
 
       {/* Interactive 2D Map */}
-      <div className="relative bg-gradient-card rounded-xl md:rounded-2xl border border-border/50 p-2 md:p-8 overflow-hidden hover-glow transition-all duration-500">
+      <div className="relative bg-gradient-card rounded-xl md:rounded-2xl border border-border/50 p-2 md:p-8 overflow-hidden hover-glow transition-all duration-500 flex-grow flex flex-col">
         {/* Tooltip */}
         {tooltipContent && (
-          <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10 bg-black/95 text-white px-3 py-2 md:px-4 md:py-3 rounded-lg md:rounded-xl border border-white/20 shadow-2xl backdrop-blur-sm animate-fade-in max-w-[200px] md:max-w-none">
+          <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10 bg-black/95 text-white px-3 py-2 md:px-4 md:py-3 rounded-lg md:rounded-xl border border-white/20 shadow-2xl backdrop-blur-sm animate-fade-in max-w-[200px] md:max-w-none pointer-events-none">
             <div className="flex items-center gap-2">
               <span className="text-xl md:text-2xl">{tooltipContent.flag}</span>
               <span className="font-semibold text-sm md:text-base truncate">{tooltipContent.name}</span>
@@ -245,7 +306,7 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
             {tooltipContent.visited && (
               <span className="text-green-400 text-xs md:text-sm font-medium">✓ Visited</span>
             )}
-            {tooltipContent.visaInfo && !tooltipContent.visited && (
+            {tooltipContent.visaInfo && (viewMode === 'visa' || !tooltipContent.visited) && (
               <div className="mt-1 text-xs">
                 <span
                   className="px-2 py-0.5 rounded-full font-medium"
@@ -264,18 +325,56 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
           </div>
         )}
 
-        <div className="w-full touch-pan-y" style={{ height: "300px", minHeight: "250px" }}>
+        <div
+          className={`w-full flex-grow relative cursor-pointer transition-all ${mapActive ? 'ring-2 ring-white/30' : ''}`}
+          style={{ minHeight: "250px" }}
+          onClick={() => setMapActive(true)}
+          onMouseLeave={() => setMapActive(false)}
+        >
           <ComposableMap
             projection="geoMercator"
             projectionConfig={{ scale: 100, center: [0, 20] }}
-            style={{ width: "100%", height: "100%" }}
+            style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }}
           >
-            <ZoomableGroup zoom={1} minZoom={0.5} maxZoom={50}>
+            <ZoomableGroup
+              zoom={1}
+              minZoom={1}
+              maxZoom={50}
+              translateExtent={[
+                [-100, -100],
+                [900, 700]
+              ]}
+              onMove={handleZoomChange}
+              filterZoomEvent={(evt) => {
+                // Only allow zoom if map is active (clicked)
+                return mapActive;
+              }}
+            >
               <Geographies geography={worldData}>
                 {({ geographies }) =>
                   geographies.map((geo) => {
                     const iso2 = getIso2Code(geo);
-                    const fillColor = getCountryFillColor(iso2, visitedCountries, userPassportCode, heldVisas);
+
+                    // Logic for Fill Color
+                    let fillColor = "rgba(80, 80, 80, 0.3)"; // Base unvisited
+
+                    if (iso2) {
+                      if (viewMode === 'visited') {
+                        if (visitedCountries.includes(iso2)) {
+                          fillColor = "rgba(255, 255, 255, 0.9)"; // White for visited
+                        } else {
+                          fillColor = "rgba(80, 80, 80, 0.5)"; // Dark for unvisited
+                        }
+                      } else if (viewMode === 'visa' && userPassportCode) {
+                        // Visa Mode
+                        if (userPassportCode === iso2) {
+                          fillColor = "rgba(255, 255, 255, 0.9)"; // Your Home/Passport country
+                        } else {
+                          fillColor = getCountryFillColor(iso2, [], userPassportCode, heldVisas);
+                        }
+                      }
+                    }
+
                     const isVisited = iso2 ? visitedCountries.includes(iso2) : false;
 
                     return (
@@ -292,23 +391,23 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
                           default: {
                             fill: fillColor,
                             stroke: "rgba(255, 255, 255, 0.2)",
-                            strokeWidth: 0.1,
+                            strokeWidth: 0.5 / zoomLevel, // Scale stroke width too
                             vectorEffect: "non-scaling-stroke",
                             outline: "none",
                             cursor: "pointer",
                             transition: "all 0.3s ease"
                           },
                           hover: {
-                            fill: isVisited ? "rgba(255, 255, 255, 1)" : "rgba(200, 200, 200, 0.8)",
-                            stroke: "rgba(255, 255, 255, 0.5)",
-                            strokeWidth: 0.2,
+                            fill: isVisited && viewMode === 'visited' ? "rgba(255, 255, 255, 1)" : "rgba(200, 200, 200, 0.5)",
+                            stroke: "rgba(255, 255, 255, 0.8)",
+                            strokeWidth: 1 / zoomLevel,
                             vectorEffect: "non-scaling-stroke",
                             outline: "none",
                             cursor: "pointer",
                           },
                           pressed: {
                             fill: "rgba(255, 255, 255, 0.9)",
-                            strokeWidth: 0.2,
+                            strokeWidth: 1 / zoomLevel,
                             vectorEffect: "non-scaling-stroke",
                             outline: "none"
                           }
@@ -318,17 +417,45 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
                   })
                 }
               </Geographies>
+
+
+              {/* Country Labels - Only show at low zoom levels */}
+              {zoomLevel < 3 && countries.map((country) => {
+                if (!country.coordinates) return null;
+                const coordinates: [number, number] = [country.coordinates[1], country.coordinates[0]];
+                const isVisited = visitedCountries.includes(country.code);
+
+                // Scale labels based on zoom, but hide entirely at high zoom
+                const baseMapUnitSize = 3;
+                const fontSize = baseMapUnitSize / zoomLevel;
+
+                return (
+                  <Marker key={country.code} coordinates={coordinates}>
+                    <text
+                      textAnchor="middle"
+                      y={fontSize / 2}
+                      style={{
+                        fontFamily: "Inter, sans-serif",
+                        fill: isVisited || viewMode === 'visa' ? "#fff" : "rgba(255,255,255,0.7)",
+                        fontSize: `${fontSize}px`,
+                        fontWeight: "500",
+                        pointerEvents: "none",
+                        opacity: zoomLevel > 2 ? 0.5 : 1,
+                        textShadow: `0px 0px ${0.3 / zoomLevel}px rgba(0,0,0,0.9)`
+                      }}
+                    >
+                      {country.name}
+                    </text>
+                  </Marker>
+                );
+              })}
             </ZoomableGroup>
           </ComposableMap>
         </div>
 
         {/* Legend */}
-        {userPassportCode && (
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 md:gap-4 text-xs md:text-sm">
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 md:w-4 md:h-4 rounded" style={{ backgroundColor: "rgba(255,255,255,0.9)" }} />
-              <span className="text-muted-foreground">Visited</span>
-            </div>
+        {viewMode === 'visa' && userPassportCode ? (
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 md:gap-4 text-xs md:text-sm flex-shrink-0 animate-fade-in">
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 md:w-4 md:h-4 rounded" style={{ backgroundColor: "rgba(34,197,94,0.7)" }} />
               <span className="text-muted-foreground">Visa Free</span>
@@ -342,14 +469,16 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
               <span className="text-muted-foreground">e-Visa</span>
             </div>
             <div className="flex items-center gap-1">
+              <div className="w-3 h-3 md:w-4 md:h-4 rounded" style={{ backgroundColor: "rgba(249, 115, 22, 0.7)" }} />
+              <span className="text-white/60">ETA</span>
+            </div>
+            <div className="flex items-center gap-1">
               <div className="w-3 h-3 md:w-4 md:h-4 rounded" style={{ backgroundColor: "rgba(239,68,68,0.6)" }} />
               <span className="text-muted-foreground">Required</span>
             </div>
           </div>
-        )}
-
-        {!userPassportCode && (
-          <div className="mt-4 flex items-center justify-center gap-4 md:gap-8 flex-wrap text-xs md:text-sm">
+        ) : (
+          <div className="mt-4 flex items-center justify-center gap-4 md:gap-8 flex-wrap text-xs md:text-sm flex-shrink-0 animate-fade-in">
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 md:w-5 md:h-5 rounded-md shadow-lg" style={{ backgroundColor: "rgba(255, 255, 255, 0.9)" }} />
               <span className="text-muted-foreground font-medium">Visited ({visitedCount})</span>
@@ -362,34 +491,36 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
         )}
       </div>
 
-      {/* Quick stats - Mobile optimized */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-        <div className="bg-gradient-card rounded-lg md:rounded-xl border border-border/50 p-3 md:p-5 text-center hover-lift group transition-all duration-300">
-          <MapPin className="w-5 h-5 md:w-7 md:h-7 text-primary mx-auto mb-1 md:mb-2 group-hover:scale-110 transition-transform" />
-          <div className="font-display text-xl md:text-3xl font-bold">{visitedCount}</div>
-          <div className="text-xs text-muted-foreground uppercase tracking-wider">Countries</div>
-        </div>
-        <div className="bg-gradient-card rounded-lg md:rounded-xl border border-border/50 p-3 md:p-5 text-center hover-lift group transition-all duration-300">
-          <Globe className="w-5 h-5 md:w-7 md:h-7 text-primary mx-auto mb-1 md:mb-2 group-hover:scale-110 transition-transform" />
-          <div className="font-display text-xl md:text-3xl font-bold">{percentage}%</div>
-          <div className="text-xs text-muted-foreground uppercase tracking-wider">Explored</div>
-        </div>
-        <div className="bg-gradient-card rounded-lg md:rounded-xl border border-border/50 p-3 md:p-5 text-center hover-lift group transition-all duration-300">
-          <div className="w-5 h-5 md:w-7 md:h-7 mx-auto mb-1 md:mb-2 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <span className="text-lg md:text-2xl">✈️</span>
+      {/* Quick stats - Mobile optimized - HIDE IN VISA MODE? Or Keep? Keep. */}
+      {viewMode === 'visited' && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 flex-shrink-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
+          <div className="bg-gradient-card rounded-lg md:rounded-xl border border-border/50 p-3 md:p-5 text-center hover-lift group transition-all duration-300">
+            <MapPin className="w-5 h-5 md:w-7 md:h-7 text-primary mx-auto mb-1 md:mb-2 group-hover:scale-110 transition-transform" />
+            <div className="font-display text-xl md:text-3xl font-bold">{visitedCount}</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Countries</div>
           </div>
-          <div className="font-display text-xl md:text-3xl font-bold">{countries.length - visitedCount}</div>
-          <div className="text-xs text-muted-foreground uppercase tracking-wider">Remaining</div>
-        </div>
-        <div className="bg-gradient-card rounded-lg md:rounded-xl border border-border/50 p-3 md:p-5 text-center hover-lift group transition-all duration-300">
-          <div className="w-5 h-5 md:w-7 md:h-7 mx-auto mb-1 md:mb-2 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <span className="text-lg md:text-2xl">🏆</span>
+          <div className="bg-gradient-card rounded-lg md:rounded-xl border border-border/50 p-3 md:p-5 text-center hover-lift group transition-all duration-300">
+            <Globe className="w-5 h-5 md:w-7 md:h-7 text-primary mx-auto mb-1 md:mb-2 group-hover:scale-110 transition-transform" />
+            <div className="font-display text-xl md:text-3xl font-bold">{percentage}%</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Explored</div>
           </div>
-          <div className="font-display text-xl md:text-3xl font-bold">{countries.length}</div>
-          <div className="text-xs text-muted-foreground uppercase tracking-wider">Total</div>
+          <div className="bg-gradient-card rounded-lg md:rounded-xl border border-border/50 p-3 md:p-5 text-center hover-lift group transition-all duration-300">
+            <div className="w-5 h-5 md:w-7 md:h-7 mx-auto mb-1 md:mb-2 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="text-lg md:text-2xl">✈️</span>
+            </div>
+            <div className="font-display text-xl md:text-3xl font-bold">{countries.length - visitedCount}</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Remaining</div>
+          </div>
+          <div className="bg-gradient-card rounded-lg md:rounded-xl border border-border/50 p-3 md:p-5 text-center hover-lift group transition-all duration-300">
+            <div className="w-5 h-5 md:w-7 md:h-7 mx-auto mb-1 md:mb-2 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="text-lg md:text-2xl">🏆</span>
+            </div>
+            <div className="font-display text-xl md:text-3xl font-bold">{countries.length}</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Total</div>
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </div >
   );
 };
 

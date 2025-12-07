@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import { useUser } from '@/contexts/UserContext';
 import { TravelCalendar } from '@/components/TravelCalendar';
 import { PhotoUpload } from '@/components/PhotoUpload';
 import { TripEntry } from '@/data/trips';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const CalendarPage = () => {
-    const [trips, setTrips] = useState<TripEntry[]>([]);
+    const { trips, updateTrips } = useUser();
 
     const handleTripsDetected = (detectedTrips: Partial<TripEntry>[]) => {
         // Convert partial trips to full trips with IDs
@@ -21,7 +22,7 @@ const CalendarPage = () => {
             createdAt: new Date(),
         }));
 
-        setTrips([...trips, ...newTrips]);
+        updateTrips([...trips, ...newTrips]);
     };
 
     return (
