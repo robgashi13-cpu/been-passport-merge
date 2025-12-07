@@ -109,7 +109,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
             <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
                 <div className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity" onClick={onClose} />
 
-                <div className="relative bg-[#0a0a0a] w-full max-w-2xl h-[85vh] rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col animate-zoom-in">
+                <div className="relative bg-[#0a0a0a] w-full max-w-2xl max-h-[85vh] rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col animate-zoom-in">
                     <div className="flex items-center justify-between p-6 border-b border-white/10 flex-shrink-0">
                         <h2 className="font-display text-2xl font-bold">Profile</h2>
                         <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
@@ -253,7 +253,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
             <div className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity" onClick={onClose} />
 
             {/* Modal */}
-            <div className="relative bg-[#0a0a0a] w-full max-w-2xl h-[85vh] rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col animate-zoom-in">
+            <div className="relative bg-[#0a0a0a] w-full max-w-2xl max-h-[85vh] rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col animate-zoom-in">
                 {/* Header */}
                 <div className="bg-white/5 p-4 flex items-center justify-between border-b border-white/10 flex-shrink-0">
                     <div className="flex items-center gap-3">
@@ -271,7 +271,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                     </button>
                 </div>
 
-                <div className="p-6 overflow-y-auto custom-scrollbar flex-1 flex flex-col justify-center">
+                <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
 
                     {/* Mode Toggle */}
                     <div className="flex gap-2 mb-6">
