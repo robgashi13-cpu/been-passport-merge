@@ -95,9 +95,9 @@ const Dashboard = ({ stats, visitedCountries }: DashboardProps) => {
 
       {/* Stats Merged Card */}
       <div className="bg-gradient-card rounded-2xl border border-white/10 p-4">
-        <div className="grid grid-cols-2 sm:flex sm:items-center gap-4">
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
 
-          {/* Progress Ring - Clickable - Larger size */}
+          {/* Progress Ring - Clickable - Smaller size */}
           <div
             onClick={() => setShowCountryBrowser(true)}
             className="cursor-pointer hover:scale-105 transition-transform flex flex-col items-center justify-center sm:block"
@@ -106,67 +106,62 @@ const Dashboard = ({ stats, visitedCountries }: DashboardProps) => {
               percentage={stats.percentage}
               visited={stats.visitedCount}
               total={stats.totalCountries}
-              size={100}
+              size={80}
             />
           </div>
 
           {/* Divider (Desktop Only) */}
-          <div className="hidden sm:block w-px h-12 bg-white/10 flex-shrink-0" />
+          <div className="hidden sm:block w-px h-10 bg-white/10 flex-shrink-0" />
 
           {/* Countries Visited */}
           <div
             onClick={() => setShowVisitedModal(true)}
-            className="flex-1 min-w-[100px] cursor-pointer hover:bg-white/5 rounded-xl p-2 transition-colors flex flex-col justify-center items-center sm:items-start text-center sm:text-left"
+            className="flex-1 min-w-[80px] cursor-pointer hover:bg-white/5 rounded-lg p-1.5 transition-colors flex flex-col justify-center items-center sm:items-start text-center sm:text-left"
           >
-            <div className="flex items-center gap-2 text-white/60 text-[10px] uppercase font-bold tracking-wider mb-1">
-              <MapPin className="w-3 h-3" />
+            <div className="flex items-center gap-1 text-white/60 text-[9px] uppercase font-bold tracking-wider mb-0.5">
+              <MapPin className="w-2.5 h-2.5" />
               <span>Countries</span>
             </div>
-            <div className="flex items-baseline gap-1">
-              <span className="font-display font-bold text-2xl md:text-3xl">{stats.visitedCount}</span>
-              <span className="text-xs text-white/40 font-medium">/{stats.totalCountries}</span>
+            <div className="flex items-baseline gap-0.5">
+              <span className="font-display font-bold text-xl md:text-2xl">{stats.visitedCount}</span>
+              <span className="text-[10px] text-white/40 font-medium">/{stats.totalCountries}</span>
             </div>
           </div>
 
           {/* Divider (Desktop Only) */}
-          <div className="hidden sm:block w-px h-12 bg-white/10 flex-shrink-0" />
+          <div className="hidden sm:block w-px h-10 bg-white/10 flex-shrink-0" />
 
-          {/* Continents Unlocked (New Section) */}
+          {/* Continents Unlocked */}
           <div
             onClick={() => setShowContinentModal(true)}
-            className="flex-1 min-w-[100px] cursor-pointer hover:bg-white/5 rounded-xl p-2 transition-colors flex flex-col justify-center items-center sm:items-start text-center sm:text-left h-full"
+            className="flex-1 min-w-[80px] cursor-pointer hover:bg-white/5 rounded-lg p-1.5 transition-colors flex flex-col justify-center items-center sm:items-start text-center sm:text-left h-full"
           >
-            <div className="flex items-center gap-2 text-white/60 text-[10px] uppercase font-bold tracking-wider mb-1">
-              <Globe className="w-3 h-3" />
+            <div className="flex items-center gap-1 text-white/60 text-[9px] uppercase font-bold tracking-wider mb-0.5">
+              <Globe className="w-2.5 h-2.5" />
               <span>Continents</span>
             </div>
-            <div className="flex items-baseline gap-1">
-              <span className="font-display font-bold text-2xl md:text-3xl">{unlockedContinentCount}</span>
-              <span className="text-xs text-white/40 font-medium">/{totalContinents}</span>
+            <div className="flex items-baseline gap-0.5">
+              <span className="font-display font-bold text-xl md:text-2xl">{unlockedContinentCount}</span>
+              <span className="text-[10px] text-white/40 font-medium">/{totalContinents}</span>
             </div>
-            {unlockedContinentCount > 0 && (
-              <p className="text-[10px] text-white/50 leading-tight mt-1">
-                {unlockedContinents.map(c => c.name).join(', ')}
-              </p>
-            )}
           </div>
 
           {/* Divider (Desktop Only) */}
-          <div className="hidden sm:block w-px h-12 bg-white/10 flex-shrink-0" />
+          <div className="hidden sm:block w-px h-10 bg-white/10 flex-shrink-0" />
 
           {/* Passport Power */}
           <div
             onClick={() => setShowPassportModal(true)}
-            className="flex-1 min-w-[100px] cursor-pointer hover:bg-white/5 rounded-xl p-2 transition-colors flex flex-col justify-center items-center sm:items-start text-center sm:text-left h-full"
+            className="flex-1 min-w-[80px] cursor-pointer hover:bg-white/5 rounded-lg p-1.5 transition-colors flex flex-col justify-center items-center sm:items-start text-center sm:text-left h-full"
           >
-            <div className="flex items-center gap-2 text-white/60 text-xs mb-1">
-              <Trophy className="w-3 h-3" />
+            <div className="flex items-center gap-1 text-white/60 text-[9px] uppercase font-bold tracking-wider mb-1">
+              <Trophy className="w-2.5 h-2.5" />
               <span>Passport</span>
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="font-display font-bold text-2xl md:text-3xl">{stats.userPassport?.passportRank || '-'}</span>
+            <div className="flex items-baseline gap-1">
+              <span className="font-display font-bold text-xl md:text-2xl">{stats.userPassport?.passportRank || '-'}</span>
             </div>
-            <p className="text-xs text-white/40 mt-1 leading-tight">{stats.userPassport?.name || 'Select Passport'}</p>
+            <p className="text-[9px] text-white/40 mt-0.5 leading-tight truncate max-w-[80px]">{stats.userPassport?.name || 'Select'}</p>
           </div>
         </div>
       </div>

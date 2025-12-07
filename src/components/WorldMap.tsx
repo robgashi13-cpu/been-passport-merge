@@ -315,7 +315,7 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
 
         <div
           className="w-full flex-grow relative cursor-pointer transition-all"
-          style={{ minHeight: "250px" }}
+          style={{ minHeight: "400px" }}
         >
           <ComposableMap
             projection="geoMercator"
@@ -475,30 +475,30 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
 
       {/* Quick stats - Mobile optimized - HIDE IN VISA MODE? Or Keep? Keep. */}
       {viewMode === 'visited' && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 flex-shrink-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
-          <div className="bg-gradient-card rounded-lg md:rounded-xl border border-border/50 p-3 md:p-5 text-center hover-lift group transition-all duration-300">
-            <MapPin className="w-5 h-5 md:w-7 md:h-7 text-primary mx-auto mb-1 md:mb-2 group-hover:scale-110 transition-transform" />
-            <div className="font-display text-xl md:text-3xl font-bold">{visitedCount}</div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider">Countries</div>
+        <div className="grid grid-cols-4 gap-2 flex-shrink-0 animate-slide-up" style={{ animationDelay: "0.2s" }}>
+          <div className="bg-gradient-card rounded-lg border border-border/50 p-2 text-center hover-lift group transition-all duration-300">
+            <MapPin className="w-4 h-4 text-primary mx-auto mb-1 group-hover:scale-110 transition-transform" />
+            <div className="font-display text-lg font-bold">{visitedCount}</div>
+            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Countries</div>
           </div>
-          <div className="bg-gradient-card rounded-lg md:rounded-xl border border-border/50 p-3 md:p-5 text-center hover-lift group transition-all duration-300">
-            <Globe className="w-5 h-5 md:w-7 md:h-7 text-primary mx-auto mb-1 md:mb-2 group-hover:scale-110 transition-transform" />
-            <div className="font-display text-xl md:text-3xl font-bold">{percentage}%</div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider">Explored</div>
+          <div className="bg-gradient-card rounded-lg border border-border/50 p-2 text-center hover-lift group transition-all duration-300">
+            <Globe className="w-4 h-4 text-primary mx-auto mb-1 group-hover:scale-110 transition-transform" />
+            <div className="font-display text-lg font-bold">{percentage}%</div>
+            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Explored</div>
           </div>
-          <div className="bg-gradient-card rounded-lg md:rounded-xl border border-border/50 p-3 md:p-5 text-center hover-lift group transition-all duration-300">
-            <div className="w-5 h-5 md:w-7 md:h-7 mx-auto mb-1 md:mb-2 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <span className="text-lg md:text-2xl">✈️</span>
+          <div className="bg-gradient-card rounded-lg border border-border/50 p-2 text-center hover-lift group transition-all duration-300">
+            <div className="w-4 h-4 mx-auto mb-1 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="text-sm">✈️</span>
             </div>
-            <div className="font-display text-xl md:text-3xl font-bold">{countries.length - visitedCount}</div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider">Remaining</div>
+            <div className="font-display text-lg font-bold">{countries.length - visitedCount}</div>
+            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Left</div>
           </div>
-          <div className="bg-gradient-card rounded-lg md:rounded-xl border border-border/50 p-3 md:p-5 text-center hover-lift group transition-all duration-300">
-            <div className="w-5 h-5 md:w-7 md:h-7 mx-auto mb-1 md:mb-2 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <span className="text-lg md:text-2xl">🏆</span>
+          <div className="bg-gradient-card rounded-lg border border-border/50 p-2 text-center hover-lift group transition-all duration-300">
+            <div className="w-4 h-4 mx-auto mb-1 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="text-sm">🏆</span>
             </div>
-            <div className="font-display text-xl md:text-3xl font-bold">{countries.length}</div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wider">Total</div>
+            <div className="font-display text-lg font-bold">{countries.length}</div>
+            <div className="text-[9px] text-muted-foreground uppercase tracking-wider">Total</div>
           </div>
         </div>
       )}
