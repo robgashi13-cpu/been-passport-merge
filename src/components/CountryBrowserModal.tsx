@@ -78,7 +78,7 @@ export const CountryBrowserModal = ({
                         <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
                         <Input
                             placeholder="Search countries..."
-                            className="pl-9 bg-white/5 border-white/10"
+                            className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/50 focus-visible:ring-white/20"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
