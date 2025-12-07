@@ -34,6 +34,7 @@ export const CountryDetails = ({
     const [exchangeRate, setExchangeRate] = useState<number | null>(null);
     const [exchangeLoading, setExchangeLoading] = useState(false);
     const [allHolidaysOpen, setAllHolidaysOpen] = useState(false);
+    const [isDescExpanded, setDescExpanded] = useState(false);
 
     // Initial data fetch
     useEffect(() => {
@@ -113,42 +114,38 @@ export const CountryDetails = ({
     const content = (
         <div className={`bg-black/95 backdrop-blur-2xl border border-white/10 w-full overflow-y-auto animate-scale-in flex flex-col ${isModal ? 'rounded-2xl max-w-2xl max-h-[90vh]' : 'h-full bg-transparent border-none animate-none'}`}>
 
-            {/* Ultra-Premium Header */}
-            <div className="sticky top-0 bg-black/80 backdrop-blur-xl border-b border-white/10 p-5 z-20">
-                <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-5">
+            {/* Ultra-Premium Header (Compact) */}
+            <div className="sticky top-0 bg-black/80 backdrop-blur-xl border-b border-white/10 p-4 z-20">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
                         <div className="relative group">
-                            <span className="text-6xl md:text-7xl drop-shadow-2xl transition-transform group-hover:scale-110 block">{country.flagEmoji}</span>
-                            <div className="absolute -bottom-2 -right-2 bg-black/50 backdrop-blur-md px-2 py-0.5 rounded-full border border-white/20 text-[10px] text-white/80 font-mono">
-                                {country.code}
-                            </div>
+                            <span className="text-4xl md:text-5xl drop-shadow-2xl transition-transform group-hover:scale-110 block">{country.flagEmoji}</span>
                         </div>
                         <div>
-                            <h2 className="font-display text-3xl md:text-4xl font-bold tracking-tight text-white mb-1">{country.name}</h2>
-                            <p className="text-white/50 text-sm font-medium flex items-center gap-2">
-                                <Globe className="w-3.5 h-3.5" />
-                                <span className="uppercase tracking-wider text-[10px]">{country.continent} • {extendedData?.subregion || 'Earth'}</span>
+                            <h2 className="font-display text-2xl font-bold tracking-tight text-white leading-tight">{country.name}</h2>
+                            <p className="text-white/50 text-[10px] font-medium flex items-center gap-1.5 uppercase tracking-wider">
+                                {country.continent} • {country.code}
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                         <button
                             onClick={onToggleVisited}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all border
+                            className={`flex items-center justify-center w-10 h-10 rounded-full transition-all border
                                 ${isVisited
-                                    ? 'bg-green-500/20 text-green-400 border-green-500/30 shadow-[0_0_20px_rgba(34,197,94,0.2)]'
+                                    ? 'bg-green-500/20 text-green-400 border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.2)]'
                                     : 'bg-white/5 text-white/70 hover:bg-white/10 border-white/10 hover:border-white/20'
                                 }`}
                         >
-                            {isVisited ? <Check className="w-4 h-4" /> : <Plane className="w-4 h-4" />}
-                            <span className="hidden sm:inline">{isVisited ? 'Visited' : 'Mark as Visited'}</span>
+                            <span className="sr-only">{isVisited ? 'Visited' : 'Mark as Visited'}</span>
+                            {isVisited ? <Check className="w-5 h-5" /> : <Plane className="w-5 h-5" />}
                         </button>
 
                         {isModal && (
                             <button
                                 onClick={onClose}
-                                className="p-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 transition-colors"
+                                className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 transition-colors"
                             >
                                 <X className="w-5 h-5 text-white/70" />
                             </button>
@@ -157,22 +154,22 @@ export const CountryDetails = ({
                 </div>
             </div>
 
-            <div className="p-5 md:p-8 flex-1 overflow-y-auto no-scrollbar">
-                <Tabs defaultValue="overview" className="w-full space-y-8">
-                    <div className="sticky top-[88px] z-10 bg-black/95 pb-2 -mt-2">
-                        <TabsList className="w-full grid grid-cols-5 bg-white/5 p-1 rounded-2xl border border-white/5">
-                            <TabsTrigger value="overview" className="rounded-xl data-[state=active]:bg-white/10 data-[state=active]:text-white text-xs py-2.5 font-medium">Overview</TabsTrigger>
-                            <TabsTrigger value="visa" className="rounded-xl data-[state=active]:bg-white/10 data-[state=active]:text-white text-xs py-2.5 font-medium">Visa</TabsTrigger>
-                            <TabsTrigger value="transport" className="rounded-xl data-[state=active]:bg-white/10 data-[state=active]:text-white text-xs py-2.5 font-medium">Transport</TabsTrigger>
-                            <TabsTrigger value="weather" className="rounded-xl data-[state=active]:bg-white/10 data-[state=active]:text-white text-xs py-2.5 font-medium">Weather</TabsTrigger>
-                            <TabsTrigger value="details" className="rounded-xl data-[state=active]:bg-white/10 data-[state=active]:text-white text-xs py-2.5 font-medium">Details</TabsTrigger>
+            <div className="p-4 flex-1 overflow-y-auto no-scrollbar">
+                <Tabs defaultValue="overview" className="w-full space-y-4">
+                    <div className="sticky top-[73px] z-10 bg-black/95 pt-2 pb-2 -mx-4 px-4 border-b border-white/5 shadow-2xl backdrop-blur-xl">
+                        <TabsList className="flex w-full overflow-x-auto no-scrollbar gap-2 bg-transparent p-0 border-none h-auto">
+                            <TabsTrigger value="overview" className="flex-shrink-0 rounded-full px-4 py-1.5 bg-white/5 data-[state=active]:bg-white data-[state=active]:text-black text-xs font-bold border border-white/5 transition-all">Overview</TabsTrigger>
+                            <TabsTrigger value="visa" className="flex-shrink-0 rounded-full px-4 py-1.5 bg-white/5 data-[state=active]:bg-white data-[state=active]:text-black text-xs font-bold border border-white/5 transition-all">Visa</TabsTrigger>
+                            <TabsTrigger value="transport" className="flex-shrink-0 rounded-full px-4 py-1.5 bg-white/5 data-[state=active]:bg-white data-[state=active]:text-black text-xs font-bold border border-white/5 transition-all">Transport</TabsTrigger>
+                            <TabsTrigger value="weather" className="flex-shrink-0 rounded-full px-4 py-1.5 bg-white/5 data-[state=active]:bg-white data-[state=active]:text-black text-xs font-bold border border-white/5 transition-all">Weather</TabsTrigger>
+                            <TabsTrigger value="details" className="flex-shrink-0 rounded-full px-4 py-1.5 bg-white/5 data-[state=active]:bg-white data-[state=active]:text-black text-xs font-bold border border-white/5 transition-all">Details</TabsTrigger>
                         </TabsList>
                     </div>
 
                     {/* OVERVIEW TAB - Modern Bento Grid */}
-                    <TabsContent value="overview" className="space-y-6 mt-2 animate-slide-up">
+                    <TabsContent value="overview" className="space-y-4 mt-0 animate-slide-up">
                         {/* Summary Card with AI Badge */}
-                        <div className="relative bg-gradient-to-br from-white/10 to-white/5 rounded-3xl p-6 border border-white/10 overflow-hidden group">
+                        <div className="relative bg-gradient-to-br from-white/10 to-white/5 rounded-3xl p-5 border border-white/10 overflow-hidden group">
                             <div className="absolute top-0 right-0 p-4 opacity-50">
                                 <Sparkles className="w-24 h-24 text-white/5 -rotate-12" />
                             </div>
@@ -183,9 +180,19 @@ export const CountryDetails = ({
                                 </div>
                             </div>
 
-                            <p className="text-white/80 leading-relaxed font-light text-sm md:text-base relative z-10">
-                                {wikiSummary?.extract || richData?.description || "Loading detailed information..."}
-                            </p>
+                            <div className="relative z-10">
+                                <p className={`text-white/80 leading-relaxed font-light text-sm transition-all overflow-hidden ${isDescExpanded ? 'max-h-full' : 'max-h-[4.5em] line-clamp-3'}`}>
+                                    {wikiSummary?.extract || richData?.description || "Loading detailed information..."}
+                                </p>
+                                {(wikiSummary?.extract || richData?.description) && (
+                                    <button
+                                        onClick={() => setDescExpanded(!isDescExpanded)}
+                                        className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mt-2 hover:text-blue-300 flex items-center gap-1"
+                                    >
+                                        {isDescExpanded ? 'Show Less' : 'Read More'}
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         {/* Stats Grid */}
