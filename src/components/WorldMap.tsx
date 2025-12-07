@@ -15,6 +15,7 @@ interface WorldMapProps {
   heldVisas?: string[];
   bucketList?: string[];
   onCountryClick?: (code: string) => void;
+  isFullScreen?: boolean;
 }
 
 // Comprehensive numeric ID to ISO2 mapping from Natural Earth / world-110m.json
@@ -154,7 +155,7 @@ const getCountryFillColor = (
   return "rgba(80, 80, 80, 0.5)";
 };
 
-const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas = [], onCountryClick }: WorldMapProps) => {
+const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas = [], onCountryClick, isFullScreen = false }: WorldMapProps) => {
   const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
   const [tooltipContent, setTooltipContent] = useState<{
     name: string;
@@ -231,13 +232,15 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
 
   return (
     <div className="space-y-4 md:space-y-6 animate-fade-in h-full flex flex-col">
-      <div className="text-center py-4 md:py-6 flex-shrink-0 relative">
-        <h2 className="font-display text-2xl md:text-4xl font-bold mb-2 animate-slide-up">
-          World <span className="text-gradient-white">Explorer</span>
-        </h2>
+      <div className={`text-center py-4 md:py-6 flex-shrink-0 relative pointer-events-none ${isFullScreen ? 'absolute top-0 left-0 right-0 z-10 pt-safe' : ''}`}>
+        {!isFullScreen && (
+          <h2 className="font-display text-2xl md:text-4xl font-bold mb-2 animate-slide-up">
+            World <span className="text-gradient-white">Explorer</span>
+          </h2>
+        )}
 
         {/* View Mode Toggle */}
-        <div className="flex justify-center mt-4 mb-2 animate-slide-up" style={{ animationDelay: "0.1s" }}>
+        <div className={`flex justify-center mt-4 mb-2 animate-slide-up pointer-events-auto ${isFullScreen ? 'mt-2' : ''}`} style={{ animationDelay: "0.1s" }}>
           <div className="bg-white/10 p-1 rounded-xl flex gap-1 border border-white/10 backdrop-blur-md">
             <button
               onClick={() => setViewMode('visited')}
@@ -270,20 +273,22 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
           </div>
         </div>
 
-        <p className="text-sm md:text-base text-muted-foreground animate-slide-up" style={{ animationDelay: "0.2s" }}>
-          {viewMode === 'visa' && userPassportCode ? (
-            <span className="flex items-center justify-center gap-2 text-gold">
-              <span className="text-lg">{userPassport?.flagEmoji}</span>
-              Showing visa requirements for {userPassport?.name} passport
-            </span>
-          ) : (
-            "Mark your travels and explore the world"
-          )}
-        </p>
+        {!isFullScreen && (
+          <p className="text-sm md:text-base text-muted-foreground animate-slide-up" style={{ animationDelay: "0.2s" }}>
+            {viewMode === 'visa' && userPassportCode ? (
+              <span className="flex items-center justify-center gap-2 text-gold">
+                <span className="text-lg">{userPassport?.flagEmoji}</span>
+                Showing visa requirements for {userPassport?.name} passport
+              </span>
+            ) : (
+              "Mark your travels and explore the world"
+            )}
+          </p>
+        )}
       </div>
 
       {/* Interactive 2D Map */}
-      <div className="relative bg-gradient-card rounded-xl md:rounded-2xl border border-border/50 p-2 md:p-8 overflow-hidden hover-glow transition-all duration-500 flex-grow flex flex-col">
+      <div className={`relative bg-gradient-card rounded-xl md:rounded-2xl border border-border/50 overflow-hidden hover-glow transition-all duration-500 flex-grow flex flex-col ${isFullScreen ? 'h-full rounded-none border-none' : 'p-2 md:p-8'}`}>
         {/* Tooltip */}
         {tooltipContent && (
           <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10 bg-black/95 text-white px-3 py-2 md:px-4 md:py-3 rounded-lg md:rounded-xl border border-white/20 shadow-2xl backdrop-blur-sm animate-fade-in max-w-[200px] md:max-w-none pointer-events-none">
@@ -315,7 +320,7 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
 
         <div
           className="w-full flex-grow relative cursor-pointer transition-all"
-          style={{ minHeight: "400px" }}
+          style={{ minHeight: isFullScreen ? "100%" : "400px" }}
         >
           <ComposableMap
             projection="geoMercator"
