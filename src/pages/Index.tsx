@@ -133,19 +133,21 @@ const Index = () => {
 
   const handlers = useSwipeable({
     onSwipedLeft: () => {
+      if (isNative) return; // Disable on native
       const currentIndex = tabOrder.indexOf(activeTab);
       if (currentIndex < tabOrder.length - 1) {
         setActiveTab(tabOrder[currentIndex + 1]);
       }
     },
     onSwipedRight: () => {
+      if (isNative) return; // Disable on native
       const currentIndex = tabOrder.indexOf(activeTab);
       if (currentIndex > 0) {
         setActiveTab(tabOrder[currentIndex - 1]);
       }
     },
     trackMouse: false,
-    preventScrollOnSwipe: false, // Allow scrolling
+    preventScrollOnSwipe: false,
     delta: 20
   });
 

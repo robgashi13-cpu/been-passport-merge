@@ -223,19 +223,7 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
 
   const [viewMode, setViewMode] = useState<'visited' | 'visa'>('visited');
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [mapActive, setMapActive] = useState(false); // Click-to-zoom feature
-
-  // Lock body scroll when map is active
-  useEffect(() => {
-    if (mapActive) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [mapActive]);
+  // Removed mapActive state to specific user request - Map is always active
 
   const handleZoomChange = (position: { k: number, x: number, y: number }) => {
     setZoomLevel(position.k);
@@ -326,10 +314,8 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
         )}
 
         <div
-          className={`w-full flex-grow relative cursor-pointer transition-all ${mapActive ? 'ring-2 ring-white/30' : ''}`}
+          className="w-full flex-grow relative cursor-pointer transition-all"
           style={{ minHeight: "250px" }}
-          onClick={() => setMapActive(true)}
-          onMouseLeave={() => setMapActive(false)}
         >
           <ComposableMap
             projection="geoMercator"
@@ -345,10 +331,6 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
                 [900, 700]
               ]}
               onMove={handleZoomChange}
-              filterZoomEvent={(evt) => {
-                // Only allow zoom if map is active (clicked)
-                return mapActive;
-              }}
             >
               <Geographies geography={worldData}>
                 {({ geographies }) =>
