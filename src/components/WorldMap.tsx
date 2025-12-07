@@ -372,7 +372,6 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
           >
             {/* ... ZoomableGroup ... */}
             <ZoomableGroup
-              zoom={1}
               minZoom={1}
               maxZoom={50}
               translateExtent={[
