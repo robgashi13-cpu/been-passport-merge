@@ -5,12 +5,12 @@ import { createPortal } from 'react-dom';
 
 // Level System
 export const LEVELS = [
-    { min: 0, title: 'Couch Surfer', color: 'text-stone-400', icon: Map },
-    { min: 5, title: 'Weekend Wanderer', color: 'text-blue-400', icon: Compass },
-    { min: 10, title: 'Backpacker', color: 'text-green-400', icon: Plane },
-    { min: 25, title: 'Frequent Flyer', color: 'text-purple-400', icon: Globe2 },
-    { min: 50, title: 'Global Nomad', color: 'text-orange-400', icon: Star },
-    { min: 100, title: 'World Citizen', color: 'text-cyan-400', icon: Trophy }, // Platinum/Diamond look
+    { min: 0, title: 'Couch Surfer', color: 'text-stone-400', icon: Map, emoji: '🛋️' },
+    { min: 5, title: 'Weekend Wanderer', color: 'text-blue-400', icon: Compass, emoji: '🚶' },
+    { min: 10, title: 'Backpacker', color: 'text-green-400', icon: Plane, emoji: '🎒' },
+    { min: 25, title: 'Frequent Flyer', color: 'text-purple-400', icon: Globe2, emoji: '✈️' },
+    { min: 50, title: 'Global Nomad', color: 'text-orange-400', icon: Star, emoji: '🌏' },
+    { min: 100, title: 'World Citizen', color: 'text-cyan-400', icon: Trophy, emoji: '👽' }, // Platinum/Diamond look
 ];
 
 export const getLevel = (count: number) => {
@@ -352,22 +352,22 @@ export const LevelCard = ({ visitedCountries }: AchievementsProps) => {
         <>
             <div
                 onClick={() => setShowModal(true)}
-                className="bg-gradient-card rounded-2xl border border-white/10 p-4 relative overflow-hidden min-h-[140px] flex flex-col cursor-pointer hover-lift active:scale-95 transition-transform"
+                className="bg-gradient-card rounded-2xl border border-white/10 p-4 relative overflow-hidden min-h-[120px] flex flex-col cursor-pointer hover-lift active:scale-95 transition-transform group"
             >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl group-hover:bg-indigo-500/20 transition-colors" />
 
-                <div className="flex items-center gap-3 mb-3">
-                    <div className={`w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 ${level.color} shrink-0`}>
-                        <level.icon className="w-5 h-5" />
+                <div className="flex items-center gap-4 mb-3">
+                    <div className="text-4xl animate-bounce-slow">
+                        {level.emoji}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 mb-1">
                             <span className="text-xs text-white/50 font-medium">Current Rank</span>
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded bg-white/5 ${level.color}`}>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded bg-white/5 ${level.color} border border-white/5`}>
                                 Lvl {LEVELS.indexOf(level) + 1}
                             </span>
                         </div>
-                        <h3 className={`font-display text-lg font-bold ${level.color} truncate`}>{level.title}</h3>
+                        <h3 className={`font-display text-xl font-bold ${level.color} truncate`}>{level.title}</h3>
                     </div>
                 </div>
 
@@ -376,7 +376,7 @@ export const LevelCard = ({ visitedCountries }: AchievementsProps) => {
                         <span className="font-medium text-white/60">{count} Countries</span>
                         {nextLevel && <span>Next: {nextLevel.title} ({nextLevel.min})</span>}
                     </div>
-                    <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                         <div
                             className={`h-full rounded-full transition-all duration-1000 ${level.color.replace('text', 'bg')}`}
                             style={{ width: `${progress}%` }}

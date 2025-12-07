@@ -23,7 +23,10 @@ import { CountryDetailsModal } from '@/components/CountryDetailsModal';
 import { useSwipeable } from 'react-swipeable';
 import TabBar from '@/plugins/TabBar';
 import { AchievementCelebration, useAchievementTracker } from '@/components/AchievementCelebration';
-
+import { getLevel, LEVELS } from '@/components/Achievements';
+import { useTravelNotifications } from '@/hooks/useTravelNotifications';
+import { GoogleWorldMap } from '@/components/GoogleWorldMap';
+import { CountryDetailSheet } from '@/components/CountryDetailSheet';
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const isNative = Capacitor.isNativePlatform();
@@ -31,6 +34,9 @@ const Index = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showAddTripModal, setShowAddTripModal] = useState(false);
   const [selectedCountryCode, setSelectedCountryCode] = useState<string | null>(null);
+  const [selectedSheetCountry, setSelectedSheetCountry] = useState<string | null>(null);
+  const [isSheetOpen, setSheetOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
   const { user, isLoggedIn, updateHeldVisas, trips, updateTrips } = useUser();
 
@@ -89,6 +95,62 @@ const Index = () => {
 
     TabBar.setActiveTab({ tab: activeTab }).catch(() => { });
   }, [activeTab, isNative]);
+
+  // Travel Notifications logic
+  const { requestPermissions: requestTravelPermissions } = useTravelNotifications();
+
+  // Trigger permission request once on mount (user preference check usually better, but for this request:)
+  useEffect(() => {
+    // We try to request permissions or check status silently first?
+    // Actually, we shouldn't prompt immediately on load without context usually, but the user asked for "request... so user clicks allow".
+    // We will let the GeoPassport component handle the UI interaction for enabling this explicitly.
+  }, []);
+
+  // Sync Data -> Widget
+  useEffect(() => {
+    if (!isNative) return;
+
+    const syncWidget = async () => {
+      // We moved the main sync logic to include the snapshot below.
+      // But we still want to sync stats immediately even if map is generating.
+      const levelInfo = getLevel(visitedCountries.length);
+      const percentage = Math.round((visitedCountries.length / 195) * 100);
+      const rankLevel = LEVELS.findIndex(l => l.title === levelInfo.title) + 1;
+
+      try {
+        await TabBar.updateWidgetData({
+          visitedCount: visitedCountries.length,
+          rankTitle: levelInfo.title,
+          rankLevel: rankLevel,
+          percentage: percentage
+        });
+      } catch (e) {
+        console.error("Widget sync failed (stats)", e);
+      }
+    };
+
+    syncWidget();
+  }, [visitedCountries, isNative]);
+
+  const handleWidgetSnapshot = async (base64: string) => {
+    console.log("Syncing widget map image...");
+    const levelInfo = getLevel(visitedCountries.length);
+    const percentage = Math.round((visitedCountries.length / 195) * 100);
+    const rankLevel = LEVELS.findIndex(l => l.title === levelInfo.title) + 1;
+
+    try {
+      await TabBar.updateWidgetData({
+        visitedCount: visitedCountries.length,
+        rankTitle: levelInfo.title,
+        rankLevel: rankLevel,
+        percentage: percentage,
+        mapBase64: base64
+      });
+      console.log("Widget map synced!");
+    } catch (e) {
+      console.error("Widget sync failed (image)", e);
+    }
+  };
 
   const handleTripsDetected = (newTrips: Partial<TripEntry>[]) => {
     // Convert partial trips to full trips with IDs
@@ -178,37 +240,31 @@ const Index = () => {
                 onCountryClick={(code) => setSelectedCountryCode(code)}
               />
 
-              <div className="pt-4 border-t border-white/10">
-                <h3 className="font-display text-2xl font-bold mb-6">Explore Destinations</h3>
-                <ExploreDestinations
-                  onCountryClick={(code) => setSelectedCountryCode(code)}
-                />
-              </div>
             </TabsContent>
 
-            <TabsContent value="map" className="animate-fade-in focus-visible:outline-none pb-48">
-              <div className="h-[60vh] md:h-[calc(100vh-20rem)] rounded-2xl border border-white/10 bg-white/5 overflow-hidden backdrop-blur-sm">
-                <WorldMap
+            <TabsContent value="map" className="h-[calc(100vh-5rem)] md:h-[calc(100vh-4rem)] w-full p-0 m-0 data-[state=inactive]:hidden focus-visible:outline-none">
+              <div className="relative w-full h-full">
+                {/* Full Screen Google Map */}
+                <GoogleWorldMap
                   visitedCountries={visitedCountries}
-                  bucketList={bucketList || []}
-                  onCountryClick={(code) => setSelectedCountryCode(code)}
-                  userPassportCode={userPassport}
-                  heldVisas={heldVisas}
+                  onCountryClick={(code) => {
+                    setSelectedSheetCountry(code);
+                    setSheetOpen(true);
+                  }}
+                />
+
+                {/* Country Detail Sheet */}
+                <CountryDetailSheet
+                  countryCode={selectedSheetCountry}
+                  isOpen={isSheetOpen}
+                  onOpenChange={setSheetOpen}
+                  userPassportCode={userPassport?.code}
+                  isVisited={selectedSheetCountry ? visitedCountries.includes(selectedSheetCountry) : false}
+                  onToggleVisited={() => {
+                    if (selectedSheetCountry) toggleVisited(selectedSheetCountry);
+                  }}
                 />
               </div>
-
-              <div className="mt-6 pt-6 border-t border-white/10">
-                <CountryList
-                  visitedCountries={visitedCountries}
-                  bucketList={bucketList || []}
-                  toggleVisited={toggleVisited}
-                  toggleBucketList={toggleBucketList}
-                  onCountryClick={(code) => setSelectedCountryCode(code)}
-                />
-              </div>
-
-              {/* Extra Spacer for Bottom Navigation/Button visibility */}
-              <div className="h-32 md:h-0"></div>
             </TabsContent>
 
             <TabsContent value="calendar" className="pb-24 lg:pb-8 focus-visible:outline-none">
@@ -228,7 +284,13 @@ const Index = () => {
                 </div>
 
                 <TabsContent value="calendar" className="mt-0">
-                  <TravelCalendar trips={trips} />
+                  <TravelCalendar
+                    trips={trips}
+                    onDateClick={(date) => {
+                      setSelectedDate(date);
+                      setShowAddTripModal(true);
+                    }}
+                  />
                 </TabsContent>
 
                 <TabsContent value="import" className="mt-0">
@@ -250,16 +312,22 @@ const Index = () => {
         </main>
 
         {/* Mobile Bottom Navigation - Hide on native iOS (uses real iOS tab bar) */}
-        {!isNative && (
-          <div className="lg:hidden">
-            <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
-          </div>
-        )}
+        {
+          !isNative && (
+            <div className="lg:hidden">
+              <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+            </div>
+          )
+        }
 
         <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
         <AddTripModal
           isOpen={showAddTripModal}
-          onClose={() => setShowAddTripModal(false)}
+          onClose={() => {
+            setShowAddTripModal(false);
+            setSelectedDate(undefined); // Reset date on close
+          }}
+          initialDate={selectedDate}
         />
         <CountryDetailsModal
           countryCode={selectedCountryCode}
@@ -272,8 +340,8 @@ const Index = () => {
           onClose={clearAchievement}
           duration={duration}
         />
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 

@@ -367,7 +367,7 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
           {/* ... Map Component ... */}
           <ComposableMap
             projection="geoMercator"
-            projectionConfig={{ scale: isFullScreen ? 250 : 100, center: [0, 0] }}
+            projectionConfig={{ scale: isFullScreen ? 300 : 100, center: [0, 0] }}
             style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }}
           >
             {/* ... ZoomableGroup ... */}
@@ -375,8 +375,8 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
               minZoom={1}
               maxZoom={50}
               translateExtent={[
-                [-100, -100],
-                [900, 700]
+                [-2000, -1000],
+                [4000, 2000]
               ]}
               onMove={handleZoomChange}
             >

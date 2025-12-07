@@ -177,7 +177,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const signup = async (name: string, email: string, password: string, passportCode: string): Promise<{ success: boolean; message?: string }> => {
         try {
             const redirectUrl = `${window.location.origin}/`;
-            
+
             const { data, error } = await supabase.auth.signUp({
                 email,
                 password,

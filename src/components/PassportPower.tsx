@@ -298,46 +298,46 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
         <TabsContent value="your-passport" className="mt-6 space-y-6">
           {selectedPassport ? (
             <>
-              {/* Main Passport Card */}
-              <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-2xl border border-white/20 p-6 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full blur-3xl" />
-                <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-white/5 rounded-full blur-2xl" />
+              {/* Main Passport Card - Compact */}
+              <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-2xl border border-white/20 p-5 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl" />
+                <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-white/5 rounded-full blur-2xl" />
 
                 <div className="relative z-10">
-                  <div className="flex items-center gap-2 text-sm text-white/70 mb-4">
-                    <Crown className="w-4 h-4" />
+                  <div className="flex items-center gap-2 text-xs text-white/70 mb-3">
+                    <Crown className="w-3.5 h-3.5" />
                     <span className="uppercase tracking-wider font-medium">Your Passport</span>
                   </div>
 
-                  <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
+                  <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
                     {/* Flag & Name */}
-                    <div className="flex-1 text-center md:text-left">
-                      <div className="text-6xl md:text-7xl mb-2">{selectedPassport.flagEmoji}</div>
-                      <h3 className="font-display text-2xl md:text-3xl font-bold">{selectedPassport.name}</h3>
-                      <p className="text-muted-foreground">{selectedPassport.continent}</p>
-                      <div className={`mt - 2 text - sm font - medium ${getRatingText(dynamicRank).color} `}>
+                    <div className="flex-1 text-center sm:text-left">
+                      <div className="text-5xl sm:text-6xl mb-1">{selectedPassport.flagEmoji}</div>
+                      <h3 className="font-display text-xl sm:text-2xl font-bold">{selectedPassport.name}</h3>
+                      <p className="text-xs text-muted-foreground mb-1">{selectedPassport.continent}</p>
+                      <div className={`inline-block text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/5 ${getRatingText(dynamicRank).color} border border-white/10`}>
                         {getRatingText(dynamicRank).text} Power
                       </div>
                     </div>
 
-                    {/* Unified Stats Board */}
-                    <div className="flex gap-4 md:gap-8 items-center bg-black/20 p-4 rounded-xl backdrop-blur-sm border border-white/10">
+                    {/* Unified Stats Board - Compact */}
+                    <div className="flex w-full sm:w-auto gap-4 items-center justify-center bg-black/20 p-3 rounded-xl backdrop-blur-sm border border-white/10">
                       {/* Rank */}
-                      <div className="text-center">
-                        <div className="font-display text-4xl md:text-5xl font-bold text-gradient-white">
+                      <div className="text-center min-w-[60px]">
+                        <div className="font-display text-2xl sm:text-3xl font-bold text-gradient-white">
                           {getRankBadge(dynamicRank)}
                         </div>
-                        <p className="text-xs md:text-sm text-muted-foreground uppercase tracking-widest mt-1">Global Rank</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest leading-none mt-1">Global<br />Rank</p>
                       </div>
 
-                      <div className="w-px h-12 bg-white/20"></div>
+                      <div className="w-px h-8 bg-white/20"></div>
 
                       {/* Progress */}
-                      <div className="text-center">
-                        <div className="font-display text-4xl md:text-5xl font-bold text-blue-400">
+                      <div className="text-center min-w-[60px]">
+                        <div className="font-display text-2xl sm:text-3xl font-bold text-blue-400">
                           {Math.round(((dynamicStats?.totalScore || 0) / 199) * 100)}%
                         </div>
-                        <p className="text-xs md:text-sm text-muted-foreground uppercase tracking-widest mt-1">World Access</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest leading-none mt-1">World<br />Access</p>
                       </div>
                     </div>
                   </div>

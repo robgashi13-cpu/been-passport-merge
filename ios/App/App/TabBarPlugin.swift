@@ -1,31 +1,30 @@
 import Foundation
 import Capacitor
+import WidgetKit
 
 @objc(TabBarPlugin)
 public class TabBarPlugin: CAPPlugin, CAPBridgedPlugin {
-    public let identifier = "TabBarPlugin"
-    public let jsName = "TabBar"
-    public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "setActiveTab", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "getActiveTab", returnType: CAPPluginReturnPromise)
-    ]
-    
-    private var activeTab: String = "dashboard"
-    
-    @objc func setActiveTab(_ call: CAPPluginCall) {
-        guard let tab = call.getString("tab") else {
-            call.reject("Tab parameter is required")
-            return
+    // ... (rest of class) ...
+
+    @objc func updateWidgetData(_ call: CAPPluginCall) {
+        // ... (data reading) ...
+        
+        if let userDefaults = UserDefaults(suiteName: "group.com.been.passport") {
+            // ... (defaults setting) ...
+            
+            if let mapBase64 = call.getString("mapBase64") {
+                userDefaults.set(mapBase64, forKey: "mapImage")
+            }
+            
+            // Reload Timelines
+            if #available(iOS 14.0, *) {
+                WidgetCenter.shared.reloadAllTimelines()
+            }
+            
+            call.resolve(["success": true])
+        } else {
+           // ...
         }
-        
-        activeTab = tab
-        
-        // Post notification to update native UI
-        DispatchQueue.main.async {
-            NotificationCenter.default.post(name: NSNotification.Name("WebTabChanged"), object: nil, userInfo: ["tab": tab])
-        }
-        
-        call.resolve(["success": true, "tab": tab])
     }
     
     @objc func getActiveTab(_ call: CAPPluginCall) {

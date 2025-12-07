@@ -5,9 +5,10 @@ import { ChevronLeft, ChevronRight, MapPin, Plane, Calendar, Clock } from 'lucid
 
 interface TravelCalendarProps {
     trips: TripEntry[];
+    onDateClick?: (date: Date) => void;
 }
 
-export const TravelCalendar = ({ trips }: TravelCalendarProps) => {
+export const TravelCalendar = ({ trips, onDateClick }: TravelCalendarProps) => {
     const [currentDate, setCurrentDate] = useState(new Date());
 
     const currentYear = currentDate.getFullYear();
@@ -68,30 +69,29 @@ export const TravelCalendar = ({ trips }: TravelCalendarProps) => {
     const totalDays = trips.reduce((sum, trip) => sum + calculateDays(trip), 0);
 
     return (
-        <div className="space-y-6 animate-fade-in">
-            {/* Header */}
-            <div className="text-center py-4">
-                <h2 className="font-display text-3xl md:text-4xl font-bold mb-2 animate-slide-up">
+        <div className="space-y-4 animate-fade-in">
+            {/* Header - Compact */}
+            <div className="text-center py-2">
+                <h2 className="font-display text-2xl font-bold mb-1 animate-slide-up">
                     Travel <span className="text-gradient-white">Calendar</span>
                 </h2>
-                <p className="text-muted-foreground animate-slide-up" style={{ animationDelay: "0.1s" }}>
-                    Track your travel days and see where you've been
+                <p className="text-xs text-muted-foreground animate-slide-up" style={{ animationDelay: "0.1s" }}>
+                    Your travel timeline
                 </p>
             </div>
 
-            {/* Currently Traveling Banner */}
+            {/* Currently Traveling Banner - Compact */}
             {activeTrips.length > 0 && (
-                <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-2xl border border-green-500/30 p-6 animate-pulse-slow">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-green-500/30 flex items-center justify-center">
-                            <Plane className="w-6 h-6 text-green-400" />
+                <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-xl border border-green-500/30 p-3 animate-pulse-slow">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-green-500/30 flex items-center justify-center">
+                            <Plane className="w-4 h-4 text-green-400" />
                         </div>
                         <div>
-                            <h3 className="font-bold text-lg text-green-400">Currently Traveling!</h3>
+                            <h3 className="font-bold text-sm text-green-400">Currently Traveling!</h3>
                             {activeTrips.map((trip, idx) => (
-                                <p key={idx} className="text-muted-foreground">
+                                <p key={idx} className="text-xs text-muted-foreground line-clamp-1">
                                     {getCountryByCode(trip.countryCode)?.flagEmoji} {trip.countryName}
-                                    {trip.cityName && ` - ${trip.cityName}`}
                                 </p>
                             ))}
                         </div>
@@ -99,57 +99,53 @@ export const TravelCalendar = ({ trips }: TravelCalendarProps) => {
                 </div>
             )}
 
-            {/* Stats Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-gradient-card rounded-xl border border-border/50 p-4 text-center hover-lift">
-                    <Calendar className="w-6 h-6 text-primary mx-auto mb-2" />
-                    <div className="font-display text-2xl font-bold">{totalDays}</div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider">Total Days</div>
+            {/* Stats Row - Compact */}
+            <div className="grid grid-cols-4 gap-2">
+                <div className="bg-gradient-card rounded-lg border border-border/50 p-2 text-center">
+                    <div className="font-display text-lg font-bold">{totalDays}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Days</div>
                 </div>
-                <div className="bg-gradient-card rounded-xl border border-border/50 p-4 text-center hover-lift">
-                    <Plane className="w-6 h-6 text-primary mx-auto mb-2" />
-                    <div className="font-display text-2xl font-bold">{trips.length}</div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider">Trips</div>
+                <div className="bg-gradient-card rounded-lg border border-border/50 p-2 text-center">
+                    <div className="font-display text-lg font-bold">{trips.length}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Trips</div>
                 </div>
-                <div className="bg-gradient-card rounded-xl border border-border/50 p-4 text-center hover-lift">
-                    <MapPin className="w-6 h-6 text-primary mx-auto mb-2" />
-                    <div className="font-display text-2xl font-bold">{Object.keys(daysByCountry).length}</div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider">Countries</div>
+                <div className="bg-gradient-card rounded-lg border border-border/50 p-2 text-center">
+                    <div className="font-display text-lg font-bold">{Object.keys(daysByCountry).length}</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Countries</div>
                 </div>
-                <div className="bg-gradient-card rounded-xl border border-border/50 p-4 text-center hover-lift">
-                    <Clock className="w-6 h-6 text-primary mx-auto mb-2" />
-                    <div className="font-display text-2xl font-bold">
+                <div className="bg-gradient-card rounded-lg border border-border/50 p-2 text-center">
+                    <div className="font-display text-lg font-bold">
                         {trips.length > 0 ? Math.round(totalDays / trips.length) : 0}
                     </div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider">Avg. Days</div>
+                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Avg</div>
                 </div>
             </div>
 
-            {/* Calendar */}
-            <div className="bg-gradient-card rounded-2xl border border-border/50 p-6 overflow-hidden">
+            {/* Calendar - Compact */}
+            <div className="bg-gradient-card rounded-xl border border-border/50 p-3 overflow-hidden">
                 {/* Month Navigation */}
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-4">
                     <button
                         onClick={previousMonth}
-                        className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
                     >
-                        <ChevronLeft className="w-5 h-5" />
+                        <ChevronLeft className="w-4 h-4" />
                     </button>
-                    <h3 className="font-display text-xl font-bold">
+                    <h3 className="font-display text-base font-bold">
                         {monthNames[currentMonth]} {currentYear}
                     </h3>
                     <button
                         onClick={nextMonth}
-                        className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
                     >
-                        <ChevronRight className="w-5 h-5" />
+                        <ChevronRight className="w-4 h-4" />
                     </button>
                 </div>
 
                 {/* Day Headers */}
-                <div className="grid grid-cols-7 gap-1 mb-2">
+                <div className="grid grid-cols-7 gap-1 mb-1">
                     {dayNames.map(day => (
-                        <div key={day} className="text-center text-xs text-muted-foreground font-medium py-2">
+                        <div key={day} className="text-center text-[10px] text-muted-foreground font-medium py-1">
                             {day}
                         </div>
                     ))}
@@ -166,41 +162,37 @@ export const TravelCalendar = ({ trips }: TravelCalendarProps) => {
                         return (
                             <div
                                 key={idx}
+                                onClick={() => {
+                                    if (dayData.day && onDateClick) {
+                                        const clickedDate = new Date(currentYear, currentMonth, dayData.day);
+                                        // Adjust for timezone offset to avoid previous day issues if treated as UTC
+                                        clickedDate.setHours(12, 0, 0, 0);
+                                        onDateClick(clickedDate);
+                                    }
+                                }}
                                 className={`
-                  aspect-square rounded-lg flex flex-col items-center justify-center p-1 transition-all duration-200 relative
-                  ${dayData.day ? 'hover:bg-white/10 cursor-pointer' : ''}
-                  ${hasTrips ? 'bg-white/20 ring-1 ring-white/30' : 'bg-white/5'}
-                  ${isToday ? 'ring-2 ring-primary' : ''}
+                  aspect-square rounded-md flex flex-col items-center justify-start pt-1 transition-all duration-200 relative
+                  ${dayData.day ? 'hover:bg-white/10 cursor-pointer active:scale-95' : ''}
+                  ${hasTrips ? 'bg-white/10 ring-1 ring-white/20' : 'bg-white/2'}
+                  ${isToday ? 'ring-1 ring-primary' : ''}
                 `}
                             >
                                 {dayData.day && (
                                     <>
-                                        <span className={`text-sm font-medium ${hasTrips ? 'text-white' : 'text-muted-foreground'}`}>
+                                        <span className={`text-[10px] font-medium leading-none ${hasTrips ? 'text-white' : 'text-muted-foreground'}`}>
                                             {dayData.day}
                                         </span>
                                         {hasTrips && (
-                                            <div className="flex gap-1 mt-1 flex-wrap justify-center">
-                                                {dayData.trips.slice(0, 1).map((trip: TripEntry) => {
-                                                    const start = new Date(trip.startDate);
-                                                    start.setHours(0, 0, 0, 0);
-                                                    const current = new Date(currentYear, currentMonth, dayData.day);
-                                                    current.setHours(0, 0, 0, 0);
-                                                    const diffTime = current.getTime() - start.getTime();
-                                                    const dayNum = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-
-                                                    return (
-                                                        <div key={trip.id} className="flex flex-col items-center">
-                                                            <span className="text-xs">
-                                                                {getCountryByCode(trip.countryCode)?.flagEmoji}
-                                                            </span>
-                                                            <span className="text-[10px] text-luxury-gold font-bold leading-none">
-                                                                {dayNum}
-                                                            </span>
-                                                        </div>
-                                                    );
-                                                })}
+                                            <div className="flex flex-col items-center justify-center flex-1 w-full -mt-1">
+                                                {dayData.trips.slice(0, 1).map((trip: TripEntry) => (
+                                                    <div key={trip.id} className="flex flex-col items-center">
+                                                        <span className="text-xs leading-none transform scale-90">
+                                                            {getCountryByCode(trip.countryCode)?.flagEmoji}
+                                                        </span>
+                                                    </div>
+                                                ))}
                                                 {dayData.trips.length > 1 && (
-                                                    <span className="text-[10px] text-white/50">+</span>
+                                                    <div className="w-1 h-1 rounded-full bg-white/50 mt-0.5" />
                                                 )}
                                             </div>
                                         )}
@@ -212,35 +204,43 @@ export const TravelCalendar = ({ trips }: TravelCalendarProps) => {
                 </div>
             </div>
 
-            {/* Days by Country */}
+            {/* Days by Country - Compact List */}
             {Object.keys(daysByCountry).length > 0 && (
-                <div className="bg-gradient-card rounded-2xl border border-border/50 p-6">
-                    <h3 className="font-display text-lg font-bold mb-4">Days Per Country</h3>
-                    <div className="space-y-3">
+                <div className="bg-gradient-card rounded-xl border border-border/50 p-4">
+                    <h3 className="font-display text-sm font-bold mb-3">Days Per Country</h3>
+                    <div className="space-y-2">
                         {Object.entries(daysByCountry)
                             .sort(([, a], [, b]) => b - a)
+                            .slice(0, 5) // Limit to top 5 to save space
                             .map(([code, days]) => {
                                 const country = getCountryByCode(code);
                                 const percentage = totalDays > 0 ? (days / totalDays) * 100 : 0;
 
                                 return (
                                     <div key={code} className="space-y-1">
-                                        <div className="flex items-center justify-between text-sm">
-                                            <span className="flex items-center gap-2">
-                                                <span className="text-lg">{country?.flagEmoji}</span>
-                                                <span className="font-medium">{country?.name || code}</span>
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="flex items-center gap-1.5">
+                                                <span className="text-base">{country?.flagEmoji}</span>
+                                                <span className="font-medium truncate max-w-[120px]">{country?.name || code}</span>
                                             </span>
-                                            <span className="text-muted-foreground">{days} days</span>
+                                            <span className="text-muted-foreground">{days}d</span>
                                         </div>
-                                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                                        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
                                             <div
-                                                className="h-full bg-gradient-to-r from-white/60 to-white/90 rounded-full transition-all duration-500"
+                                                className="h-full bg-gradient-to-r from-white/60 to-white/90 rounded-full"
                                                 style={{ width: `${percentage}%` }}
                                             />
                                         </div>
                                     </div>
                                 );
                             })}
+                        {Object.keys(daysByCountry).length > 5 && (
+                            <div className="text-center pt-1">
+                                <span className="text-[10px] text-muted-foreground italic">
+                                    + {Object.keys(daysByCountry).length - 5} more countries
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

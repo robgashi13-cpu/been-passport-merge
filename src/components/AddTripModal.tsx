@@ -16,9 +16,10 @@ interface AddTripModalProps {
     isOpen: boolean;
     onClose: () => void;
     initialCountryCode?: string;
+    initialDate?: Date;
 }
 
-export const AddTripModal = ({ isOpen, onClose, initialCountryCode }: AddTripModalProps) => {
+export const AddTripModal = ({ isOpen, onClose, initialCountryCode, initialDate }: AddTripModalProps) => {
     const { addTrip } = useUser();
     const [countryCode, setCountryCode] = useState(initialCountryCode || '');
     const [startDate, setStartDate] = useState('');
@@ -30,6 +31,14 @@ export const AddTripModal = ({ isOpen, onClose, initialCountryCode }: AddTripMod
     useEffect(() => {
         if (initialCountryCode) setCountryCode(initialCountryCode);
     }, [initialCountryCode]);
+
+    useEffect(() => {
+        if (initialDate) {
+            const dateStr = initialDate.toISOString().split('T')[0];
+            setStartDate(dateStr);
+            setEndDate(dateStr); // Sets end date same as start date for convenience
+        }
+    }, [initialDate, isOpen]);
 
     // Body scroll lock
     useEffect(() => {
