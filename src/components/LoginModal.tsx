@@ -271,7 +271,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                     </button>
                 </div>
 
-                <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                <div className="p-6 overflow-y-auto custom-scrollbar flex-1 flex flex-col justify-center">
 
                     {/* Mode Toggle */}
                     <div className="flex gap-2 mb-6">
