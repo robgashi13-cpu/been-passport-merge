@@ -106,7 +106,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
         const passport = getCountryByCode(user.passportCode);
 
         return createPortal(
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[9999] flex items-start justify-center p-4 pt-20">
                 <div className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity" onClick={onClose} />
 
                 <div className="relative bg-[#0a0a0a] w-full max-w-2xl min-h-[500px] max-h-[85vh] rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col animate-zoom-in">
@@ -248,7 +248,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
     }
 
     return createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] flex items-start justify-center p-4 pt-20">
             {/* Backdrop */}
             <div className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity" onClick={onClose} />
 
