@@ -186,8 +186,8 @@ const Index = () => {
               </div>
             </TabsContent>
 
-            <TabsContent value="map" className="h-[calc(100vh-12rem)] animate-fade-in focus-visible:outline-none pb-48">
-              <div className="h-full rounded-2xl border border-white/10 bg-white/5 overflow-hidden backdrop-blur-sm">
+            <TabsContent value="map" className="animate-fade-in focus-visible:outline-none pb-48">
+              <div className="h-[60vh] md:h-[calc(100vh-20rem)] rounded-2xl border border-white/10 bg-white/5 overflow-hidden backdrop-blur-sm">
                 <WorldMap
                   visitedCountries={visitedCountries}
                   bucketList={bucketList || []}
@@ -206,6 +206,9 @@ const Index = () => {
                   onCountryClick={(code) => setSelectedCountryCode(code)}
                 />
               </div>
+
+              {/* Extra Spacer for Bottom Navigation/Button visibility */}
+              <div className="h-32 md:h-0"></div>
             </TabsContent>
 
             <TabsContent value="calendar" className="pb-24 lg:pb-8 focus-visible:outline-none">
