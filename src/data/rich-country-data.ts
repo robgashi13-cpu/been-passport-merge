@@ -19,7 +19,7 @@ const PLUGS = {
 export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
     // --- NORTH AMERICA ---
     "US": {
-        description: "A tapestry of diverse landscapes, from the bustling streets of NYC to the vast Grand Canyon. A cultural powerhouse offering everything from Hollywood glamour to deep-south jazz.",
+        description: "A tapestry of diverse landscapes, from the bustling streets of NYC to the vast Grand Canyon.",
         knownFor: ["Hollywood", "Tech Innovation", "National Parks", "Fast Food"],
         majorReligion: "Christianity",
         dialCode: "+1",
@@ -36,10 +36,13 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         emergency: { police: "911", ambulance: "911", fire: "911" },
         alcohol: { drinkingAge: 21, purchaseAge: 21 },
         waterRating: "Safe",
-        vaccinations: "Routine"
+        vaccinations: "Routine",
+        hdi: 0.921,
+        gdp: "$26.8 Trillion",
+        visitors2025: "79M"
     },
     "CA": {
-        description: "Second largest country by area, known for its polite locals, maple syrup, and stunning wilderness ranging from the Rockies to Niagara Falls.",
+        description: "Second largest country by area, known for its polite locals, maple syrup, and stunning wilderness.",
         knownFor: ["Rocky Mountains", "Maple Syrup", "Ice Hockey", "Niagara Falls"],
         majorReligion: "Christianity",
         dialCode: "+1",
@@ -55,7 +58,10 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         emergency: { police: "911", ambulance: "911", fire: "911" },
         alcohol: { drinkingAge: 19, purchaseAge: 19 },
         waterRating: "Safe",
-        vaccinations: "Routine"
+        vaccinations: "Routine",
+        hdi: 0.936,
+        gdp: "$2.1 Trillion",
+        visitors2025: "22M"
     },
     "MX": {
         description: "A land of color and contrast, boasting ancient Mayan ruins, colonial cities, spicy cuisine, and world-class beaches.",
@@ -74,12 +80,15 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         emergency: { police: "911", ambulance: "911", fire: "911" },
         alcohol: { drinkingAge: 18, purchaseAge: 18 },
         waterRating: "Use Bottled Water",
-        vaccinations: "Hep A, Typhoid"
+        vaccinations: "Hep A, Typhoid",
+        hdi: 0.774,
+        gdp: "$1.4 Trillion",
+        visitors2025: "38M"
     },
 
     // --- EUROPE ---
     "GB": {
-        description: "The birthplace of Shakespeare and the Beatles. A blend of historic traditions, rolling countryside, and the cosmopolitan energy of London.",
+        description: "The birthplace of Shakespeare and the Beatles. A blend of historic traditions and modern energy.",
         knownFor: ["Royal Family", "The Beatles", "Tea", "History"],
         majorReligion: "Christianity",
         dialCode: "+44",
@@ -95,10 +104,13 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         emergency: { police: "999", ambulance: "999", fire: "999" },
         alcohol: { drinkingAge: 18, purchaseAge: 18 },
         waterRating: "Safe",
-        vaccinations: "Routine"
+        vaccinations: "Routine",
+        hdi: 0.929,
+        gdp: "$3.1 Trillion",
+        visitors2025: "37M"
     },
     "FR": {
-        description: "The global capital of art, fashion, and gastronomy. From the Eiffel Tower to the lavender fields of Provence, it defines romance.",
+        description: "The global capital of art, fashion, and gastronomy. From the Eiffel Tower to the lavender fields of Provence.",
         knownFor: ["Eiffel Tower", "Wine", "Fashion", "Cuisine"],
         majorReligion: "Christianity (Catholic)",
         dialCode: "+33",
@@ -114,10 +126,13 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         emergency: { police: "112", ambulance: "15", fire: "18" },
         alcohol: { drinkingAge: 18, purchaseAge: 18 },
         waterRating: "Safe",
-        vaccinations: "Routine"
+        vaccinations: "Routine",
+        hdi: 0.901,
+        gdp: "$2.9 Trillion",
+        visitors2025: "90M"
     },
     "DE": {
-        description: "An economic powerhouse known for precision engineering, historic castles, hearty food, and the spirited Oktoberfest.",
+        description: "An economic powerhouse known for precision engineering, historic castles, hearty food, and Oktoberfest.",
         knownFor: ["Cars", "Oktoberfest", "Castles", "Beer"],
         majorReligion: "Christianity",
         dialCode: "+49",
@@ -133,10 +148,13 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         emergency: { police: "110", ambulance: "112", fire: "112" },
         alcohol: { drinkingAge: 16, purchaseAge: 16 },
         waterRating: "Safe",
-        vaccinations: "Routine"
+        vaccinations: "Routine",
+        hdi: 0.947,
+        gdp: "$4.3 Trillion",
+        visitors2025: "35M"
     },
     "IT": {
-        description: "Home to the Roman Empire and the Renaissance. Italy dazzles with its art, architecture, coastlines, and unrivaled cuisine.",
+        description: "Home to the Roman Empire and the Renaissance. Italy dazzles with its art, architecture, and cuisine.",
         knownFor: ["Pasta/Pizza", "Roman History", "Fashion", "Art"],
         majorReligion: "Christianity (Catholic)",
         dialCode: "+39",
@@ -152,10 +170,13 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         emergency: { police: "112", ambulance: "118", fire: "115" },
         alcohol: { drinkingAge: 18, purchaseAge: 18 },
         waterRating: "Safe",
-        vaccinations: "Routine"
+        vaccinations: "Routine",
+        hdi: 0.892,
+        gdp: "$2.1 Trillion",
+        visitors2025: "60M"
     },
     "ES": {
-        description: "A passionate nation of fiestas, flamenco, and tapas. Combines Moorish history with modern vibrancy and stunning beaches.",
+        description: "A passionate nation of fiestas, flamenco, and tapas. Combines Moorish history with modern vibrancy.",
         knownFor: ["Flamenco", "Beaches", "Paella", "Architecture"],
         majorReligion: "Christianity (Catholic)",
         dialCode: "+34",
@@ -171,10 +192,13 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         emergency: { police: "112", ambulance: "061", fire: "080" },
         alcohol: { drinkingAge: 18, purchaseAge: 18 },
         waterRating: "Safe",
-        vaccinations: "Routine"
+        vaccinations: "Routine",
+        hdi: 0.904,
+        gdp: "$1.5 Trillion",
+        visitors2025: "82M"
     },
     "AL": {
-        description: "A hidden gem in the Balkans with pristine beaches along the Albanian Riviera, rugged mountains, and a unique history.",
+        description: "A hidden gem in the Balkans with pristine beaches along the Albanian Riviera and rugged mountains.",
         knownFor: ["Riviera Beaches", "Bunkers", "Hospitality", "Mountains"],
         majorReligion: "Islam / Christianity",
         dialCode: "+355",
@@ -190,10 +214,13 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         emergency: { police: "129", ambulance: "127", fire: "128" },
         alcohol: { drinkingAge: 18, purchaseAge: 18 },
         waterRating: "Bottled Recommended",
-        vaccinations: "Routine"
+        vaccinations: "Routine",
+        hdi: 0.795,
+        gdp: "$19 Billion",
+        visitors2025: "10M"
     },
     "XK": {
-        description: "Europe's youngest country, characterized by its vibrant cafe culture, stunning mountain ranges, and warm, welcoming people.",
+        description: "Europe's youngest country, characterized by its vibrant cafe culture and warm people.",
         knownFor: ["Coffee Culture", "Young Population", "Mountains", "History"],
         majorReligion: "Islam / Christianity",
         dialCode: "+383",
@@ -206,12 +233,15 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         emergency: { police: "192", ambulance: "194", fire: "193" },
         alcohol: { drinkingAge: 18, purchaseAge: 18 },
         waterRating: "Bottled Recommended",
-        vaccinations: "Routine"
+        vaccinations: "Routine",
+        hdi: 0.750,
+        gdp: "$9 Billion",
+        visitors2025: "500k"
     },
 
     // --- ASIA ---
     "JP": {
-        description: "A seamless blend of ancient tradition and futuristic technology. Temples co-exist with neon skyscrapers and bullet trains.",
+        description: "A seamless blend of ancient tradition and futuristic technology.",
         knownFor: ["Anime/Manga", "Sushi", "Technology", "Temples"],
         majorReligion: "Shinto / Buddhism",
         dialCode: "+81",
@@ -227,10 +257,13 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         emergency: { police: "110", ambulance: "119", fire: "119" },
         alcohol: { drinkingAge: 20, purchaseAge: 20 },
         waterRating: "Safe",
-        vaccinations: "Routine"
+        vaccinations: "Routine",
+        hdi: 0.925,
+        gdp: "$4.2 Trillion",
+        visitors2025: "25M"
     },
     "CN": {
-        description: "One of the world's oldest civilizations, featuring the Great Wall, Forbidden City, and hyper-modern cities like Shanghai.",
+        description: "One of the world's oldest civilizations, featuring the Great Wall and hyper-modern cities.",
         knownFor: ["Great Wall", "Pandas", "Tea", "History"],
         majorReligion: "Atheist / Buddhism",
         dialCode: "+86",
@@ -246,10 +279,13 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         emergency: { police: "110", ambulance: "120", fire: "119" },
         alcohol: { drinkingAge: 18, purchaseAge: 18 },
         waterRating: "Use Bottled Water",
-        vaccinations: "Hep A, Typhoid"
+        vaccinations: "Hep A, Typhoid",
+        hdi: 0.768,
+        gdp: "$17.9 Trillion",
+        visitors2025: "60M"
     },
     "IN": {
-        description: "A sensory explosion of colors, spices, and spirituality. Home to the Taj Mahal, bustling bazaars, and diverse landscapes.",
+        description: "A sensory explosion of colors, spices, and spirituality.",
         knownFor: ["Taj Mahal", "Curry", "Bollywood", "Yoga"],
         majorReligion: "Hinduism",
         dialCode: "+91",
@@ -265,10 +301,13 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         emergency: { police: "100", ambulance: "102", fire: "101" },
         alcohol: { drinkingAge: 18, purchaseAge: 18 },
         waterRating: "Unsafe (Bottled Only)",
-        vaccinations: "Hep A, Typhoid, Malaria"
+        vaccinations: "Hep A, Typhoid, Malaria",
+        hdi: 0.633,
+        gdp: "$3.4 Trillion",
+        visitors2025: "15M"
     },
     "TH": {
-        description: "The land of smiles, famous for its tropical beaches, opulent royal palaces, ancient ruins, and ornate temples.",
+        description: "The land of smiles, famous for its tropical beaches and ornate temples.",
         knownFor: ["Street Food", "Beaches", "Temples", "Smiles"],
         majorReligion: "Buddhism",
         dialCode: "+66",
@@ -284,10 +323,13 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         emergency: { police: "191", ambulance: "1669", fire: "199" },
         alcohol: { drinkingAge: 20, purchaseAge: 20 },
         waterRating: "Use Bottled Water",
-        vaccinations: "Hep A, Typhoid"
+        vaccinations: "Hep A, Typhoid",
+        hdi: 0.777,
+        gdp: "$495 Billion",
+        visitors2025: "28M"
     },
     "ID": {
-        description: "An archipelago of thousands of islands, with Bali being the crown jewel. Offers volcanoes, jungles, and rich cultural heritage.",
+        description: "An archipelago of thousands of islands, with Bali being the crown jewel.",
         knownFor: ["Bali", "Volcanoes", "Komodo Dragons", "Coffee"],
         majorReligion: "Islam (Hindu in Bali)",
         dialCode: "+62",
@@ -302,12 +344,15 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         emergency: { police: "110", ambulance: "118", fire: "113" },
         alcohol: { drinkingAge: 21, purchaseAge: 21 },
         waterRating: "Use Bottled Water",
-        vaccinations: "Hep A, Typhoid"
+        vaccinations: "Hep A, Typhoid",
+        hdi: 0.718,
+        gdp: "$1.3 Trillion",
+        visitors2025: "11M"
     },
 
     // --- OCEANIA ---
     "AU": {
-        description: "A continent-country with unique wildlife like kangaroos, the vast Outback, and the iconic Sydney Opera House and Great Barrier Reef.",
+        description: "A continent-country with unique wildlife, the vast Outback, and the Great Barrier Reef.",
         knownFor: ["Kangaroos", "Outback", "Surfing", "Great Barrier Reef"],
         majorReligion: "Christianity",
         dialCode: "+61",
@@ -323,12 +368,15 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         emergency: { police: "000", ambulance: "000", fire: "000" },
         alcohol: { drinkingAge: 18, purchaseAge: 18 },
         waterRating: "Safe",
-        vaccinations: "Routine"
+        vaccinations: "Routine",
+        hdi: 0.951,
+        gdp: "$1.7 Trillion",
+        visitors2025: "7M"
     },
 
     // --- LATIN AMERICA ---
     "BR": {
-        description: "Largest country in South America, famous for the Amazon Rainforest, Rio's Carnival, and a vibrant football culture.",
+        description: "Largest country in South America, famous for the Amazon Rainforest and Rio's Carnival.",
         knownFor: ["Amazon Rainforest", "Carnival", "Football", "Beaches"],
         majorReligion: "Christianity (Catholic)",
         dialCode: "+55",
@@ -344,12 +392,15 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         emergency: { police: "190", ambulance: "192", fire: "193" },
         alcohol: { drinkingAge: 18, purchaseAge: 18 },
         waterRating: "Use Bottled Water",
-        vaccinations: "Yellow Fever, Hep A"
+        vaccinations: "Yellow Fever, Hep A",
+        hdi: 0.754,
+        gdp: "$1.9 Trillion",
+        visitors2025: "6M"
     },
 
     // --- MIDDLE EAST ---
     "AE": {
-        description: "A federation of seven emirates, known for luxury shopping, ultramodern architecture like the Burj Khalifa, and vast deserts.",
+        description: "Known for luxury shopping, ultramodern architecture, and vast deserts.",
         knownFor: ["Dubai", "Burj Khalifa", "Luxury", "Desert"],
         majorReligion: "Islam",
         dialCode: "+971",
@@ -364,6 +415,9 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         emergency: { police: "999", ambulance: "998", fire: "997" },
         alcohol: { drinkingAge: 21, purchaseAge: 21 },
         waterRating: "Safe (Desalinated)",
-        vaccinations: "Routine"
+        vaccinations: "Routine",
+        hdi: 0.911,
+        gdp: "$507 Billion",
+        visitors2025: "22M"
     },
 };

@@ -42,4 +42,7 @@ export interface RichCountryInfo {
     };
     waterRating: string;
     vaccinations: string;
+    hdi?: number;
+    gdp?: string;
+    visitors2025?: string;
 }

@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Search, Check, Plus, MapPin } from 'lucide-react';
+import { X, Search, Check, Plus, MapPin, Users } from 'lucide-react';
 import { countries } from '@/data/countries';
+import { RICH_COUNTRIES_DB } from '@/data/rich-country-data';
 import { Input } from '@/components/ui/input';
 
 interface CountryBrowserModalProps {
@@ -115,6 +116,8 @@ export const CountryBrowserModal = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {filteredCountries.map(country => {
                             const isVisited = visitedCountries.includes(country.code);
+                            const visitors = RICH_COUNTRIES_DB[country.code]?.visitors2025;
+
                             return (
                                 <button
                                     key={country.code}
@@ -127,7 +130,15 @@ export const CountryBrowserModal = ({
                                     <span className="text-2xl">{country.flagEmoji}</span>
                                     <div className="flex-1 min-w-0">
                                         <div className="font-medium text-white truncate">{country.name}</div>
-                                        <div className="text-xs text-white/40">{country.continent}</div>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            <div className="text-xs text-white/40">{country.continent}</div>
+                                            {visitors && (
+                                                <div className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded-full border border-white/10">
+                                                    <Users className="w-2.5 h-2.5 text-white/40" />
+                                                    <span className="text-[10px] font-bold text-white/60 font-numbers">{visitors}</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                     {isVisited ? (
                                         <Check className="w-5 h-5 text-green-400 flex-shrink-0" />

@@ -3,7 +3,7 @@ import { fetchCountrySummary, WikiSummary } from '@/services/wikiService';
 import { useEffect, useState } from 'react';
 import { Country, getCountryByCode, countries } from '@/data/countries';
 import { getVisaRequirementFromMatrix, getVisaRequirementColor, getVisaRequirementLabel } from '@/data/visaMatrix';
-import { X, Globe, Users, MapPin, Plane, CreditCard, Check, AlertCircle, Phone, Plug, AlertTriangle, Calendar as CalendarIcon, Tag, Heart, DollarSign, CloudSun, Sparkles, Car, Droplet, Syringe, Beer } from 'lucide-react';
+import { X, Globe, Users, MapPin, Plane, CreditCard, Check, AlertCircle, Phone, Plug, AlertTriangle, Calendar as CalendarIcon, Tag, Heart, DollarSign, CloudSun, Sparkles, Car, Droplet, Syringe, Beer, TrendingUp, Briefcase, Activity } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface CountryDetailsProps {
@@ -238,15 +238,17 @@ export const CountryDetails = ({
                             <div className="bg-white/5 rounded-3xl p-6 border border-white/5">
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="font-display font-bold text-lg flex items-center gap-2"><CalendarIcon className="w-4 h-4 text-white/60" /> Public Holidays</h3>
-                                    <button
-                                        onClick={() => setAllHolidaysOpen(!allHolidaysOpen)}
-                                        className="text-xs font-bold text-white/50 hover:text-white transition-colors bg-white/5 px-3 py-1 rounded-full"
+                                    <a
+                                        href={`https://www.google.com/search?q=public+holidays+in+${country.name}+2025`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-[10px] font-bold text-white/50 hover:text-white transition-colors bg-white/5 px-3 py-1.5 rounded-full flex items-center gap-1 uppercase tracking-wider"
                                     >
-                                        {allHolidaysOpen ? "Show Less" : "View All"}
-                                    </button>
+                                        Search Google ↗
+                                    </a>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {richData?.publicHolidays.slice(0, allHolidaysOpen ? undefined : 4).map((h, i) => (
+                                    {richData?.publicHolidays.slice(0, 4).map((h, i) => (
                                         <div key={i} className="flex justify-between items-center bg-black/20 p-3 rounded-xl border border-white/5">
                                             <span className="font-medium text-sm text-white/90">{h.name}</span>
                                             <span className="font-numbers text-xs text-white/50 bg-white/5 px-2 py-1 rounded-md">{h.date}</span>
@@ -445,6 +447,24 @@ export const CountryDetails = ({
 
                         {/* DETAILS / SAFETY TAB */}
                         <TabsContent value="details" className="space-y-6 mt-2 animate-slide-up">
+
+                            {/* Macro Stats (GDP / HDI) */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-white/5 rounded-3xl p-5 border border-white/5 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-4 opacity-10">
+                                        <Briefcase className="w-16 h-16 text-white" />
+                                    </div>
+                                    <div className="text-white/40 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5"><Briefcase className="w-3.5 h-3.5" /> GDP</div>
+                                    <div className="font-numbers text-xl font-bold">{richData?.gdp || 'N/A'}</div>
+                                </div>
+                                <div className="bg-white/5 rounded-3xl p-5 border border-white/5 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-4 opacity-10">
+                                        <Activity className="w-16 h-16 text-white" />
+                                    </div>
+                                    <div className="text-white/40 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5"><Activity className="w-3.5 h-3.5" /> HDI</div>
+                                    <div className="font-numbers text-xl font-bold">{richData?.hdi || 'N/A'}</div>
+                                </div>
+                            </div>
                             {/* Emergency Grid */}
                             <div className="grid grid-cols-1 gap-4">
                                 <div className="bg-red-500/10 border border-red-500/20 rounded-3xl p-6 relative overflow-hidden">
