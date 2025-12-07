@@ -4,6 +4,7 @@ import { countries, getCountryByCode } from '@/data/countries';
 import { getVisaRequirementFromMatrix, getVisaRequirementColor, getVisaRequirementLabel, VisaRequirement } from '@/data/visaMatrix';
 import { VISA_SUBSTITUTIONS, AVAILABLE_ADDITIONAL_VISAS, getVisaPowerGroups } from '@/data/visaSubstitutions';
 import { MapPin, Globe, CreditCard, Maximize2, Minimize2 } from 'lucide-react';
+import { StatusBar } from '@capacitor/status-bar';
 
 // Import TopoJSON data
 import worldData from '@/data/world-110m.json';
@@ -160,6 +161,29 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
   const [internalIsFullScreen, setInternalIsFullScreen] = useState(false);
   const isFullScreen = externalIsFullScreen || internalIsFullScreen;
 
+  // Handle True Full Screen (Hide Status Bar)
+  useEffect(() => {
+    const handleFullScreenChange = async () => {
+      try {
+        if (isFullScreen) {
+          await StatusBar.hide();
+        } else {
+          await StatusBar.show();
+        }
+      } catch (err) {
+        console.warn("StatusBar plugin not available or failed:", err);
+      }
+    };
+    handleFullScreenChange();
+
+    return () => {
+      // Ensure status bar returns on unmount/cleanup if we were in fullscreen
+      if (isFullScreen) {
+        StatusBar.show().catch(() => { });
+      }
+    };
+  }, [isFullScreen]);
+
   const [tooltipContent, setTooltipContent] = useState<{
     name: string;
     flag: string;
@@ -233,7 +257,7 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
   };
 
   return (
-    <div className={`space-y-4 md:space-y-6 animate-fade-in flex flex-col transition-all duration-500 ${isFullScreen ? 'fixed inset-0 z-[100] bg-black' : 'h-full'}`}>
+    <div className={`space-y-4 md:space-y-6 animate-fade-in flex flex-col transition-all duration-500 ${isFullScreen ? 'fixed inset-0 z-[100] bg-black w-screen h-screen' : 'h-full'}`}>
       <div className={`text-center py-4 md:py-6 flex-shrink-0 relative pointer-events-none ${isFullScreen ? 'absolute top-0 left-0 right-0 z-10 pt-safe bg-gradient-to-b from-black/80 to-transparent' : ''}`}>
         {!isFullScreen && (
           <h2 className="font-display text-2xl md:text-4xl font-bold mb-2 animate-slide-up">
