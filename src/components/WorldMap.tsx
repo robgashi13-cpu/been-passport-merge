@@ -3,7 +3,7 @@ import { ComposableMap, Geographies, Geography, ZoomableGroup, Marker } from "re
 import { countries, getCountryByCode } from '@/data/countries';
 import { getVisaRequirementFromMatrix, getVisaRequirementColor, getVisaRequirementLabel, VisaRequirement } from '@/data/visaMatrix';
 import { VISA_SUBSTITUTIONS, AVAILABLE_ADDITIONAL_VISAS, getVisaPowerGroups } from '@/data/visaSubstitutions';
-import { MapPin, Globe, CreditCard, Maximize2, Minimize2 } from 'lucide-react';
+import { MapPin, Globe, CreditCard, Maximize2, Minimize2, X } from 'lucide-react';
 import { StatusBar } from '@capacitor/status-bar';
 
 // Import TopoJSON data
@@ -324,9 +324,9 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
             e.stopPropagation(); // Prevent map click
             setInternalIsFullScreen(!internalIsFullScreen);
           }}
-          className={`absolute z-[10000] p-2 md:p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-black/60 transition-all shadow-xl ${isFullScreen ? 'bottom-10 right-4' : 'bottom-4 right-4'}`}
+          className={`absolute z-[10000] p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-black/60 transition-all shadow-xl ${isFullScreen ? 'bottom-10 right-4 scale-125' : 'bottom-4 right-4'}`}
         >
-          {isFullScreen ? <Minimize2 className="w-5 h-5 md:w-6 md:h-6" /> : <Maximize2 className="w-5 h-5 md:w-6 md:h-6" />}
+          {isFullScreen ? <X className="w-6 h-6" /> : <Maximize2 className="w-5 h-5 md:w-6 md:h-6" />}
         </button>
 
         {/* ... Tooltip ... */}
@@ -367,7 +367,7 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
           {/* ... Map Component ... */}
           <ComposableMap
             projection="geoMercator"
-            projectionConfig={{ scale: isFullScreen ? 140 : 100, center: [0, 0] }}
+            projectionConfig={{ scale: isFullScreen ? 180 : 100, center: [0, 0] }}
             style={{ width: "100%", height: "100%", position: "absolute", inset: 0 }}
           >
             {/* ... ZoomableGroup ... */}
