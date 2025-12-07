@@ -91,7 +91,6 @@ export const ExploreDestinations = ({ onCountryClick }: ExploreDestinationsProps
                                 Best Season: {topDestinations[0].bestMonth}
                             </span>
                             <span className="flex items-center gap-1 text-yellow-400">
-                                <DollarSign className="w-4 h-4" />
                                 Expensive: {topDestinations[0].averageCost}
                             </span>
                         </div>
@@ -170,7 +169,6 @@ const DestinationCard = ({ destination, rank, onClick }: DestinationCardProps) =
                     Best Season: {destination.bestMonth}
                 </span>
                 <span className="flex items-center gap-1 text-yellow-400">
-                    <DollarSign className="w-3 h-3" />
                     Expensive: {destination.averageCost}
                 </span>
             </div>

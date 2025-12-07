@@ -4,28 +4,29 @@ export interface City {
     isCapital?: boolean;
     latitude?: number;
     longitude?: number;
+    bestSeason?: string;
 }
 
 export const citiesByCountry: Record<string, City[]> = {
     // === NORTH AMERICA ===
     "US": [
-        { name: "New York City", population: 8419600, latitude: 40.7128, longitude: -74.0060 },
-        { name: "Los Angeles", population: 3980400, latitude: 34.0522, longitude: -118.2437 },
-        { name: "Chicago", population: 2716000, latitude: 41.8781, longitude: -87.6298 },
-        { name: "Houston", population: 2328000, latitude: 29.7604, longitude: -95.3698 },
-        { name: "Phoenix", population: 1680992 },
-        { name: "Philadelphia", population: 1584064 },
-        { name: "San Antonio", population: 1547253 },
-        { name: "San Diego", population: 1423851 },
-        { name: "Dallas", population: 1343573 },
-        { name: "San Jose", population: 1021795 },
-        { name: "Washington, D.C.", population: 689545, isCapital: true },
-        { name: "Miami", population: 442241 },
-        { name: "San Francisco", population: 873965 },
-        { name: "Seattle", population: 737015 },
-        { name: "Boston", population: 675647 },
-        { name: "Las Vegas", population: 641903 },
-        { name: "Orlando", population: 307573 }
+        { name: "New York City", population: 8419600, latitude: 40.7128, longitude: -74.0060, bestSeason: "Apr-Jun, Sep-Nov" },
+        { name: "Los Angeles", population: 3980400, latitude: 34.0522, longitude: -118.2437, bestSeason: "Mar-May, Sep-Nov" },
+        { name: "Chicago", population: 2716000, latitude: 41.8781, longitude: -87.6298, bestSeason: "Jun-Sep" },
+        { name: "Houston", population: 2328000, latitude: 29.7604, longitude: -95.3698, bestSeason: "Feb-Apr, Oct-Nov" },
+        { name: "Phoenix", population: 1680992, bestSeason: "Nov-Apr" },
+        { name: "Philadelphia", population: 1584064, bestSeason: "Mar-May" },
+        { name: "San Antonio", population: 1547253, bestSeason: "Nov-Apr" },
+        { name: "San Diego", population: 1423851, bestSeason: "Mar-May, Sep-Nov" },
+        { name: "Dallas", population: 1343573, bestSeason: "Sep-Nov, Mar-May" },
+        { name: "San Jose", population: 1021795, bestSeason: "Jun-Sep" },
+        { name: "Washington, D.C.", population: 689545, isCapital: true, bestSeason: "Sep-Nov, Mar-May" },
+        { name: "Miami", population: 442241, bestSeason: "Nov-Apr" },
+        { name: "San Francisco", population: 873965, bestSeason: "Sep-Nov" },
+        { name: "Seattle", population: 737015, bestSeason: "Jun-Sep" },
+        { name: "Boston", population: 675647, bestSeason: "Jun-Oct" },
+        { name: "Las Vegas", population: 641903, bestSeason: "Mar-May, Sep-Nov" },
+        { name: "Orlando", population: 307573, bestSeason: "Jan-Apr" }
     ],
     "CA": [
         { name: "Toronto", population: 2731571 },
@@ -52,42 +53,42 @@ export const citiesByCountry: Record<string, City[]> = {
     ],
     // === EUROPE ===
     "GB": [
-        { name: "London", population: 8982000, isCapital: true },
-        { name: "Birmingham", population: 1141816 },
-        { name: "Manchester", population: 553230 },
-        { name: "Glasgow", population: 633120 },
-        { name: "Leeds", population: 793139 },
-        { name: "Liverpool", population: 496784 },
-        { name: "Newcastle", population: 300196 },
-        { name: "Sheffield", population: 584853 },
-        { name: "Bristol", population: 467099 },
-        { name: "Edinburgh", population: 524930 },
-        { name: "Cardiff", population: 362750 },
-        { name: "Belfast", population: 341877 }
+        { name: "London", population: 8982000, isCapital: true, bestSeason: "May-Sep" },
+        { name: "Birmingham", population: 1141816, bestSeason: "May-Sep" },
+        { name: "Manchester", population: 553230, bestSeason: "Jun-Aug" },
+        { name: "Glasgow", population: 633120, bestSeason: "May-Aug" },
+        { name: "Leeds", population: 793139, bestSeason: "May-Sep" },
+        { name: "Liverpool", population: 496784, bestSeason: "May-Sep" },
+        { name: "Newcastle", population: 300196, bestSeason: "Jun-Aug" },
+        { name: "Sheffield", population: 584853, bestSeason: "May-Sep" },
+        { name: "Bristol", population: 467099, bestSeason: "May-Sep" },
+        { name: "Edinburgh", population: 524930, bestSeason: "Jun-Aug" },
+        { name: "Cardiff", population: 362750, bestSeason: "Jun-Aug" },
+        { name: "Belfast", population: 341877, bestSeason: "May-Aug" }
     ],
     "FR": [
-        { name: "Paris", population: 2165423, isCapital: true },
-        { name: "Marseille", population: 868277 },
-        { name: "Lyon", population: 518635 },
-        { name: "Toulouse", population: 479553 },
-        { name: "Nice", population: 340017 },
-        { name: "Nantes", population: 314138 },
-        { name: "Montpellier", population: 285121 },
-        { name: "Strasbourg", population: 284677 },
-        { name: "Bordeaux", population: 257068 },
-        { name: "Lille", population: 232787 }
+        { name: "Paris", population: 2165423, isCapital: true, bestSeason: "Apr-Oct" },
+        { name: "Marseille", population: 868277, bestSeason: "May-Oct" },
+        { name: "Lyon", population: 518635, bestSeason: "Apr-Oct" },
+        { name: "Toulouse", population: 479553, bestSeason: "May-Oct" },
+        { name: "Nice", population: 340017, bestSeason: "May-Oct" },
+        { name: "Nantes", population: 314138, bestSeason: "Jun-Sep" },
+        { name: "Montpellier", population: 285121, bestSeason: "May-Oct" },
+        { name: "Strasbourg", population: 284677, bestSeason: "May-Oct" },
+        { name: "Bordeaux", population: 257068, bestSeason: "May-Oct" },
+        { name: "Lille", population: 232787, bestSeason: "Jun-Sep" }
     ],
     "DE": [
-        { name: "Berlin", population: 3769000, isCapital: true },
-        { name: "Hamburg", population: 1841000 },
-        { name: "Munich", population: 1472000 },
-        { name: "Cologne", population: 1086000 },
-        { name: "Frankfurt", population: 753056 },
-        { name: "Stuttgart", population: 634830 },
-        { name: "Düsseldorf", population: 619294 },
-        { name: "Leipzig", population: 587857 },
-        { name: "Dortmund", population: 587010 },
-        { name: "Essen", population: 583109 }
+        { name: "Berlin", population: 3769000, isCapital: true, bestSeason: "May-Sep" },
+        { name: "Hamburg", population: 1841000, bestSeason: "May-Sep" },
+        { name: "Munich", population: 1472000, bestSeason: "May-Oct" },
+        { name: "Cologne", population: 1086000, bestSeason: "May-Oct" },
+        { name: "Frankfurt", population: 753056, bestSeason: "May-Oct" },
+        { name: "Stuttgart", population: 634830, bestSeason: "May-Oct" },
+        { name: "Düsseldorf", population: 619294, bestSeason: "May-Oct" },
+        { name: "Leipzig", population: 587857, bestSeason: "May-Sep" },
+        { name: "Dortmund", population: 587010, bestSeason: "May-Sep" },
+        { name: "Essen", population: 583109, bestSeason: "May-Sep" }
     ],
     "IT": [
         { name: "Rome", population: 2873000, isCapital: true },

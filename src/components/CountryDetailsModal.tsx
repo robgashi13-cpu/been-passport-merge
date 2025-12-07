@@ -305,6 +305,12 @@ export const CountryDetailsModal = ({ countryCode, onClose }: CountryDetailsModa
                                                                 {city.population && (
                                                                     <span>{(city.population / 1000000).toFixed(2)}M people</span>
                                                                 )}
+                                                                {city.bestSeason && (
+                                                                    <span className="flex items-center gap-1 text-green-400">
+                                                                        <Calendar className="w-3 h-3" />
+                                                                        {city.bestSeason}
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>
