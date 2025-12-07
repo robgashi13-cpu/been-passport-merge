@@ -289,16 +289,19 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
         )}
       </div>
 
-      {/* Full Screen Toggle Button */}
-      <button
-        onClick={() => setInternalIsFullScreen(!internalIsFullScreen)}
-        className={`absolute z-50 p-3 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-white hover:bg-white/20 transition-all shadow-xl ${isFullScreen ? 'bottom-8 right-4' : 'bottom-4 right-4'}`}
-      >
-        {isFullScreen ? <Minimize2 className="w-6 h-6" /> : <Maximize2 className="w-6 h-6" />}
-      </button>
-
       {/* Interactive 2D Map */}
       <div className={`relative bg-gradient-card rounded-xl md:rounded-2xl border border-border/50 overflow-hidden hover-glow transition-all duration-500 flex-grow flex flex-col ${isFullScreen ? 'h-full rounded-none border-none' : 'p-2 md:p-8'}`}>
+        {/* Full Screen Toggle Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent map click
+            setInternalIsFullScreen(!internalIsFullScreen);
+          }}
+          className="absolute bottom-4 right-4 z-50 p-2 md:p-3 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white hover:bg-black/60 transition-all shadow-xl"
+        >
+          {isFullScreen ? <Minimize2 className="w-5 h-5 md:w-6 md:h-6" /> : <Maximize2 className="w-5 h-5 md:w-6 md:h-6" />}
+        </button>
+
         {/* Tooltip */}
         {tooltipContent && (
           <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10 bg-black/95 text-white px-3 py-2 md:px-4 md:py-3 rounded-lg md:rounded-xl border border-white/20 shadow-2xl backdrop-blur-sm animate-fade-in max-w-[200px] md:max-w-none pointer-events-none">
