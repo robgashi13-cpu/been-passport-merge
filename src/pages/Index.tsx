@@ -164,7 +164,7 @@ const Index = () => {
           showDesktopNav={true}
         />
 
-        <main className="container mx-auto px-4 pb-32" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 140px)' }}>
+        <main className="container mx-auto px-4 pb-32" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 80px)' }}>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsContent value="dashboard" className="space-y-6 animate-fade-in focus-visible:outline-none">
               <Dashboard stats={stats} visitedCountries={visitedCountries} />
