@@ -106,133 +106,141 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
         const passport = getCountryByCode(user.passportCode);
 
         return createPortal(
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
-                <div className="bg-gradient-card border border-border/50 rounded-2xl w-full max-w-2xl p-6 animate-scale-in max-h-[85vh] overflow-y-auto">
-                    <div className="flex items-center justify-between mb-6">
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity" onClick={onClose} />
+
+                <div className="relative bg-[#0a0a0a] w-full max-w-2xl max-h-[85vh] rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col animate-zoom-in">
+                    <div className="flex items-center justify-between p-6 border-b border-white/10 flex-shrink-0">
                         <h2 className="font-display text-2xl font-bold">Profile</h2>
                         <button onClick={onClose} className="p-2 rounded-lg hover:bg-white/10 transition-colors">
                             <X className="w-5 h-5" />
                         </button>
                     </div>
 
-                    <div className="text-center mb-6">
-                        <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
-                            <User className="w-10 h-10" />
+                    <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+
+                        <div className="text-center mb-6">
+                            <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
+                                <User className="w-10 h-10" />
+                            </div>
+                            <h3 className="text-xl font-bold">{user.name}</h3>
+                            <p className="text-muted-foreground">{user.email}</p>
                         </div>
-                        <h3 className="text-xl font-bold">{user.name}</h3>
-                        <p className="text-muted-foreground">{user.email}</p>
-                    </div>
 
-                    {/* Tabs */}
-                    <div className="flex gap-2 mb-6 p-1 bg-white/5 rounded-xl">
-                        <button
-                            onClick={() => setActiveTab('stats')}
-                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'stats' ? 'bg-white text-black shadow-lg' : 'text-white/60 hover:text-white'}`}
-                        >
-                            Stats
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('achievements')}
-                            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'achievements' ? 'bg-white text-black shadow-lg' : 'text-white/60 hover:text-white'}`}
-                        >
-                            Achievements
-                        </button>
-                    </div>
+                        {/* Tabs */}
+                        <div className="flex gap-2 mb-6 p-1 bg-white/5 rounded-xl">
+                            <button
+                                onClick={() => setActiveTab('stats')}
+                                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'stats' ? 'bg-white text-black shadow-lg' : 'text-white/60 hover:text-white'}`}
+                            >
+                                Stats
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('achievements')}
+                                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'achievements' ? 'bg-white text-black shadow-lg' : 'text-white/60 hover:text-white'}`}
+                            >
+                                Achievements
+                            </button>
+                        </div>
 
-                    {activeTab === 'stats' ? (
-                        <>
-                            <div className="bg-white/5 rounded-xl p-4 mb-6">
-                                <div className="flex items-center gap-3">
-                                    <span className="text-3xl">{passport?.flagEmoji}</span>
-                                    <div>
-                                        <div className="font-medium">{passport?.name} Passport</div>
-                                        <div className="text-sm text-muted-foreground">
-                                            {user.visitedCountries.length} countries visited
+                        {activeTab === 'stats' ? (
+                            <>
+                                <div className="bg-white/5 rounded-xl p-4 mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-3xl">{passport?.flagEmoji}</span>
+                                        <div>
+                                            <div className="font-medium">{passport?.name} Passport</div>
+                                            <div className="text-sm text-muted-foreground">
+                                                {user.visitedCountries.length} countries visited
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="grid grid-cols-2 gap-4 mb-6">
-                                <div className="bg-white/5 rounded-xl p-4 text-center">
-                                    <div className="font-display text-2xl font-bold">{user.visitedCountries.length}</div>
-                                    <div className="text-xs text-muted-foreground">Countries</div>
-                                </div>
-                                <div className="bg-white/5 rounded-xl p-4 text-center">
-                                    <div className="font-display text-2xl font-bold">{user.bucketList.length}</div>
-                                    <div className="text-xs text-muted-foreground">Bucket List</div>
-                                </div>
-                            </div>
-
-                            {/* Account Settings / Change Password */}
-                            <div className="mb-6 border-t border-white/10 pt-6">
-                                <h4 className="text-sm font-bold text-white mb-3">Account Settings</h4>
-                                {isChangingPassword ? (
-                                    <form onSubmit={handleChangePassword} className="space-y-3 bg-white/5 p-4 rounded-xl border border-white/10">
-                                        <div className="relative">
-                                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                            <input
-                                                type="password"
-                                                placeholder="New Password"
-                                                value={newPassword}
-                                                onChange={(e) => setNewPassword(e.target.value)}
-                                                className="w-full bg-black/40 border border-white/10 rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none focus:border-white/30"
-                                                required
-                                                minLength={6}
-                                            />
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setIsChangingPassword(false);
-                                                    setNewPassword('');
-                                                    setError('');
-                                                }}
-                                                className="flex-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition-colors"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                type="submit"
-                                                disabled={isLoading}
-                                                className="flex-1 py-2 rounded-lg bg-white text-black text-sm font-medium hover:bg-white/90 transition-colors disabled:opacity-50"
-                                            >
-                                                {isLoading ? 'Saving...' : 'Save'}
-                                            </button>
-                                        </div>
-                                    </form>
-                                ) : (
-                                    <button
-                                        onClick={() => setIsChangingPassword(true)}
-                                        className="w-full flex items-center gap-2 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-left"
-                                    >
-                                        <div className="p-2 bg-white/5 rounded-lg">
-                                            <Lock className="w-4 h-4 text-white/60" />
-                                        </div>
-                                        <span className="text-sm font-medium">Change Password</span>
-                                    </button>
-                                )}
-                                {successMessage && (
-                                    <div className="mt-3 p-3 bg-green-500/20 border border-green-500/30 rounded-lg text-sm text-green-400 text-center animate-fade-in">
-                                        {successMessage}
+                                <div className="grid grid-cols-2 gap-4 mb-6">
+                                    <div className="bg-white/5 rounded-xl p-4 text-center">
+                                        <div className="font-display text-2xl font-bold">{user.visitedCountries.length}</div>
+                                        <div className="text-xs text-muted-foreground">Countries</div>
                                     </div>
-                                )}
-                            </div>
-                        </>
-                    ) : (
-                        <div className="mb-6">
-                            <AchievementList visitedCountries={user.visitedCountries} />
-                        </div>
-                    )}
+                                    <div className="bg-white/5 rounded-xl p-4 text-center">
+                                        <div className="font-display text-2xl font-bold">{user.bucketList.length}</div>
+                                        <div className="text-xs text-muted-foreground">Bucket List</div>
+                                    </div>
+                                </div>
 
-                    <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors border border-red-500/20"
-                    >
-                        <LogOut className="w-5 h-5" />
-                        Sign Out
-                    </button>
+                                {/* Account Settings / Change Password */}
+                                <div className="mb-6 border-t border-white/10 pt-6">
+                                    <h4 className="text-sm font-bold text-white mb-3">Account Settings</h4>
+                                    {isChangingPassword ? (
+                                        <form onSubmit={handleChangePassword} className="space-y-3 bg-white/5 p-4 rounded-xl border border-white/10">
+                                            <div className="relative">
+                                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                                                <input
+                                                    type="password"
+                                                    placeholder="New Password"
+                                                    value={newPassword}
+                                                    onChange={(e) => setNewPassword(e.target.value)}
+                                                    className="w-full bg-black/40 border border-white/10 rounded-lg py-2 pl-9 pr-3 text-sm focus:outline-none focus:border-white/30"
+                                                    required
+                                                    minLength={6}
+                                                />
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setIsChangingPassword(false);
+                                                        setNewPassword('');
+                                                        setError('');
+                                                    }}
+                                                    className="flex-1 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm transition-colors"
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    type="submit"
+                                                    disabled={isLoading}
+                                                    className="flex-1 py-2 rounded-lg bg-white text-black text-sm font-medium hover:bg-white/90 transition-colors disabled:opacity-50"
+                                                >
+                                                    {isLoading ? 'Saving...' : 'Save'}
+                                                </button>
+                                            </div>
+                                        </form>
+                                    ) : (
+                                        <button
+                                            onClick={() => setIsChangingPassword(true)}
+                                            className="w-full flex items-center gap-2 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-left"
+                                        >
+                                            <div className="p-2 bg-white/5 rounded-lg">
+                                                <Lock className="w-4 h-4 text-white/60" />
+                                            </div>
+                                            <span className="text-sm font-medium">Change Password</span>
+                                        </button>
+                                    )}
+                                    {successMessage && (
+                                        <div className="mt-3 p-3 bg-green-500/20 border border-green-500/30 rounded-lg text-sm text-green-400 text-center animate-fade-in">
+                                            {successMessage}
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        ) : (
+                            <div className="mb-6">
+                                <AchievementList visitedCountries={user.visitedCountries} />
+                            </div>
+                        )}
+
+                    </div>
+
+                    <div className="p-6 border-t border-white/10 bg-white/5 flex-shrink-0">
+                        <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors border border-red-500/20"
+                        >
+                            <LogOut className="w-5 h-5" />
+                            Sign Out
+                        </button>
+                    </div>
                 </div>
             </div>,
             document.body
@@ -247,7 +255,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
             {/* Modal */}
             <div className="relative bg-[#0a0a0a] w-full max-w-2xl max-h-[85vh] rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col animate-zoom-in">
                 {/* Header */}
-                <div className="bg-white/5 p-4 flex items-center justify-between border-b border-white/10">
+                <div className="bg-white/5 p-4 flex items-center justify-between border-b border-white/10 flex-shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-gold via-gold-dark to-transparent rounded-full p-[1px]">
                             <div className="w-full h-full bg-black rounded-full flex items-center justify-center overflow-hidden">
@@ -263,7 +271,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                     </button>
                 </div>
 
-                <div className="p-6 overflow-y-auto custom-scrollbar">
+                <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
 
                     {/* Mode Toggle */}
                     <div className="flex gap-2 mb-6">
