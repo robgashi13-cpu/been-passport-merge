@@ -253,7 +253,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
             <div className="absolute inset-0 bg-black/80 backdrop-blur-md transition-opacity" onClick={onClose} />
 
             {/* Modal */}
-            <div className="relative bg-[#0a0a0a] w-full max-w-2xl max-h-[85vh] rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col animate-zoom-in">
+            <div className="relative bg-[#0a0a0a] w-full max-w-2xl min-h-[500px] max-h-[85vh] rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col animate-zoom-in">
                 {/* Header */}
                 <div className="bg-white/5 p-4 flex items-center justify-between border-b border-white/10 flex-shrink-0">
                     <div className="flex items-center gap-3">
