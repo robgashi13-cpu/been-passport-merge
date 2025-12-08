@@ -181,19 +181,6 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
         </button>
       </div>
 
-      {/* Sign Out - Fixed at bottom */}
-      <div className="mt-auto pt-6 pb-6 px-1">
-        {isLoggedIn && (
-          <button
-            onClick={logout}
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors border border-red-500/20"
-          >
-            <LogOut className="w-5 h-5" />
-            Sign Out
-          </button>
-        )}
-      </div>
-
       {/* Modals */}
       <VisitedCountriesModal
         isOpen={showVisitedModal}
