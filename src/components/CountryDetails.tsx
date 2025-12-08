@@ -203,13 +203,14 @@ export const CountryDetails = ({
                         </div>
 
                         <div className="flex items-center gap-2 pr-10">
-                            {/* NEW: Cities Visited Pill (Visible without scrolling tabs) */}
+                            {/* NEW: Regions Visited Pill (Visible without scrolling tabs) */}
                             {cities.length > 0 && (
                                 <div className="hidden min-[400px]:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/50 border border-border/50 backdrop-blur-md self-center">
                                     <MapPin className={`w-3.5 h-3.5 ${visitedCountInCountry > 0 ? 'text-green-500' : 'text-muted-foreground'}`} />
                                     <div className="flex items-baseline gap-1">
+                                        <span className="text-xs text-muted-foreground/80">Regions</span>
                                         <span className="text-sm font-bold text-foreground font-numbers">{visitedCountInCountry}</span>
-                                        <span className="text-xs text-muted-foreground/60 font-medium">/ {cities.length}</span>
+                                        <span className="text-xs text-muted-foreground/60">/ {cities.length}</span>
                                     </div>
                                 </div>
                             )}
@@ -269,14 +270,14 @@ export const CountryDetails = ({
 
                 <div className="p-4 pt-2">
                     <Tabs defaultValue="overview" className="w-full space-y-4">
-                        <div className="sticky top-0 z-40 bg-transparent pt-2 pb-2 -mx-4 px-4 backdrop-blur-xl transition-all">
-                            <TabsList className="flex w-full overflow-x-auto no-scrollbar gap-2 bg-transparent p-0 border-none h-auto">
-                                <TabsTrigger value="overview" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-secondary data-[state=active]:text-foreground data-[state=active]:backdrop-blur-md data-[state=active]:border-border/50 text-muted-foreground hover:text-foreground border border-transparent">Overview</TabsTrigger>
-                                <TabsTrigger value="cities" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-secondary data-[state=active]:text-foreground data-[state=active]:backdrop-blur-md data-[state=active]:border-border/50 text-muted-foreground hover:text-foreground border border-transparent">Cities</TabsTrigger>
-                                <TabsTrigger value="visa" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-secondary data-[state=active]:text-foreground data-[state=active]:backdrop-blur-md data-[state=active]:border-border/50 text-muted-foreground hover:text-foreground border border-transparent">Visa</TabsTrigger>
-                                <TabsTrigger value="transport" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-secondary data-[state=active]:text-foreground data-[state=active]:backdrop-blur-md data-[state=active]:border-border/50 text-muted-foreground hover:text-foreground border border-transparent">Transport</TabsTrigger>
-                                <TabsTrigger value="weather" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-secondary data-[state=active]:text-foreground data-[state=active]:backdrop-blur-md data-[state=active]:border-border/50 text-muted-foreground hover:text-foreground border border-transparent">Weather</TabsTrigger>
-                                <TabsTrigger value="details" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-secondary data-[state=active]:text-foreground data-[state=active]:backdrop-blur-md data-[state=active]:border-border/50 text-muted-foreground hover:text-foreground border border-transparent">Details</TabsTrigger>
+                        <div className="sticky top-0 z-40 bg-background/80 pt-2 pb-3 -mx-4 px-4 backdrop-blur-xl">
+                            <TabsList className="grid grid-cols-6 w-full gap-1.5 bg-secondary/30 p-1.5 rounded-xl border border-border/30">
+                                <TabsTrigger value="overview" className="rounded-lg px-2 py-2 text-xs font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Overview</TabsTrigger>
+                                <TabsTrigger value="cities" className="rounded-lg px-2 py-2 text-xs font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Cities</TabsTrigger>
+                                <TabsTrigger value="visa" className="rounded-lg px-2 py-2 text-xs font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Visa</TabsTrigger>
+                                <TabsTrigger value="transport" className="rounded-lg px-2 py-2 text-xs font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Transit</TabsTrigger>
+                                <TabsTrigger value="weather" className="rounded-lg px-2 py-2 text-xs font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Weather</TabsTrigger>
+                                <TabsTrigger value="details" className="rounded-lg px-2 py-2 text-xs font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Details</TabsTrigger>
                             </TabsList>
                         </div>
 

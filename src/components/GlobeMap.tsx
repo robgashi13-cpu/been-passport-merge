@@ -196,9 +196,23 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
         const mapInstance = map.current;
 
         mapInstance.on('style.load', () => {
-            // Completely disable all atmospheric effects
+            // Completely disable all atmospheric and projection effects
             // @ts-ignore - setFog(null) removes fog entirely
             mapInstance.setFog(null);
+
+            // Remove any sky/atmosphere layers that might exist
+            const style = mapInstance.getStyle();
+            if (style && style.layers) {
+                style.layers.forEach((layer: any) => {
+                    if (layer.type === 'sky' || layer.id.includes('sky') || layer.id.includes('space') || layer.id.includes('star')) {
+                        try {
+                            mapInstance.removeLayer(layer.id);
+                        } catch (e) {
+                            // Layer might not exist, ignore
+                        }
+                    }
+                });
+            }
         });
 
         mapInstance.on('load', () => {
