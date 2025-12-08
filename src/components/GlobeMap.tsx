@@ -56,6 +56,12 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null);
     const [viewMode, setViewMode] = useState<'visited' | 'visa'>('visited');
+    const [showHint, setShowHint] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setShowHint(false), 2500); // 1.5s visible + 1s fade start
+        return () => clearTimeout(timer);
+    }, []);
 
     // Color Calculation Function (Keep this logic separate for reuse)
     const getCountryColor = (iso2: string) => {
@@ -142,17 +148,71 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
         const mapInstance = map.current;
 
         mapInstance.on('style.load', () => {
-            // Atmosphere
+            // Atmosphere - Reduced intensity to remove "shadow" look
             mapInstance.setFog({
                 color: 'rgb(20, 20, 20)', // Lower atmosphere
                 'high-color': 'rgb(0, 0, 0)', // Upper atmosphere
-                'horizon-blend': 0.05, // Atmosphere thickness (default 0.2 at low zooms)
+                'horizon-blend': 0.0, // Remove horizon blend to reduce shadow
                 'space-color': 'rgb(0, 0, 0)', // Background color
-                'star-intensity': 0.6 // Background star brightness (default 0.35 at low zoooms )
+                'star-intensity': 0.0 // Remove starts/noise
             });
         });
 
         mapInstance.on('load', () => {
+            // ... existing code ...
+
+            // Add Kosovo Marker (Since geometry is missing in 110m)
+            const kosovoLngLat: [number, number] = [20.9667, 42.6667];
+
+            // Invisible clickable circle for Kosovo
+            mapInstance.addSource('kosovo-point', {
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: [{
+                        type: 'Feature',
+                        geometry: {
+                            type: 'Point',
+                            coordinates: kosovoLngLat
+                        },
+                        properties: {
+                            iso2: 'XK',
+                            name: 'Kosovo'
+                        }
+                    }]
+                }
+            });
+
+            mapInstance.addLayer({
+                id: 'kosovo-fill',
+                type: 'circle',
+                source: 'kosovo-point',
+                paint: {
+                    'circle-radius': 10,
+                    'circle-color': getCountryColor('XK'), // Use dynamic color
+                    'circle-opacity': 0.8,
+                    'circle-stroke-width': 1,
+                    'circle-stroke-color': 'rgba(255,255,255,0.2)'
+                }
+            });
+
+            // Click Interaction for Kosovo
+            mapInstance.on('click', 'kosovo-fill', (e) => {
+                if (onCountryClick) {
+                    onCountryClick('XK');
+                } else if (toggleVisited) {
+                    toggleVisited('XK');
+                }
+            });
+
+            // Hover Cursor for Kosovo
+            mapInstance.on('mouseenter', 'kosovo-fill', () => {
+                mapInstance.getCanvas().style.cursor = 'pointer';
+            });
+            mapInstance.on('mouseleave', 'kosovo-fill', () => {
+                mapInstance.getCanvas().style.cursor = '';
+            });
+
             // Load GeoJSON
             // @ts-ignore
             const geojson = topojson.feature(worldData, worldData.objects.countries);
@@ -246,7 +306,13 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
             // Default fallback
             matchExpression.push('rgba(60,60,60,0.3)');
 
-            mapInstance.setPaintProperty('countries-fill', 'fill-color', matchExpression);
+            mapInstance.setPaintProperty('countries-fill', 'fill-color', matchExpression as any);
+
+            // Update Kosovo Color explicitly
+            if (mapInstance.getLayer('kosovo-fill')) {
+                const kosovoColor = getCountryColor('XK');
+                mapInstance.setPaintProperty('kosovo-fill', 'circle-color', kosovoColor);
+            }
         };
 
         if (mapInstance.isStyleLoaded()) {
@@ -270,7 +336,7 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
             <div ref={mapContainer} className="w-full h-full" />
 
             {/* View Mode Toggle Buttons - Top */}
-            <div className="absolute top-20 left-0 right-0 flex justify-center z-[10] pointer-events-none" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+            <div className="absolute top-14 left-0 right-0 flex justify-center z-[10] pointer-events-none" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
                 <div className="bg-black/60 backdrop-blur-md p-1 rounded-xl flex gap-1 border border-white/10 pointer-events-auto">
                     <button
                         onClick={(e) => { e.stopPropagation(); setViewMode('visited'); }}
@@ -320,7 +386,7 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
             </div>
 
             {/* Instructions */}
-            <div className="absolute bottom-36 left-0 right-0 flex justify-center pointer-events-none">
+            <div className={`absolute bottom-36 left-0 right-0 flex justify-center pointer-events-none transition-opacity duration-1000 ${showHint ? 'opacity-100' : 'opacity-0'}`}>
                 <div className="bg-black/60 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
                     <p className="text-white/60 text-sm">Drag to rotate • Pinch to zoom • Tap for details</p>
                 </div>

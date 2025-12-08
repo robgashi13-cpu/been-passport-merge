@@ -1,5 +1,6 @@
 import { fetchCountryData, CountryExtendedData, getStaticTravelInfo, getRichCountryData, RichCountryInfo, fetchCapitalWeather, getWeatherDescription, fetchCountryCities } from '@/services/countryService';
 import { fetchCountrySummary, WikiSummary } from '@/services/wikiService';
+import { useUser } from '@/contexts/UserContext';
 import { useEffect, useState, useMemo } from 'react';
 import { Country, getCountryByCode, countries } from '@/data/countries';
 import { getVisaRequirementFromMatrix, getVisaRequirementColor, getVisaRequirementLabel } from '@/data/visaMatrix';
@@ -23,6 +24,7 @@ export const CountryDetails = ({
     onToggleVisited,
     isModal = true
 }: CountryDetailsProps) => {
+    const { visitedCities, updateVisitedCities } = useUser();
     const [userPassport, setUserPassport] = useState<Country | undefined>(undefined);
     const [userVisaInfo, setUserVisaInfo] = useState<any>(null);
     const [extendedData, setExtendedData] = useState<CountryExtendedData | null>(null);
@@ -40,6 +42,26 @@ export const CountryDetails = ({
     const [cities, setCities] = useState<string[]>([]);
     const [citySearch, setCitySearch] = useState('');
     const [isLoadingCities, setIsLoadingCities] = useState(false);
+    const [visibleCitiesCount, setVisibleCitiesCount] = useState(50);
+
+    // Helper to check if visited
+    const isCityVisited = (cityName: string) => visitedCities.includes(`${cityName}|${country.code}`);
+
+    // Toggle City Logic
+    const toggleCity = (cityName: string) => {
+        const cityKey = `${cityName}|${country.code}`;
+        let newVisitedCities = [...visitedCities];
+        if (newVisitedCities.includes(cityKey)) {
+            newVisitedCities = newVisitedCities.filter(c => c !== cityKey);
+        } else {
+            newVisitedCities.push(cityKey);
+        }
+        updateVisitedCities(newVisitedCities);
+    };
+
+    // Calculation for progress
+    const visitedCountInCountry = cities.filter(c => isCityVisited(c)).length;
+    const progressPercentage = cities.length > 0 ? (visitedCountInCountry / cities.length) * 100 : 0;
 
     // Initial data fetch
     useEffect(() => {
@@ -67,6 +89,7 @@ export const CountryDetails = ({
 
             // Fetch Cities
             setIsLoadingCities(true);
+            setVisibleCitiesCount(50);
             fetchCountryCities(country.name).then(cityList => {
                 setCities(cityList);
                 setIsLoadingCities(false);
@@ -279,7 +302,23 @@ export const CountryDetails = ({
                         {/* CITIES TAB */}
                         <TabsContent value="cities" className="space-y-4 mt-2 animate-slide-up">
                             <div className="bg-white/5 rounded-3xl p-5 border border-white/5 min-h-[300px]">
-                                <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2"><Building className="w-5 h-5 text-white/60" /> Major Cities</h3>
+                                <div className="flex justify-between items-end mb-4">
+                                    <div>
+                                        <h3 className="font-display font-bold text-lg flex items-center gap-2"><Building className="w-5 h-5 text-white/60" /> Cities</h3>
+                                        <p className="text-xs text-white/40 mt-1">Tap to mark as visited</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="font-numbers text-2xl font-bold text-white">
+                                            {visitedCountInCountry} <span className="text-white/30 text-lg">/ {cities.length}</span>
+                                        </div>
+                                        <div className="w-24 h-1 bg-white/10 rounded-full mt-2 overflow-hidden">
+                                            <div
+                                                className="h-full bg-green-400 transition-all duration-500 ease-out"
+                                                style={{ width: `${progressPercentage}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
 
                                 {/* Search */}
                                 <div className="relative mb-4">
@@ -299,22 +338,58 @@ export const CountryDetails = ({
                                         <span className="text-xs text-white/50">Loading cities...</span>
                                     </div>
                                 ) : cities.length > 0 ? (
-                                    <div className="grid grid-cols-2 gap-2 max-h-[400px] overflow-y-auto custom-scrollbar pr-1">
-                                        {filteredCities.map((city, i) => (
-                                            <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-black/20 hover:bg-white/5 transition-colors border border-transparent hover:border-white/5">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-white/20 flex-shrink-0" />
-                                                <span className="text-sm text-white/80 truncate">{city}</span>
-                                            </div>
-                                        ))}
-                                    </div>
+                                    <>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-[400px] overflow-y-auto custom-scrollbar pr-1 content-start">
+                                            {filteredCities.slice(0, visibleCitiesCount).map((city, i) => {
+                                                const visited = isCityVisited(city);
+                                                return (
+                                                    <button
+                                                        key={i}
+                                                        onClick={() => toggleCity(city)}
+                                                        className={`flex items-center gap-2 p-3 rounded-xl transition-all border group text-left relative overflow-hidden
+                                                            ${visited
+                                                                ? 'bg-green-500/10 border-green-500/30 hover:bg-green-500/20'
+                                                                : 'bg-black/20 border-white/5 hover:bg-white/10 hover:border-white/10'
+                                                            }
+                                                        `}
+                                                    >
+                                                        <div className={`w-4 h-4 rounded-full flex items-center justify-center border transition-colors flex-shrink-0
+                                                            ${visited ? 'bg-green-500 border-green-500' : 'border-white/20 group-hover:border-white/40'}
+                                                        `}>
+                                                            {visited && <Check className="w-2.5 h-2.5 text-black font-bold" />}
+                                                        </div>
+                                                        <span className={`text-sm truncate font-medium transition-colors ${visited ? 'text-white' : 'text-white/80 group-hover:text-white'}`}>
+                                                            {city}
+                                                        </span>
+                                                        {visited && (
+                                                            <div className="absolute inset-0 bg-green-400/5 pointer-events-none" />
+                                                        )}
+                                                    </button>
+                                                );
+                                            })}
+
+                                            {/* Load More Trigger */}
+                                            {visibleCitiesCount < filteredCities.length && (
+                                                <div className="col-span-full flex justify-center py-4">
+                                                    <button
+                                                        onClick={() => setVisibleCitiesCount(prev => prev + 50)}
+                                                        className="text-xs text-white/50 hover:text-white border border-white/10 rounded-full px-4 py-2 transition-all hover:bg-white/5"
+                                                    >
+                                                        Load More Cities ({filteredCities.length - visibleCitiesCount} remaining)
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="mt-4 text-[10px] text-white/30 text-center uppercase tracking-widest flex justify-between px-2">
+                                            <span>Showing {Math.min(visibleCitiesCount, filteredCities.length)} of {filteredCities.length}</span>
+                                            <span>{Math.round((Math.min(visibleCitiesCount, filteredCities.length) / filteredCities.length) * 100)}% Loaded</span>
+                                        </div>
+                                    </>
                                 ) : (
                                     <div className="text-center py-10 text-white/40 text-sm">
                                         No cities found.
                                     </div>
                                 )}
-                                <div className="mt-4 text-[10px] text-white/30 text-center uppercase tracking-widest">
-                                    Total: {filteredCities.length}
-                                </div>
                             </div>
                         </TabsContent>
 

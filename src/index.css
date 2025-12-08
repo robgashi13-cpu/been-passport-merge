@@ -78,86 +78,75 @@ a {
 
 @layer base {
   :root {
-    /* Pure black & white foundation with gold accents */
-    --background: 0 0% 2%;
+    /* Pure black & white foundation with gold accents - GLASS MODE */
+    --background: 240 10% 4%;
+    /* Dark Blue-Black base */
     --foreground: 0 0% 98%;
 
-    --card: 0 0% 6%;
+    --card: 240 10% 6%;
+    /* Slightly lighter */
     --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 5%;
+    --popover: 240 10% 5%;
     --popover-foreground: 0 0% 98%;
 
-    /* White as primary for high contrast */
     --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 2%;
+    --primary-foreground: 240 10% 4%;
 
-    /* Dark grays for secondary */
-    --secondary: 0 0% 10%;
+    --secondary: 240 10% 12%;
     --secondary-foreground: 0 0% 98%;
 
-    /* Muted grays */
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 55%;
+    --muted: 240 10% 15%;
+    --muted-foreground: 240 5% 65%;
 
-    /* Gold accent for luxury feel */
     --accent: 45 85% 55%;
-    --accent-foreground: 0 0% 2%;
-
-    /* Gold color */
-    --gold: 45 85% 55%;
-    --gold-light: 45 90% 75%;
-    --gold-dark: 38 75% 40%;
+    --accent-foreground: 240 10% 4%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    /* Subtle borders */
-    --border: 0 0% 15%;
-    --input: 0 0% 15%;
+    --border: 0 0% 100%;
+    /* Will be used with opacity */
+    --input: 240 10% 15%;
     --ring: 45 85% 55%;
 
     --radius: 1rem;
 
     /* Custom premium tokens */
-    --pure-black: 0 0% 0%;
-    --pure-white: 0 0% 100%;
-    --charcoal: 0 0% 4%;
-    --dark-gray: 0 0% 12%;
-    --mid-gray: 0 0% 40%;
-    --light-gray: 0 0% 80%;
-    --off-white: 0 0% 95%;
+    --gold: 45 85% 55%;
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-bg: rgba(20, 20, 25, 0.7);
+    --glass-bg-hover: rgba(40, 40, 50, 0.7);
 
-    /* Premium Gradients */
-    --gradient-dark: linear-gradient(180deg, hsl(0 0% 4%), hsl(0 0% 0%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 8%) 0%, hsl(0 0% 3%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(45 85% 55% / 0.15), transparent 70%);
-    --gradient-white: linear-gradient(135deg, hsl(0 0% 100%), hsl(0 0% 85%));
-    --gradient-shimmer: linear-gradient(90deg, transparent, hsl(45 85% 55% / 0.15), transparent);
-    --gradient-gold: linear-gradient(135deg, hsl(45 85% 55%), hsl(38 75% 45%));
-    --gradient-premium: linear-gradient(135deg, hsl(0 0% 8%) 0%, hsl(0 0% 4%) 50%, hsl(0 0% 6%) 100%);
+    /* Modern Gradients */
+    --gradient-dark: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #000000 100%);
+    --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+    --gradient-glow: radial-gradient(circle at center, rgba(56, 189, 248, 0.15), transparent 70%);
 
-    /* Premium Shadows */
-    --shadow-white: 0 0 60px hsl(0 0% 100% / 0.08);
-    --shadow-card: 0 8px 40px hsl(0 0% 0% / 0.6), 0 0 1px hsl(0 0% 100% / 0.1);
-    --shadow-elevated: 0 24px 60px hsl(0 0% 0% / 0.8);
-    --shadow-glow: 0 0 40px hsl(45 85% 55% / 0.15);
-    --shadow-gold: 0 0 30px hsl(45 85% 55% / 0.2);
-
-    /* Premium Font families */
-    --font-display: 'Playfair Display', 'SF Pro Display', Georgia, serif;
-    --font-body: 'DM Sans', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-mono: 'Space Grotesk', 'SF Mono', monospace;
-
-    --sidebar-background: 0 0% 3%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 45 85% 55%;
-    --sidebar-primary-foreground: 0 0% 2%;
-    --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 45 85% 55%;
+    /* Premium Fantasies */
+    --font-display: 'Playfair Display', 'SF Pro Display', serif;
+    --font-body: 'DM Sans', 'SF Pro Text', sans-serif;
   }
+}
+
+@layer base {
+  body {
+    @apply bg-black text-foreground font-body antialiased;
+    background-image: radial-gradient(circle at 50% -20%, #111122 0%, #000000 60%);
+    background-attachment: fixed;
+  }
+}
+
+
+/* Hide Mapbox Controls */
+.mapboxgl-ctrl-logo,
+.mapboxgl-ctrl-attrib {
+  display: none !important;
+}
+
+/* Ensure Modals are on top */
+[data-radix-portal] {
+  z-index: 10000 !important;
 }
 
 @layer base {

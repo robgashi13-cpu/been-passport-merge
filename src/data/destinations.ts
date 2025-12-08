@@ -122,7 +122,7 @@ export const popularDestinations: PopularDestination[] = [
     },
     {
         id: "newyork",
-        cityName: "New York",
+        cityName: "New York City", // Match cities.ts
         countryCode: "US",
         countryName: "United States",
         image: "🗽",
@@ -148,7 +148,7 @@ export const popularDestinations: PopularDestination[] = [
     },
     {
         id: "bali",
-        cityName: "Bali",
+        cityName: "Bali (Denpasar)", // Match cities.ts
         countryCode: "ID",
         countryName: "Indonesia",
         image: "🌴",

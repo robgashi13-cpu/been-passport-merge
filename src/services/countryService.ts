@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { CountryExtendedData, RichCountryInfo } from '@/types/country';
+import { countries } from '@/data/countries';
 import { RICH_COUNTRIES_DB } from '@/data/rich-country-data';
 export type { CountryExtendedData, RichCountryInfo }; // Re-export for consumers
 
@@ -128,17 +129,72 @@ export const getRichCountryData = (code: string): RichCountryInfo => {
 // ------------------------------------------------------------------
 // 4. Cities Data (CountriesNow API)
 // ------------------------------------------------------------------
+// Helper to calculate Haversine distance in km
+function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+    const R = 6371; // Radius of the earth in km
+    const dLat = deg2rad(lat2 - lat1);
+    const dLon = deg2rad(lon2 - lon1);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2)
+        ;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const d = R * c; // Distance in km
+    return d;
+}
+
+function deg2rad(deg: number) {
+    return deg * (Math.PI / 180);
+}
+
+export const findNearestCountry = (lat: number, lng: number): string | null => {
+    let closestCountry: string | null = null;
+    let minDistance = Infinity;
+
+    // Iterate all countries to find closest centroid
+    // Note: This is a rough approximation. For exact borders, we need a polygon check.
+    countries.forEach(country => {
+        const [cLat, cLng] = country.coordinates;
+        const dist = getDistanceFromLatLonInKm(lat, lng, cLat, cLng);
+
+        // Threshold: e.g., 500km tolerance to be "in" or "near" the country
+        // But for "nearest", we usually just take the min. 
+        // Let's enforce a max reasonable distance (e.g. 1000km) to avoid matching ocean points to random countries.
+        if (dist < minDistance && dist < 1000) {
+            minDistance = dist;
+            closestCountry = country.code;
+        }
+    });
+
+    return closestCountry;
+};
+
 export const fetchCountryCities = async (countryName: string): Promise<string[]> => {
     try {
         const response = await axios.post('https://countriesnow.space/api/v0.1/countries/cities', {
             country: countryName
         });
-        if (response.data && !response.data.error) {
+        if (response.data && !response.data.error && response.data.data.length > 0) {
             return response.data.data;
         }
+
+        // Fallback: Use Capital from local data if API returns empty
+        const localCountry = countries.find(c => c.name === countryName);
+        if (localCountry?.capital) {
+            return [localCountry.capital];
+        }
+
         return [];
     } catch (error) {
         console.warn(`Failed to fetch cities for ${countryName}`, error);
+
+        // Fallback on error too
+        const localCountry = countries.find(c => c.name === countryName);
+        if (localCountry?.capital) {
+            return [localCountry.capital];
+        }
+
         return [];
     }
 };

@@ -336,7 +336,7 @@ const WorldMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
       </div>
 
       {/* Interactive 2D Map */}
-      <div className={`relative bg-gradient-card rounded-xl md:rounded-2xl border border-border/50 overflow-hidden hover-glow transition-all duration-500 flex-grow flex flex-col ${isFullScreen ? 'h-full rounded-none border-none' : 'p-2 md:p-8'}`}>
+      <div className={`relative bg-black/20 rounded-xl md:rounded-2xl border border-white/5 overflow-hidden transition-all duration-500 flex-grow flex flex-col ${isFullScreen ? 'h-full rounded-none border-none' : 'p-2 md:p-8'}`}>
 
 
         {/* ... Tooltip ... */}

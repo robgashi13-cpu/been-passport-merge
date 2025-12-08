@@ -146,7 +146,7 @@ export const useTravelData = () => {
       totalCountries: countries.length,
       percentage: Math.round((visitedCountries.length / countries.length) * 100),
       continentStats: continentData,
-      passportScore: dynamicScore,
+      passportScore: dynamicScore, // Detailed breakdown is handling in PassportPower, but this score determines Rank
       passportRank: myRank || (passport?.passportRank ?? 0),
       heldVisas: heldVisas || [],
       userPassport: passport ? { ...passport, code: passport.code } : null,
