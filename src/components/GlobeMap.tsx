@@ -330,31 +330,7 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
                 filter: ['==', 'iso2', ''] // Initially empty
             });
 
-            // Add Kosovo (Point/Circle) logic...
-            const kosovoLngLat: [number, number] = [20.9667, 42.6667];
-            mapInstance.addSource('kosovo-point', {
-                type: 'geojson',
-                data: {
-                    type: 'FeatureCollection',
-                    features: [{
-                        type: 'Feature',
-                        geometry: { type: 'Point', coordinates: kosovoLngLat },
-                        properties: { iso2: 'XK', name: 'Kosovo' }
-                    }]
-                }
-            });
-
-            mapInstance.addLayer({
-                id: 'kosovo-fill',
-                type: 'circle',
-                source: 'kosovo-point',
-                paint: {
-                    'circle-radius': 8,
-                    'circle-color': '#4a4a4a',
-                    'circle-stroke-width': 1,
-                    'circle-stroke-color': 'rgba(255,255,255,0.2)'
-                }
-            });
+            // Kosovo circle removed - no longer needed
 
             // Click Interaction (Optimized with Bounding Box)
             mapInstance.on('click', (e) => {

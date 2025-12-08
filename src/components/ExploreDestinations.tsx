@@ -33,9 +33,8 @@ export const ExploreDestinations = ({ onCountryClick }: ExploreDestinationsProps
 
     return (
         <div className="space-y-8 animate-fade-in pb-10">
-            {/* Hero Section */}
-            <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-8 md:p-12 min-h-[400px] flex flex-col justify-end group cursor-pointer transition-all hover:border-border"
-                onClick={() => handleCityClick(featured)}>
+            {/* Hero Section - NOT CLICKABLE */}
+            <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-8 md:p-12 min-h-[400px] flex flex-col justify-end group transition-all">
 
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
@@ -113,8 +112,7 @@ const DestinationCard = ({ destination, rank, onClick }: DestinationCardProps) =
 
     return (
         <div
-            className="group relative h-[320px] rounded-3xl overflow-hidden cursor-pointer border border-border/50 hover:border-border transition-all duration-500 shadow-2xl"
-            onClick={onClick}
+            className="group relative h-[320px] rounded-3xl overflow-hidden border border-border/50 transition-all duration-500 shadow-2xl"
         >
             {/* Background Image */}
             <div className="absolute inset-0 z-0">
