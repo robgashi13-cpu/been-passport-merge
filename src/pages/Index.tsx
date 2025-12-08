@@ -252,7 +252,7 @@ const Index = () => {
                 onCountryClick={(code) => setSelectedCountryCode(code)}
               />
 
-              <div className="mt-6 pt-6 border-t border-white/10">
+              <div className="pt-3 border-t border-white/10">
                 <h3 className="font-display text-2xl font-bold mb-6">Explore Destinations</h3>
                 <ExploreDestinations
                   onCountryClick={(code) => setSelectedCountryCode(code)}
