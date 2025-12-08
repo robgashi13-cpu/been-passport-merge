@@ -1,5 +1,5 @@
 import StatCard from './StatCard';
-import { MapPin, Globe, Trophy, Shield, Bell, BellOff, LayoutGrid, X } from 'lucide-react';
+import { MapPin, Globe, Trophy, Shield, Bell, BellOff, LayoutGrid, X, LogOut } from 'lucide-react';
 
 import ProgressRing from './ProgressRing';
 // Removed: import ContinentBreakdown from './ContinentBreakdown';
@@ -17,6 +17,7 @@ import { CountryBrowserModal } from './CountryBrowserModal';
 import { ContinentModal } from './ContinentModal';
 import { useState, useMemo } from 'react';
 import { useTravelData } from '@/hooks/useTravelData';
+import { useUser } from '@/contexts/UserContext';
 import WorldMap from './WorldMap';
 import { ExploreDestinations } from './ExploreDestinations';
 
@@ -48,6 +49,7 @@ interface DashboardProps {
 const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVisas, onCountryClick }: DashboardProps) => {
   // Use smart location which also handles auto-logging
   const { location } = useSmartLocation();
+  const { logout, isLoggedIn } = useUser();
 
   // Location-based notifications
   const { hasPermission, requestPermission, isSupported } = useLocationNotifications(
@@ -64,7 +66,8 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
 
   // Get safety data from country info
   const currentCountry = location.countryCode ? getCountryByCode(location.countryCode) : null;
-  const safetyScore = currentCountry?.safetyScore || 83; // Fallback to global average
+  const safetyScore = currentCountry?.safetyScore || 0;
+  const isDetectingLocation = !location.countryCode; // If no country code, we are detecting
 
   // Calculate global safety ranking based on Gallup scores
   const safetyRank = useMemo(() => {
@@ -90,111 +93,128 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
   const totalContinents = stats.continentStats.length; // usually 6 or 7 depending on data model
 
   return (
-    <div className="space-y-6 pb-4 animate-fade-in relative z-0">
-      <GeoPassport />
+    <div className="flex flex-col min-h-full space-y-6 pb-20 animate-fade-in relative z-0">
+      {/* Content */}
+      <div className="space-y-6 flex-1">
+        <GeoPassport />
 
-      {/* Level Card */}
-      <LevelCard visitedCountries={visitedCountries} />
+        {/* Level Card */}
+        <LevelCard visitedCountries={visitedCountries} />
 
-      {/* Stats Merged Card */}
-      <div className="bg-gradient-card rounded-2xl border border-border/50 p-4">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        {/* Stats Merged Card */}
+        <div className="bg-gradient-card rounded-2xl border border-border/50 p-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
 
-          {/* Progress Ring - Clickable - Smaller size */}
-          <div
-            onClick={() => setShowCountryBrowser(true)}
-            className="cursor-pointer hover:scale-105 transition-transform flex flex-col items-center justify-center p-2"
-          >
-            <ProgressRing
-              percentage={stats.percentage}
-              visited={stats.visitedCount}
-              total={stats.totalCountries}
-              size={80}
-            />
-          </div>
-
-          {/* Divider (Desktop Only) */}
-          <div className="hidden sm:block w-px h-16 bg-border/20" />
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-3 gap-2 w-full sm:w-auto">
-
-            {/* Countries Visited */}
+            {/* Progress Ring - Clickable - Smaller size */}
             <div
-              onClick={() => setShowVisitedModal(true)}
-              className="cursor-pointer hover:bg-white/5 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl p-3 transition-colors flex flex-col items-center sm:items-start text-center sm:text-left"
+              onClick={() => setShowCountryBrowser(true)}
+              className="cursor-pointer hover:scale-105 transition-transform flex flex-col items-center justify-center p-2"
             >
-              <div className="flex items-center gap-1 text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-1">
-                <MapPin className="w-3 h-3" />
-                <span>Countries</span>
-              </div>
-              <div className="flex items-baseline gap-1">
-                <span className="font-display font-bold text-2xl text-foreground">{stats.visitedCount}</span>
-                <span className="text-xs text-muted-foreground font-medium">/{stats.totalCountries}</span>
-              </div>
+              <ProgressRing
+                percentage={stats.percentage}
+                visited={stats.visitedCount}
+                total={stats.totalCountries}
+                size={80}
+              />
             </div>
 
-            {/* Continents Unlocked */}
-            <div
-              onClick={() => setShowContinentModal(true)}
-              className="cursor-pointer hover:bg-white/5 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl p-3 transition-colors flex flex-col items-center sm:items-start text-center sm:text-left"
-            >
-              <div className="flex items-center gap-1 text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-1">
-                <Globe className="w-3 h-3" />
-                <span>Continents</span>
-              </div>
-              <div className="flex items-baseline gap-1">
-                <span className="font-display font-bold text-2xl text-foreground">{unlockedContinentCount}</span>
-                <span className="text-xs text-muted-foreground font-medium">/{totalContinents}</span>
-              </div>
-            </div>
+            {/* Divider (Desktop Only) */}
+            <div className="hidden sm:block w-px h-16 bg-border/20" />
 
-            {/* Passport Power */}
-            <div
-              onClick={() => setShowPassportModal(true)}
-              className="cursor-pointer hover:bg-white/5 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl p-3 transition-colors flex flex-col items-center sm:items-start text-center sm:text-left"
-            >
-              <div className="flex items-center gap-1 text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-1">
-                <Trophy className="w-3 h-3" />
-                <span>Passport</span>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-3 gap-2 w-full sm:w-auto">
+
+              {/* Countries Visited */}
+              <div
+                onClick={() => setShowVisitedModal(true)}
+                className="cursor-pointer hover:bg-white/5 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl p-3 transition-colors flex flex-col items-center sm:items-start text-center sm:text-left"
+              >
+                <div className="flex items-center gap-1 text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-1">
+                  <MapPin className="w-3 h-3" />
+                  <span>Countries</span>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="font-display font-bold text-2xl text-foreground">{stats.visitedCount}</span>
+                  <span className="text-xs text-muted-foreground font-medium">/{stats.totalCountries}</span>
+                </div>
               </div>
-              <div className="flex items-baseline gap-1">
-                <span className="font-display font-bold text-2xl text-foreground">{stats.userPassport?.passportRank || '-'}</span>
+
+              {/* Continents Unlocked */}
+              <div
+                onClick={() => setShowContinentModal(true)}
+                className="cursor-pointer hover:bg-white/5 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl p-3 transition-colors flex flex-col items-center sm:items-start text-center sm:text-left"
+              >
+                <div className="flex items-center gap-1 text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-1">
+                  <Globe className="w-3 h-3" />
+                  <span>Continents</span>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="font-display font-bold text-2xl text-foreground">{unlockedContinentCount}</span>
+                  <span className="text-xs text-muted-foreground font-medium">/{totalContinents}</span>
+                </div>
               </div>
-              <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight truncate max-w-[80px]">{stats.userPassport?.name || 'Select'}</p>
+
+              {/* Passport Power */}
+              <div
+                onClick={() => setShowPassportModal(true)}
+                className="cursor-pointer hover:bg-white/5 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl p-3 transition-colors flex flex-col items-center sm:items-start text-center sm:text-left"
+              >
+                <div className="flex items-center gap-1 text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-1">
+                  <Trophy className="w-3 h-3" />
+                  <span>Passport</span>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="font-display font-bold text-2xl text-foreground">{stats.userPassport?.passportRank || '-'}</span>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight truncate max-w-[80px]">{stats.userPassport?.name || 'Select'}</p>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Safety Widget (Moved Below Stats) */}
+        <SafetyWidget
+          countryName={location.countryName || currentCountry?.name || "Detecting..."}
+          safetyScore={safetyScore}
+          safetyRank={safetyRank}
+          nightScore={nightScore}
+          personalScore={personalScore}
+          womenScore={womenScore}
+          isDetecting={isDetectingLocation} // Props updated
+        />
+
+        {/* Local Airport Traffic Button */}
+        <button
+          onClick={() => setShowFlightModal(true)}
+          className="bg-gradient-card rounded-2xl border border-border/50 p-4 hover-lift flex items-center justify-between group cursor-pointer w-full text-left"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+              <span className="text-2xl">✈️</span>
+            </div>
+            <div>
+              <h3 className="font-bold text-foreground group-hover:text-blue-400 transition-colors">Local Airport Traffic</h3>
+              <p className="text-sm text-muted-foreground">View live flights from Pristina (PRN)</p>
+            </div>
+          </div>
+          <div className="bg-secondary p-2 rounded-full group-hover:bg-blue-500/20 transition-colors">
+            <Globe className="w-5 h-5 text-muted-foreground group-hover:text-blue-400" />
+          </div>
+        </button>
       </div>
 
-      {/* Safety Widget (Moved Below Stats) */}
-      <SafetyWidget
-        countryName={location.countryName || currentCountry?.name || "Detecting..."}
-        safetyScore={safetyScore}
-        safetyRank={safetyRank}
-        nightScore={nightScore}
-        personalScore={personalScore}
-        womenScore={womenScore}
-      />
-
-      {/* Local Airport Traffic Button */}
-      <button
-        onClick={() => setShowFlightModal(true)}
-        className="bg-gradient-card rounded-2xl border border-border/50 p-4 hover-lift flex items-center justify-between group cursor-pointer w-full text-left"
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
-            <span className="text-2xl">✈️</span>
-          </div>
-          <div>
-            <h3 className="font-bold text-foreground group-hover:text-blue-400 transition-colors">Local Airport Traffic</h3>
-            <p className="text-sm text-muted-foreground">View live flights from Pristina (PRN)</p>
-          </div>
-        </div>
-        <div className="bg-secondary p-2 rounded-full group-hover:bg-blue-500/20 transition-colors">
-          <Globe className="w-5 h-5 text-muted-foreground group-hover:text-blue-400" />
-        </div>
-      </button>
+      {/* spacer to push footer down */}
+      <div className="mt-auto pt-6 pb-6">
+        {isLoggedIn && (
+          <button
+            onClick={logout}
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors border border-red-500/20"
+          >
+            <LogOut className="w-5 h-5" />
+            Sign Out
+          </button>
+        )}
+      </div>
 
       {/* Modals */}
       <VisitedCountriesModal

@@ -33,15 +33,15 @@ export const ExploreCityModal = ({ isOpen, onClose, destination }: ExploreCityMo
     const country = getCountryByCode(destination.countryCode);
 
     return createPortal(
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6">
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-0 sm:p-6 animate-fade-in">
             {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
+                className="absolute inset-0 bg-black/80 backdrop-blur-md"
                 onClick={onClose}
             />
 
-            {/* Modal Content */}
-            <div className="relative w-full max-w-lg max-h-[85vh] bg-card border border-border/50 rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-zoom-in z-[100000]">
+            {/* Modal Content - Fullscreen on Mobile, Centered Card on Desktop */}
+            <div className="relative bg-[#0a0a0a] w-full h-full sm:h-auto sm:max-w-lg sm:max-h-[85vh] rounded-none sm:rounded-2xl border-0 sm:border sm:border-white/10 shadow-2xl overflow-hidden flex flex-col animate-zoom-in z-[100000]">
 
                 {/* Close Button (Absolute) */}
                 <button
@@ -53,7 +53,7 @@ export const ExploreCityModal = ({ isOpen, onClose, destination }: ExploreCityMo
                 </button>
 
                 {/* Hero Header */}
-                <div className="relative h-[40%] flex-shrink-0">
+                <div className="relative h-[35%] sm:h-[40%] flex-shrink-0">
                     <img
                         src={destination.imageUrl || `https://source.unsplash.com/1600x900/?${destination.cityName},landmark`}
                         alt={destination.cityName}
@@ -64,84 +64,84 @@ export const ExploreCityModal = ({ isOpen, onClose, destination }: ExploreCityMo
                             target.src = `https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=1000`; // Fallback
                         }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/20 to-transparent" />
 
                     <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
                         <div className="flex items-center gap-2 mb-2 animate-fade-in delay-100">
                             <span className="text-2xl shadow-black drop-shadow-md">{country?.flagEmoji}</span>
-                            <span className="text-sm font-bold text-foreground/90 uppercase tracking-widest bg-background/30 backdrop-blur-md px-2 py-1 rounded-md border border-border/20 shadow-sm">{country?.name}</span>
+                            <span className="text-sm font-bold text-white/90 uppercase tracking-widest bg-black/30 backdrop-blur-md px-2 py-1 rounded-md border border-white/10 shadow-sm">{country?.name}</span>
                         </div>
-                        <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-1 animate-slide-up shadow-black drop-shadow-lg leading-tight delay-200">
+                        <h2 className="font-display text-4xl md:text-5xl font-bold text-white mb-1 animate-slide-up shadow-black drop-shadow-lg leading-tight delay-200">
                             {destination.cityName}
                         </h2>
                     </div>
                 </div>
 
                 {/* Scrollable Content */}
-                <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 md:p-8 space-y-8 bg-card custom-scrollbar">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-8 bg-[#0a0a0a] custom-scrollbar">
 
                     {/* Quick Stats Row */}
                     <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-secondary/50 border border-border/50 p-3 rounded-xl backdrop-blur-sm flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-background flex items-center justify-center flex-shrink-0">
+                        <div className="bg-white/5 border border-white/10 p-3 rounded-xl backdrop-blur-sm flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-black/40 flex items-center justify-center flex-shrink-0">
                                 <Calendar className="w-4 h-4 text-sky-400" />
                             </div>
                             <div>
                                 <div className="text-muted-foreground text-[10px] uppercase tracking-wider font-bold">Best Time</div>
-                                <div className="text-sm font-bold text-foreground">{destination.bestMonth}</div>
+                                <div className="text-sm font-bold text-white">{destination.bestMonth}</div>
                             </div>
                         </div>
-                        <div className="bg-secondary/50 border border-border/50 p-3 rounded-xl backdrop-blur-sm flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-background flex items-center justify-center flex-shrink-0">
+                        <div className="bg-white/5 border border-white/10 p-3 rounded-xl backdrop-blur-sm flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-black/40 flex items-center justify-center flex-shrink-0">
                                 <DollarSign className="w-4 h-4 text-emerald-400" />
                             </div>
                             <div>
                                 <div className="text-muted-foreground text-[10px] uppercase tracking-wider font-bold">Cost</div>
-                                <div className="text-sm font-bold text-foreground">{destination.averageCost}</div>
+                                <div className="text-sm font-bold text-white">{destination.averageCost}</div>
                             </div>
                         </div>
-                        <div className="bg-secondary/50 border border-border/50 p-3 rounded-xl backdrop-blur-sm flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-background flex items-center justify-center flex-shrink-0">
+                        <div className="bg-white/5 border border-white/10 p-3 rounded-xl backdrop-blur-sm flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-black/40 flex items-center justify-center flex-shrink-0">
                                 <Thermometer className="w-4 h-4 text-orange-400" />
                             </div>
                             <div>
                                 <div className="text-muted-foreground text-[10px] uppercase tracking-wider font-bold">Weather</div>
-                                <div className="text-sm font-bold text-foreground">24°C Avg</div>
+                                <div className="text-sm font-bold text-white">24°C Avg</div>
                             </div>
                         </div>
-                        <div className="bg-secondary/50 border border-border/50 p-3 rounded-xl backdrop-blur-sm flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-background flex items-center justify-center flex-shrink-0">
+                        <div className="bg-white/5 border border-white/10 p-3 rounded-xl backdrop-blur-sm flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-black/40 flex items-center justify-center flex-shrink-0">
                                 <MapPin className="w-4 h-4 text-purple-400" />
                             </div>
                             <div>
                                 <div className="text-muted-foreground text-[10px] uppercase tracking-wider font-bold">Visitors</div>
-                                <div className="text-sm font-bold text-foreground">{destination.visitorCount}</div>
+                                <div className="text-sm font-bold text-white">{destination.visitorCount}</div>
                             </div>
                         </div>
                     </div>
 
                     {/* Description */}
                     <div>
-                        <h3 className="font-display text-xl font-bold text-foreground mb-3 flex items-center gap-2">
+                        <h3 className="font-display text-xl font-bold text-white mb-3 flex items-center gap-2">
                             <Sun className="w-5 h-5 text-yellow-400" /> About
                         </h3>
-                        <p className="text-muted-foreground leading-relaxed text-sm bg-secondary/30 p-4 rounded-2xl border border-border/50">
+                        <p className="text-muted-foreground leading-relaxed text-sm bg-white/5 p-4 rounded-2xl border border-white/10">
                             {destination.description}
                         </p>
                     </div>
 
                     {/* Highlights */}
                     <div>
-                        <h3 className="font-display text-xl font-bold text-foreground mb-4 flex items-center gap-2">
+                        <h3 className="font-display text-xl font-bold text-white mb-4 flex items-center gap-2">
                             <Sparkles className="w-5 h-5 text-indigo-400" /> Why Visit?
                         </h3>
                         <div className="grid grid-cols-1 gap-2">
                             {destination.highlights.map((highlight, i) => (
-                                <div key={i} className="flex items-center gap-3 bg-secondary/30 border border-border/50 p-3 rounded-xl hover:bg-secondary/50 transition-colors">
+                                <div key={i} className="flex items-center gap-3 bg-white/5 border border-white/10 p-3 rounded-xl hover:bg-white/10 transition-colors">
                                     <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
                                         <ArrowRight className="w-3 h-3 text-blue-400" />
                                     </div>
-                                    <span className="text-foreground/80 text-sm font-medium">{highlight}</span>
+                                    <span className="text-white/80 text-sm font-medium">{highlight}</span>
                                 </div>
                             ))}
                         </div>

@@ -10,15 +10,19 @@ interface SafetyWidgetProps {
     nightScore: number;
     personalScore: number;
     womenScore: number;
+    isLoading?: boolean;
+    isDetecting?: boolean;
 }
 
 export const SafetyWidget = ({
     countryName = "Current Location",
-    safetyScore = 67,
+    safetyScore,
     safetyRank,
-    nightScore = 56,
-    personalScore = 50,
-    womenScore = 75
+    nightScore,
+    personalScore,
+    womenScore,
+    isLoading = false,
+    isDetecting = false
 }: SafetyWidgetProps) => {
     const [showModal, setShowModal] = useState(false);
     const [activeTab, setActiveTab] = useState<'score' | 'rankings'>('score');
@@ -44,6 +48,7 @@ export const SafetyWidget = ({
         .sort((a, b) => (b.safetyScore || 0) - (a.safetyScore || 0));
 
     const getScoreColor = (score: number) => {
+        if (!score) return "text-white/20";
         if (score >= 80) return "text-green-500";
         if (score >= 60) return "text-lime-500";
         if (score >= 40) return "text-yellow-500";
@@ -51,11 +56,35 @@ export const SafetyWidget = ({
     };
 
     const getProgressColor = (score: number) => {
+        if (!score) return "bg-white/20";
         if (score >= 80) return "bg-green-500";
         if (score >= 60) return "bg-lime-500";
         if (score >= 40) return "bg-yellow-500";
         return "bg-red-500";
     };
+
+    if (isLoading || isDetecting) {
+        return (
+            <div className="bg-gradient-card rounded-2xl border border-white/10 p-4 min-h-[140px] flex flex-col animate-pulse">
+                <div className="flex items-center justify-between mb-2 opacity-50">
+                    <div className="flex items-center gap-2 text-white/60 font-medium text-sm">
+                        <Shield className="w-4 h-4" />
+                        <span>Safety Score</span>
+                    </div>
+                </div>
+                <div className="text-xs text-white/50 mb-1 flex items-center gap-2">
+                    {isDetecting ? "Detecting GPS..." : "Loading Data..."}
+                </div>
+                <div className="flex-1 flex items-center justify-center">
+                    <div className="h-10 w-20 bg-white/10 rounded-lg"></div>
+                </div>
+                <div className="mt-2 h-1.5 bg-white/10 rounded-full overflow-hidden w-full"></div>
+            </div>
+        );
+    }
+
+    // Safety score fallback for display (still using passed prop, but ensuring it exists)
+    const displayScore = safetyScore || 0;
 
     return (
         <>
@@ -82,17 +111,17 @@ export const SafetyWidget = ({
 
                 <div className="flex-1 flex items-center justify-center">
                     <div className="text-center">
-                        <div className={`text-4xl font-bold ${getScoreColor(safetyScore)}`}>{safetyScore}</div>
+                        <div className={`text-4xl font-bold ${getScoreColor(displayScore)}`}>{displayScore > 0 ? displayScore : '--'}</div>
                         <div className="text-xs text-white/40 mt-1">
-                            {safetyScore >= 90 ? 'Very Safe' : safetyScore >= 80 ? 'Safe' : safetyScore >= 70 ? 'Above Average' : safetyScore >= 60 ? 'Moderate' : 'Use Caution'}
+                            {displayScore === 0 ? 'No Data' : displayScore >= 90 ? 'Very Safe' : displayScore >= 80 ? 'Safe' : displayScore >= 70 ? 'Above Average' : displayScore >= 60 ? 'Moderate' : 'Use Caution'}
                         </div>
                     </div>
                 </div>
 
                 <div className="mt-2 h-1.5 bg-white/10 rounded-full overflow-hidden">
                     <div
-                        className={`h-full rounded-full transition-all duration-1000 ${getProgressColor(safetyScore)}`}
-                        style={{ width: `${safetyScore}%` }}
+                        className={`h-full rounded-full transition-all duration-1000 ${getProgressColor(displayScore)}`}
+                        style={{ width: `${displayScore}%` }}
                     />
                 </div>
             </div>

@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { Preferences } from '@capacitor/preferences';
 import { User, Session } from '@supabase/supabase-js';
+import { countries } from '@/data/countries';
 
 export interface UserData {
     id: string;
@@ -145,6 +147,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                     heldVisas: travelData?.held_visas || [],
                     createdAt: new Date(profile?.created_at || travelData?.created_at || Date.now())
                 };
+
+                // Merge DB trips with LocalStorage trips if needed, or just prefer DB
+                // For now, let's prefer DB if it exists and has length, otherwise fallback to local to prevent data loss on first sync
+                // @ts-ignore
+                const dbTrips = travelData?.trips || [];
+                if (Array.isArray(dbTrips) && dbTrips.length > 0) {
+                    setTrips(dbTrips);
+                }
+
                 setUser(userData);
             }
         } catch (error) {
@@ -224,6 +235,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const logout = async () => {
         await supabase.auth.signOut();
         setUser(null);
+        setTrips([]); // Clear trips on logout
         localStorage.removeItem('cached_user_profile');
     };
 
@@ -297,14 +309,51 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const updateVisitedCountries = async (countries: string[]) => {
+    // Widget Sync Logic for iOS
+    const syncToWidget = async (visited: string[]) => {
+        try {
+            const count = visited.length;
+            const totalCountries = countries.length;
+            const percentage = Math.round((count / totalCountries) * 100);
+
+            // Calculate Rank Title
+            let rankTitle = "Traveler";
+            if (count >= 100) rankTitle = "Globetrotter";
+            else if (count >= 50) rankTitle = "Explorer";
+            else if (count >= 20) rankTitle = "Adventurer";
+            else if (count >= 10) rankTitle = "Wanderer";
+
+            await Preferences.set({ key: 'visitedCount', value: count.toString() });
+            await Preferences.set({ key: 'rankTitle', value: rankTitle });
+            await Preferences.set({ key: 'percentage', value: percentage.toString() });
+
+            // Note: Native widget reload requires a native plugin call (WidgetCenter.reloadAllTimelines)
+            // For now, updating UserDefaults is the first step.
+            console.log("Synced to Widget:", { count, rankTitle, percentage });
+        } catch (e) {
+            console.error("Widget Sync Failed", e);
+        }
+    };
+
+    const updateVisitedCountries = async (newVisited: string[]) => {
+        const unique = [...new Set(newVisited)];
+
         if (user) {
-            setUser(prev => prev ? { ...prev, visitedCountries: countries } : null);
+            setUser(prev => prev ? { ...prev, visitedCountries: unique } : null);
+            // Sync to DB
             try {
-                await supabase.from('user_travel_data').update({ visited_countries: countries }).eq('user_id', user.id);
+                const { error } = await supabase
+                    .from('user_travel_data')
+                    .update({ visited_countries: unique, updated_at: new Date().toISOString() })
+                    .eq('user_id', user.id);
+
+                if (error) console.error('Failed to update visited countries in DB', error);
             } catch (e) { console.error(e); }
+
+            // Sync to Widget
+            syncToWidget(unique);
         } else {
-            setGuestVisited(countries);
+            setGuestVisited(unique);
         }
     };
 

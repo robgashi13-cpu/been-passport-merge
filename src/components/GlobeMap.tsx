@@ -21,7 +21,7 @@ interface GlobeMapProps {
     bucketList?: string[];
 }
 
-// Numeric ID to ISO2 mapping (Reused from previous implementation)
+// Numeric ID to ISO2 mapping (Enhanced)
 const numericToIso2: Record<string, string> = {
     "8": "AL", "20": "AD", "40": "AT", "112": "BY", "56": "BE", "70": "BA", "100": "BG",
     "191": "HR", "196": "CY", "203": "CZ", "208": "DK", "233": "EE", "246": "FI", "250": "FR",
@@ -198,12 +198,12 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
         mapInstance.on('style.load', () => {
             // Disable atmosphere and stars for "clean" look
             mapInstance.setFog({
-                'color': 'rgb(0, 0, 0)',
-                'high-color': 'rgb(0, 0, 0)',
-                'horizon-blend': 0.05,
+                'color': 'rgba(0, 0, 0, 0)', // Fully transparent
+                'high-color': 'rgba(0, 0, 0, 0)',
+                'horizon-blend': 0,
                 'space-color': 'rgb(0, 0, 0)',
                 'star-intensity': 0.0,
-                'range': [0.1, 10] // Adjusted for cleaner globe presentation
+                'range': [0.1, 10]
             });
         });
 
@@ -212,11 +212,35 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
             // @ts-ignore
             const geojson = topojson.feature(worldData, worldData.objects.countries);
 
-            // Enhance GeoJSON
+            // Enhance GeoJSON with robust ID matching
             // @ts-ignore
             geojson.features.forEach((feature: any) => {
-                const id = feature.id as string;
-                if (numericToIso2[id]) feature.properties.iso2 = numericToIso2[id];
+                let id = feature.id;
+                // Normalize ID (remove leading zeros)
+                if (id) {
+                    id = String(Number(id));
+                }
+
+                // Try to find matching ISO Code
+                let matchedIso = null;
+
+                // 1. Try Numeric ID Map
+                if (id && numericToIso2[id]) {
+                    matchedIso = numericToIso2[id];
+                }
+
+                // 2. Fallback: Try Name Match if ID failed
+                if (!matchedIso && feature.properties?.name) {
+                    const name = feature.properties.name;
+                    if (name === 'Kosovo') matchedIso = 'XK';
+                    else {
+                        const found = countries.find(c => c.name === name || c.name.includes(name));
+                        if (found) matchedIso = found.code;
+                    }
+                }
+
+                // Assign found ISO
+                feature.properties.iso2 = matchedIso;
             });
 
             mapInstance.addSource('world', {

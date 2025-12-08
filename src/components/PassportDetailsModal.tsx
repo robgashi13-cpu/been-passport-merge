@@ -70,7 +70,7 @@ export const PassportDetailsModal = ({ isOpen, onClose, userPassportCode, passpo
                 className="absolute inset-0 bg-black/80 backdrop-blur-md"
                 onClick={onClose}
             />
-            <div className="relative bg-[#0a0a0a] w-full max-w-2xl max-h-[85vh] rounded-2xl border border-white/10 shadow-2xl flex flex-col animate-zoom-in overflow-hidden">
+            <div className="relative bg-[#0a0a0a] w-full h-full sm:h-auto sm:max-w-2xl sm:max-h-[85vh] rounded-none sm:rounded-2xl border-0 sm:border sm:border-white/10 shadow-2xl flex flex-col animate-zoom-in overflow-hidden">
                 {/* Header */}
                 <div className="p-6 border-b border-white/10 flex items-start justify-between bg-gradient-to-r from-luxury-charcoal to-black">
                     <div className="flex items-center gap-4">

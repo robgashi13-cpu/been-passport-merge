@@ -205,9 +205,12 @@ export const CountryDetails = ({
                         <div className="flex items-center gap-2 pr-10">
                             {/* NEW: Cities Visited Pill (Visible without scrolling tabs) */}
                             {cities.length > 0 && (
-                                <div className="hidden min-[400px]:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/50 border border-border/50 backdrop-blur-md">
-                                    <MapPin className={`w-3 h-3 ${visitedCountInCountry > 0 ? 'text-green-500' : 'text-muted-foreground'}`} />
-                                    <span className="text-xs font-bold text-foreground/90 font-numbers">{visitedCountInCountry} <span className="text-muted-foreground/60">/ {cities.length}</span></span>
+                                <div className="hidden min-[400px]:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/50 border border-border/50 backdrop-blur-md self-center">
+                                    <MapPin className={`w-3.5 h-3.5 ${visitedCountInCountry > 0 ? 'text-green-500' : 'text-muted-foreground'}`} />
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-sm font-bold text-foreground font-numbers">{visitedCountInCountry}</span>
+                                        <span className="text-xs text-muted-foreground/60 font-medium">/ {cities.length}</span>
+                                    </div>
                                 </div>
                             )}
 
@@ -308,26 +311,26 @@ export const CountryDetails = ({
                             </div>
 
                             {/* Stats Grid */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                <div className="bg-secondary/50 rounded-2xl p-4 border border-border/50 hover:border-border transition-colors">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div className="bg-secondary/50 rounded-2xl p-5 border border-border/50 hover:border-border transition-colors">
                                     <div className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-2 flex items-center gap-1.5"><Users className="w-3 h-3" /> Population</div>
                                     <div className="font-numbers text-xl md:text-2xl text-foreground font-medium">
                                         {extendedData?.population ? (extendedData.population / 1000000).toFixed(1) + 'M' : '-'}
                                     </div>
                                 </div>
-                                <div className="bg-secondary/50 rounded-2xl p-4 border border-border/50 hover:border-border transition-colors">
+                                <div className="bg-secondary/50 rounded-2xl p-5 border border-border/50 hover:border-border transition-colors">
                                     <div className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-2 flex items-center gap-1.5"><MapPin className="w-3 h-3" /> Capital</div>
                                     <div className="font-display text-lg text-foreground font-medium truncate">
                                         {extendedData?.capital?.[0] || 'N/A'}
                                     </div>
                                 </div>
-                                <div className="bg-secondary/50 rounded-2xl p-4 border border-border/50 hover:border-border transition-colors">
+                                <div className="bg-secondary/50 rounded-2xl p-5 border border-border/50 hover:border-border transition-colors">
                                     <div className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-2 flex items-center gap-1.5"><Globe className="w-3 h-3" /> Language</div>
                                     <div className="font-display text-lg text-foreground font-medium truncate">
                                         {extendedData?.languages ? Object.values(extendedData.languages)[0] : 'N/A'}
                                     </div>
                                 </div>
-                                <div className="bg-secondary/50 rounded-2xl p-4 border border-border/50 hover:border-border transition-colors">
+                                <div className="bg-secondary/50 rounded-2xl p-5 border border-border/50 hover:border-border transition-colors">
                                     <div className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-2 flex items-center gap-1.5"><Heart className="w-3 h-3" /> Religion</div>
                                     <div className="font-display text-lg text-foreground font-medium truncate">
                                         {richData?.majorReligion || 'N/A'}
@@ -360,7 +363,7 @@ export const CountryDetails = ({
                                         Search Google ↗
                                     </a>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {richData?.publicHolidays.slice(0, 4).map((h, i) => (
                                         <div key={i} className="flex justify-between items-center bg-secondary/20 p-3 rounded-xl border border-border/20">
                                             <span className="font-medium text-sm text-foreground/90">{h.name}</span>
@@ -892,23 +895,23 @@ export const CountryDetails = ({
                                 </div>
                             </div>
 
-                        </TabsContent >
-                    </Tabs >
-                </div >
-            </div >
-            );
-
-            if (!isModal) return content;
-
-            return (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in">
-                <div className="absolute inset-0" onClick={onClose} />
-                {content}
+                        </TabsContent>
+                    </Tabs>
+                </div>
             </div>
-            );
+        </div>
+    );
+
+    if (!isModal) return content;
+
+    return (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in">
+            <div className="absolute inset-0" onClick={onClose} />
+            {content}
+        </div>
+    );
 };
 
-            // Start of Helper Component
-            function AlertCertificate(props: any) {
-    return <AlertTriangle {...props} />
+function AlertCertificate(props: any) {
+    return <AlertTriangle {...props} />;
 }

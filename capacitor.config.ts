@@ -15,6 +15,9 @@ const config: CapacitorConfig = {
       backgroundColor: "#000000",
       showSpinner: false,
     },
+    Preferences: {
+      group: "group.com.been.passport"
+    }
   },
 };
 
