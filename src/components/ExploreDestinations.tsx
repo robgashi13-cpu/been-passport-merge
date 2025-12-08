@@ -28,6 +28,11 @@ export const ExploreDestinations = ({ onCountryClick }: ExploreDestinationsProps
     const featured = topDestinations[0];
 
     const handleCityClick = (city: PopularDestination & { imageUrl?: string }) => {
+        // Open Country Details modal via callback
+        if (onCountryClick) {
+            onCountryClick(city.countryCode);
+        }
+        // Also set selected city for the local modal (optional, can be removed if not needed)
         setSelectedCity(city);
     };
 

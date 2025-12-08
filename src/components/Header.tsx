@@ -1,8 +1,7 @@
 import React from 'react';
-import { Globe2, Map, LayoutDashboard, Flag, CreditCard, CalendarDays, User, LogIn, Sun, Moon } from 'lucide-react';
+import { Globe2, Map, LayoutDashboard, Flag, CreditCard, CalendarDays, User, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/contexts/UserContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import { Capacitor } from '@capacitor/core';
 
 interface HeaderProps {
@@ -14,7 +13,6 @@ interface HeaderProps {
 
 const Header = ({ activeTab, setActiveTab, onLoginClick, showDesktopNav = true }: HeaderProps) => {
   const { user, isLoggedIn } = useUser();
-  const { setTheme } = useTheme();
   const isNative = Capacitor.isNativePlatform();
 
   // Web: Fixed at top, large padding to clear safe area + spacing
@@ -113,23 +111,9 @@ const Header = ({ activeTab, setActiveTab, onLoginClick, showDesktopNav = true }
                 )}
               </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                const root = window.document.documentElement;
-                const isDark = root.classList.contains('dark');
-                setTheme(isDark ? 'light' : 'dark');
-              }}
-              className="w-9 h-9 rounded-full bg-white/5 border border-white/10 text-white hover:bg-white/10 ml-1"
-            >
-              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
-            </Button>
           </div>
-        </div>
 
+        </div>
       </div>
     </header>
   );

@@ -93,86 +93,64 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
   const totalContinents = stats.continentStats.length; // usually 6 or 7 depending on data model
 
   return (
-    <div className="flex flex-col min-h-full space-y-6 pb-20 animate-fade-in relative z-0">
+    <div className="flex flex-col min-h-full pb-20 animate-fade-in relative z-0">
       {/* Content */}
-      <div className="space-y-6 flex-1">
+      <div className="space-y-4 flex-1 px-1">
+        {/* Passport Visual */}
         <GeoPassport />
 
-        {/* Level Card */}
+        {/* Level Card - Compact */}
         <LevelCard visitedCountries={visitedCountries} />
 
-        {/* Stats Merged Card */}
-        <div className="bg-gradient-card rounded-2xl border border-border/50 p-4">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-
-            {/* Progress Ring - Clickable - Smaller size */}
-            <div
-              onClick={() => setShowCountryBrowser(true)}
-              className="cursor-pointer hover:scale-105 transition-transform flex flex-col items-center justify-center p-2"
-            >
-              <ProgressRing
-                percentage={stats.percentage}
-                visited={stats.visitedCount}
-                total={stats.totalCountries}
-                size={80}
-              />
+        {/* Stats Grid - Clean 3-column layout */}
+        <div className="grid grid-cols-3 gap-3">
+          {/* Countries */}
+          <button
+            onClick={() => setShowVisitedModal(true)}
+            className="bg-gradient-card rounded-2xl border border-border/50 p-4 text-left hover:border-border/80 transition-all active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-2">
+              <MapPin className="w-3 h-3" />
+              <span>Countries</span>
             </div>
-
-            {/* Divider (Desktop Only) */}
-            <div className="hidden sm:block w-px h-16 bg-border/20" />
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-3 gap-2 w-full sm:w-auto">
-
-              {/* Countries Visited */}
-              <div
-                onClick={() => setShowVisitedModal(true)}
-                className="cursor-pointer hover:bg-white/5 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl p-3 transition-colors flex flex-col items-center sm:items-start text-center sm:text-left"
-              >
-                <div className="flex items-center gap-1 text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-1">
-                  <MapPin className="w-3 h-3" />
-                  <span>Countries</span>
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <span className="font-display font-bold text-2xl text-foreground">{stats.visitedCount}</span>
-                  <span className="text-xs text-muted-foreground font-medium">/{stats.totalCountries}</span>
-                </div>
-              </div>
-
-              {/* Continents Unlocked */}
-              <div
-                onClick={() => setShowContinentModal(true)}
-                className="cursor-pointer hover:bg-white/5 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl p-3 transition-colors flex flex-col items-center sm:items-start text-center sm:text-left"
-              >
-                <div className="flex items-center gap-1 text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-1">
-                  <Globe className="w-3 h-3" />
-                  <span>Continents</span>
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <span className="font-display font-bold text-2xl text-foreground">{unlockedContinentCount}</span>
-                  <span className="text-xs text-muted-foreground font-medium">/{totalContinents}</span>
-                </div>
-              </div>
-
-              {/* Passport Power */}
-              <div
-                onClick={() => setShowPassportModal(true)}
-                className="cursor-pointer hover:bg-white/5 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl p-3 transition-colors flex flex-col items-center sm:items-start text-center sm:text-left"
-              >
-                <div className="flex items-center gap-1 text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-1">
-                  <Trophy className="w-3 h-3" />
-                  <span>Passport</span>
-                </div>
-                <div className="flex items-baseline gap-1">
-                  <span className="font-display font-bold text-2xl text-foreground">{stats.userPassport?.passportRank || '-'}</span>
-                </div>
-                <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight truncate max-w-[80px]">{stats.userPassport?.name || 'Select'}</p>
-              </div>
+            <div className="flex items-baseline gap-1">
+              <span className="font-display font-bold text-2xl text-foreground">{stats.visitedCount}</span>
+              <span className="text-xs text-muted-foreground">/{stats.totalCountries}</span>
             </div>
-          </div>
+          </button>
+
+          {/* Continents */}
+          <button
+            onClick={() => setShowContinentModal(true)}
+            className="bg-gradient-card rounded-2xl border border-border/50 p-4 text-left hover:border-border/80 transition-all active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-2">
+              <Globe className="w-3 h-3" />
+              <span>Continents</span>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className="font-display font-bold text-2xl text-foreground">{unlockedContinentCount}</span>
+              <span className="text-xs text-muted-foreground">/{totalContinents}</span>
+            </div>
+          </button>
+
+          {/* Passport Power */}
+          <button
+            onClick={() => setShowPassportModal(true)}
+            className="bg-gradient-card rounded-2xl border border-border/50 p-4 text-left hover:border-border/80 transition-all active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-2">
+              <Trophy className="w-3 h-3" />
+              <span>Passport</span>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className="font-display font-bold text-2xl text-foreground">#{stats.userPassport?.passportRank || '--'}</span>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1 truncate">{stats.userPassport?.name || 'Select'}</p>
+          </button>
         </div>
 
-        {/* Safety Widget (Moved Below Stats) */}
+        {/* Safety Widget */}
         <SafetyWidget
           countryName={location.countryName || currentCountry?.name || "Detecting..."}
           safetyScore={safetyScore}
@@ -180,31 +158,31 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
           nightScore={nightScore}
           personalScore={personalScore}
           womenScore={womenScore}
-          isDetecting={isDetectingLocation} // Props updated
+          isDetecting={isDetectingLocation}
         />
 
         {/* Local Airport Traffic Button */}
         <button
           onClick={() => setShowFlightModal(true)}
-          className="bg-gradient-card rounded-2xl border border-border/50 p-4 hover-lift flex items-center justify-between group cursor-pointer w-full text-left"
+          className="bg-gradient-card rounded-2xl border border-border/50 p-4 flex items-center justify-between group cursor-pointer w-full text-left hover:border-border/80 transition-all active:scale-[0.99]"
         >
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
-              <span className="text-2xl">✈️</span>
+            <div className="w-11 h-11 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <span className="text-xl">✈️</span>
             </div>
             <div>
-              <h3 className="font-bold text-foreground group-hover:text-blue-400 transition-colors">Local Airport Traffic</h3>
-              <p className="text-sm text-muted-foreground">View live flights from Pristina (PRN)</p>
+              <h3 className="font-bold text-foreground text-sm">Local Airport Traffic</h3>
+              <p className="text-xs text-muted-foreground">View live flights from Pristina (PRN)</p>
             </div>
           </div>
-          <div className="bg-secondary p-2 rounded-full group-hover:bg-blue-500/20 transition-colors">
-            <Globe className="w-5 h-5 text-muted-foreground group-hover:text-blue-400" />
+          <div className="bg-secondary p-2 rounded-full">
+            <Globe className="w-4 h-4 text-muted-foreground" />
           </div>
         </button>
       </div>
 
-      {/* spacer to push footer down */}
-      <div className="mt-auto pt-6 pb-6">
+      {/* Sign Out - Fixed at bottom */}
+      <div className="mt-auto pt-6 pb-6 px-1">
         {isLoggedIn && (
           <button
             onClick={logout}

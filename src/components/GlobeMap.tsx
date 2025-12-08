@@ -196,15 +196,9 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
         const mapInstance = map.current;
 
         mapInstance.on('style.load', () => {
-            // Disable atmosphere and stars for "clean" look
-            mapInstance.setFog({
-                'color': 'rgba(0, 0, 0, 0)', // Fully transparent
-                'high-color': 'rgba(0, 0, 0, 0)',
-                'horizon-blend': 0,
-                'space-color': 'rgb(0, 0, 0)',
-                'star-intensity': 0.0,
-                'range': [0.1, 10]
-            });
+            // Completely disable all atmospheric effects
+            // @ts-ignore - setFog(null) removes fog entirely
+            mapInstance.setFog(null);
         });
 
         mapInstance.on('load', () => {
