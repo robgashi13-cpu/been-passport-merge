@@ -27,8 +27,20 @@ export const useSmartLocation = () => {
 
     const [hasCheckedToday, setHasCheckedToday] = useState(false);
 
-    // Initial check
+    // Initial check - only once per session
     useEffect(() => {
+        // Check if we already have cached location for this session
+        const cachedLocation = sessionStorage.getItem('userLocation');
+        if (cachedLocation) {
+            try {
+                const parsed = JSON.parse(cachedLocation);
+                setLocation(parsed);
+                return; // Use cached, don't check again
+            } catch (e) {
+                console.error('Failed to parse cached location', e);
+            }
+        }
+        // No cache or invalid cache - check location
         checkLocation();
     }, []);
 
@@ -56,7 +68,7 @@ export const useSmartLocation = () => {
                     const city = data.address?.city || data.address?.town || data.address?.village || data.address?.state;
 
                     if (code && name) {
-                        setLocation({
+                        const locationData = {
                             countryCode: code,
                             countryName: name,
                             city: city || null,
@@ -64,7 +76,11 @@ export const useSmartLocation = () => {
                             longitude,
                             loading: false,
                             error: null
-                        });
+                        };
+                        setLocation(locationData);
+
+                        // Cache in sessionStorage for this session
+                        sessionStorage.setItem('userLocation', JSON.stringify(locationData));
 
                         // Handle Auto-Log Logic
                         handleAutoLog(code, name, city);
