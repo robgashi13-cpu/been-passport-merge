@@ -381,7 +381,7 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
             <div ref={mapContainer} className="w-full h-full" />
 
             {/* View Mode Toggle Buttons - Top */}
-            <div className="absolute top-14 left-0 right-0 flex justify-center z-[10] pointer-events-none" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+            <div className="absolute top-4 left-0 right-0 flex justify-center z-[10] pointer-events-none" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
                 <div className="bg-black/60 backdrop-blur-md p-1 rounded-xl flex gap-1 border border-white/10 pointer-events-auto">
                     <button
                         onClick={(e) => { e.stopPropagation(); setViewMode('visited'); }}
