@@ -159,6 +159,17 @@ export const CountryDetails = ({
         fetchExchangeRate();
     }, [extendedData?.currencies]);
 
+    // ESC key to close modal
+    useEffect(() => {
+        const handleEsc = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isModal) {
+                onClose();
+            }
+        };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, [isModal, onClose]);
+
     const currencyStr = extendedData?.currencies
         ? Object.values(extendedData.currencies).map(c => `${c.name} (${c.symbol})`).join(', ')
         : 'Loading...';
@@ -182,7 +193,8 @@ export const CountryDetails = ({
             {isModal && (
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 z-50 w-8 h-8 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-md border border-white/10 text-white/70 hover:bg-white/10 transition-colors"
+                    aria-label="Close country details"
+                    className="absolute top-4 right-4 z-50 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors backdrop-blur-sm focus-visible:ring-2 focus-visible:ring-blue-400 border border-white/10 text-white/70"
                 >
                     <X className="w-5 h-5" />
                 </button>
@@ -272,12 +284,12 @@ export const CountryDetails = ({
                     <Tabs defaultValue="overview" className="w-full space-y-4">
                         <div className="sticky top-0 z-40 bg-gradient-to-b from-black/95 via-black/90 to-transparent pt-3 pb-4 -mx-4 px-4 backdrop-blur-2xl border-b border-white/5">
                             <TabsList className="flex w-full gap-1 p-1 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 rounded-2xl border border-blue-500/20 shadow-lg shadow-blue-500/5">
-                                <TabsTrigger value="overview" className="flex-1 rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 text-white/40 hover:text-white/70">Overview</TabsTrigger>
-                                <TabsTrigger value="cities" className="flex-1 rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 text-white/40 hover:text-white/70">Cities</TabsTrigger>
-                                <TabsTrigger value="visa" className="flex-1 rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 text-white/40 hover:text-white/70">Visa</TabsTrigger>
-                                <TabsTrigger value="transport" className="flex-1 rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 text-white/40 hover:text-white/70">Transit</TabsTrigger>
-                                <TabsTrigger value="weather" className="flex-1 rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 text-white/40 hover:text-white/70">Weather</TabsTrigger>
-                                <TabsTrigger value="details" className="flex-1 rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 text-white/40 hover:text-white/70">Details</TabsTrigger>
+                                <TabsTrigger value="overview" className="flex-1 rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 text-white/60 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-blue-400">Overview</TabsTrigger>
+                                <TabsTrigger value="cities" className="flex-1 rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 text-white/60 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-blue-400">Cities</TabsTrigger>
+                                <TabsTrigger value="visa" className="flex-1 rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 text-white/60 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-blue-400">Visa</TabsTrigger>
+                                <TabsTrigger value="transport" className="flex-1 rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 text-white/60 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-blue-400">Transit</TabsTrigger>
+                                <TabsTrigger value="weather" className="flex-1 rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 text-white/60 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-blue-400">Weather</TabsTrigger>
+                                <TabsTrigger value="details" className="flex-1 rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 text-white/60 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-blue-400">Details</TabsTrigger>
                             </TabsList>
                         </div>
 
@@ -418,7 +430,7 @@ export const CountryDetails = ({
                                     <>
                                         {/* Search */}
                                         <div className="relative mb-4">
-                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
                                             <input
                                                 type="text"
                                                 placeholder="Search cities..."
