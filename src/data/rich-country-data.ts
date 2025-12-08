@@ -483,4 +483,36 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
             { name: "Other", percentage: 15 }
         ]
     },
+
+    // --- RUSSIA ---
+    "RU": {
+        description: "Vast transcontinental nation spanning 11 time zones, rich in history, culture, and natural resources from Moscow to Vladivostok.",
+        knownFor: ["Red Square", "Trans-Siberian Railway", "Hermitage Museum", "Kremlin"],
+        majorReligion: "Christianity (Orthodox)",
+        dialCode: "+7",
+        mobileOperators: ["MTS", "MegaFon", "Beeline"],
+        plugs: [PLUGS.C, PLUGS.F],
+        voltage: "220V",
+        publicHolidays: [
+            { date: "Jan 1", name: "New Year" },
+            { date: "May 9", name: "Victory Day" },
+            { date: "Jun 12", name: "Russia Day" }
+        ],
+        mainAirports: [{ code: "SVO", name: "Sheremetyevo" }, { code: "DME", name: "Domodedovo" }],
+        climate: { text: "Extreme continental. Cold winters, warm summers. Arctic in north.", bestTime: "May-Sep", seasonEmojis: "❄️☀️" },
+        emergency: { police: "102", ambulance: "103", fire: "101" },
+        alcohol: { drinkingAge: 18, purchaseAge: 18 },
+        waterRating: "Use Bottled Water",
+        vaccinations: "Routine",
+        hdi: 0.822,
+        gdp: "$1.8 Trillion",
+        visitors2025: "24M",
+        gini: 36.0,
+        area: 17098242,
+        religionDistribution: [
+            { name: "Christianity", percentage: 71 },
+            { name: "Islam", percentage: 10 },
+            { name: "Unaffiliated", percentage: 19 }
+        ]
+    },
 };
