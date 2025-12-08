@@ -200,7 +200,7 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
             // @ts-ignore - setFog(null) removes fog entirely
             mapInstance.setFog(null);
 
-            // Remove any unwanted layers (sky, atmosphere, circles, labels, symbols)
+            // Remove any unwanted layers (sky, atmosphere, circles, labels, symbols, backgrounds, etc.)
             const style = mapInstance.getStyle();
             if (style && style.layers) {
                 const layersToRemove: string[] = [];
@@ -215,6 +215,18 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
                     }
                     // Remove all symbol/label layers
                     if (layer.type === 'symbol') {
+                        layersToRemove.push(layer.id);
+                    }
+                    // Remove background layers
+                    if (layer.type === 'background' && layer.id !== 'countries-fill') {
+                        layersToRemove.push(layer.id);
+                    }
+                    // Remove heatmap, hillshade, and raster layers
+                    if (layer.type === 'heatmap' || layer.type === 'hillshade' || layer.type === 'raster') {
+                        layersToRemove.push(layer.id);
+                    }
+                    // Remove admin boundary layers that might show around countries
+                    if (layer.type === 'line' && (layer.id.includes('admin') || layer.id.includes('boundary'))) {
                         layersToRemove.push(layer.id);
                     }
                 });
