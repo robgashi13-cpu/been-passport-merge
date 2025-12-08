@@ -1,17 +1,14 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { getTopDestinations, PopularDestination } from '@/data/destinations';
 import { getCountryByCode } from '@/data/countries';
 import { citiesByCountry } from '@/data/cities';
 import { MapPin, Star, Calendar, DollarSign, TrendingUp, Sparkles, Plane, Globe, ArrowRight, Users, Navigation } from 'lucide-react';
-import { ExploreCityModal } from './ExploreCityModal'; // Import new modal
 
 interface ExploreDestinationsProps {
     onCountryClick?: (countryCode: string) => void;
 }
 
 export const ExploreDestinations = ({ onCountryClick }: ExploreDestinationsProps) => {
-    const [selectedCity, setSelectedCity] = useState<(PopularDestination & { imageUrl?: string }) | null>(null);
-
     // Enrich destinations with real images from cities.ts
     const topDestinations = useMemo(() => {
         const raw = getTopDestinations(12);
@@ -28,12 +25,10 @@ export const ExploreDestinations = ({ onCountryClick }: ExploreDestinationsProps
     const featured = topDestinations[0];
 
     const handleCityClick = (city: PopularDestination & { imageUrl?: string }) => {
-        // Open Country Details modal via callback
+        // Open Country Details directly - no modal needed
         if (onCountryClick) {
             onCountryClick(city.countryCode);
         }
-        // Also set selected city for the local modal (optional, can be removed if not needed)
-        setSelectedCity(city);
     };
 
     return (
@@ -103,13 +98,6 @@ export const ExploreDestinations = ({ onCountryClick }: ExploreDestinationsProps
                     ))}
                 </div>
             </div>
-
-            {/* Fullscreen City Modal */}
-            <ExploreCityModal
-                isOpen={!!selectedCity}
-                onClose={() => setSelectedCity(null)}
-                destination={selectedCity}
-            />
         </div>
     );
 };

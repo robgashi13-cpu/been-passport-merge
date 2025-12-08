@@ -4,11 +4,8 @@ import { Capacitor } from '@capacitor/core';
 import { useUser } from '@/contexts/UserContext';
 import { countries, getCountryByCode } from '@/data/countries';
 import { availablePassports } from '@/data/visaMatrix';
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-import { User, Mail, Lock, Globe, LogIn, UserPlus, LogOut, X, Camera as CameraIcon, Loader2 } from 'lucide-react';
+import { User, Mail, Lock, Globe, LogIn, UserPlus, LogOut, X } from 'lucide-react';
 import { AchievementList } from './Achievements';
-import { scanPhotoLibrary } from '@/services/photoScanner';
-import { findNearestCountry } from '@/services/countryService';
 
 interface LoginModalProps {
     isOpen: boolean;
@@ -16,7 +13,7 @@ interface LoginModalProps {
 }
 
 export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
-    const { login, signup, isLoggedIn, user, logout, updatePassword, visitedCountries, updateVisitedCountries } = useUser();
+    const { login, signup, isLoggedIn, user, logout, updatePassword } = useUser();
     const [mode, setMode] = useState<'login' | 'signup'>('login');
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -24,44 +21,12 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
     const [passportCode, setPassportCode] = useState('DE');
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const [isScanning, setIsScanning] = useState(false);
-    const [scanStats, setScanStats] = useState<{ found: number, new: number } | null>(null);
 
-    // Profile View States (Hoisted)
+    // Profile View States
     const [activeTab, setActiveTab] = useState<'stats' | 'achievements'>('stats');
     const [newPassword, setNewPassword] = useState('');
     const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
-    const { updateAvatar } = useUser();
-    const [isEditingAvatar, setIsEditingAvatar] = useState(false);
-    const [newAvatarUrl, setNewAvatarUrl] = useState('');
-
-    const handleNativePhotoPick = async () => {
-        try {
-            const image = await Camera.getPhoto({
-                quality: 70,
-                allowEditing: true,
-                resultType: CameraResultType.Base64,
-                source: CameraSource.Prompt
-            });
-
-            if (image.base64String) {
-                const dataUrl = `data:image/${image.format};base64,${image.base64String}`;
-                setIsLoading(true);
-                const success = await updateAvatar(dataUrl);
-                setIsLoading(false);
-
-                if (success) {
-                    setSuccessMessage('Profile picture updated!');
-                    setTimeout(() => setSuccessMessage(''), 3000);
-                } else {
-                    setError('Failed to save profile picture');
-                }
-            }
-        } catch (e) {
-            console.error("User cancelled or failed to load photo", e);
-        }
-    };
 
     const handleChangePassword = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -179,12 +144,6 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                                                 )}
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={handleNativePhotoPick}
-                                            className="absolute -bottom-1 -right-1 bg-blue-500 rounded-full p-2 border-2 border-[#0a0a0a] hover:bg-blue-400 transition-colors shadow-lg"
-                                        >
-                                            <CameraIcon className="w-3.5 h-3.5 text-white" />
-                                        </button>
                                     </div>
 
                                     {/* Name & Email */}
@@ -233,76 +192,6 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                             {/* Tab Content */}
                             {activeTab === 'stats' ? (
                                 <div className="space-y-4">
-                                    {/* Photo Scanner */}
-                                    <div className="bg-gradient-to-br from-blue-500/10 to-indigo-500/10 rounded-2xl p-5 border border-blue-500/20">
-                                        <div className="flex items-start gap-3">
-                                            <div className="p-2.5 bg-blue-500/20 rounded-xl">
-                                                <CameraIcon className="w-5 h-5 text-blue-400" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <h4 className="font-bold text-white mb-1">Auto-Fill from Photos</h4>
-                                                <p className="text-xs text-white/50 mb-3">
-                                                    Scan your photo library to find countries you've visited.
-                                                </p>
-
-                                                {scanStats ? (
-                                                    <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-center">
-                                                        <p className="text-green-400 font-medium text-sm">Scan Complete!</p>
-                                                        <p className="text-xs text-green-300/70">
-                                                            Found {scanStats.found} locations. Added {scanStats.new} new countries.
-                                                        </p>
-                                                        <button onClick={() => setScanStats(null)} className="mt-2 text-xs text-green-400 underline">
-                                                            Dismiss
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <button
-                                                        onClick={async () => {
-                                                            if (!Capacitor.isNativePlatform()) {
-                                                                setError("Photo scanning is only available on the mobile app.");
-                                                                setTimeout(() => setError(''), 3000);
-                                                                return;
-                                                            }
-                                                            setIsScanning(true);
-                                                            try {
-                                                                const locations = await scanPhotoLibrary();
-                                                                const newCountries = new Set<string>();
-                                                                const currentSet = new Set(visitedCountries);
-                                                                locations.forEach(loc => {
-                                                                    const countryCode = findNearestCountry(loc.latitude, loc.longitude);
-                                                                    if (countryCode && !currentSet.has(countryCode)) {
-                                                                        newCountries.add(countryCode);
-                                                                        currentSet.add(countryCode);
-                                                                    }
-                                                                });
-                                                                if (newCountries.size > 0) {
-                                                                    updateVisitedCountries([...visitedCountries, ...Array.from(newCountries)]);
-                                                                }
-                                                                setScanStats({ found: locations.length, new: newCountries.size });
-                                                            } catch (e) {
-                                                                console.error(e);
-                                                                setError("Failed to scan photos. Please check permissions.");
-                                                            } finally {
-                                                                setIsScanning(false);
-                                                            }
-                                                        }}
-                                                        disabled={isScanning}
-                                                        className="w-full py-2.5 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-400 transition-all flex items-center justify-center gap-2"
-                                                    >
-                                                        {isScanning ? (
-                                                            <>
-                                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                                                Scanning...
-                                                            </>
-                                                        ) : (
-                                                            "Scan Photos"
-                                                        )}
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-
                                     {/* Change Password */}
                                     <div className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
                                         {isChangingPassword ? (
