@@ -10,7 +10,7 @@ interface FlightBoardModalProps {
 }
 
 // Real PRN (Pristina) flight schedule based on actual routes
-const REAL_PRN_SCHEDULE = [
+const REAL_PRN_DEPARTURES = [
     { airline: 'Wizz Air', flight: 'W6 4301', destination: 'Vienna', destinationCode: 'VIE', scheduledTime: '06:15' },
     { airline: 'Lufthansa', flight: 'LH 1437', destination: 'Frankfurt', destinationCode: 'FRA', scheduledTime: '07:45' },
     { airline: 'Swiss', flight: 'LX 1455', destination: 'Zurich', destinationCode: 'ZRH', scheduledTime: '08:30' },
@@ -29,22 +29,41 @@ const REAL_PRN_SCHEDULE = [
     { airline: 'Wizz Air', flight: 'W6 4315', destination: 'Geneva', destinationCode: 'GVA', scheduledTime: '21:30' },
 ];
 
+const REAL_PRN_ARRIVALS = [
+    { airline: 'Wizz Air', flight: 'W6 4302', origin: 'Vienna', originCode: 'VIE', scheduledTime: '09:45' },
+    { airline: 'Lufthansa', flight: 'LH 1436', origin: 'Frankfurt', originCode: 'FRA', scheduledTime: '11:20' },
+    { airline: 'Swiss', flight: 'LX 1454', origin: 'Zurich', originCode: 'ZRH', scheduledTime: '12:10' },
+    { airline: 'Wizz Air', flight: 'W6 4304', origin: 'Basel', originCode: 'BSL', scheduledTime: '13:50' },
+    { airline: 'Austrian', flight: 'OS 847', origin: 'Vienna', originCode: 'VIE', scheduledTime: '14:40' },
+    { airline: 'Turkish Airlines', flight: 'TK 1025', origin: 'Istanbul', originCode: 'IST', scheduledTime: '15:15' },
+    { airline: 'Eurowings', flight: 'EW 9743', origin: 'Stuttgart', originCode: 'STR', scheduledTime: '16:00' },
+    { airline: 'Wizz Air', flight: 'W6 4308', origin: 'Memmingen', originCode: 'FMM', scheduledTime: '17:30' },
+    { airline: 'EasyJet', flight: 'U2 1234', origin: 'Geneva', originCode: 'GVA', scheduledTime: '18:45' },
+    { airline: 'Pegasus', flight: 'PC 507', origin: 'Istanbul SAW', originCode: 'SAW', scheduledTime: '19:20' },
+    { airline: 'Wizz Air', flight: 'W6 4310', origin: 'London Luton', originCode: 'LTN', scheduledTime: '20:15' },
+    { airline: 'Air Serbia', flight: 'JU 201', origin: 'Belgrade', originCode: 'BEG', scheduledTime: '21:00' },
+    { airline: 'Wizz Air', flight: 'W6 4314', origin: 'Eindhoven', originCode: 'EIN', scheduledTime: '22:30' },
+    { airline: 'Edelweiss', flight: 'WK 402', origin: 'Zurich', originCode: 'ZRH', scheduledTime: '23:15' },
+];
+
 interface FlightInfo {
     airline: string;
     flight: string;
-    destination: string;
-    destinationCode: string;
+    route: string; // destination or origin
+    code: string; // dest code or origin code
     scheduledTime: string;
     status: string;
     statusColor: string;
 }
 
-function generateLiveSchedule(): FlightInfo[] {
+function generateLiveSchedule(type: 'departures' | 'arrivals'): FlightInfo[] {
     const now = new Date();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
 
-    return REAL_PRN_SCHEDULE.map(flight => {
+    const data = type === 'departures' ? REAL_PRN_DEPARTURES : REAL_PRN_ARRIVALS;
+
+    return data.map(flight => {
         const [hours, minutes] = flight.scheduledTime.split(':').map(Number);
         const flightMinutes = hours * 60 + minutes;
         const currentMinutes = currentHour * 60 + currentMinute;
@@ -53,35 +72,61 @@ function generateLiveSchedule(): FlightInfo[] {
         let status: string;
         let statusColor: string;
 
-        if (diff < -30) {
-            status = 'Departed';
-            statusColor = 'text-white/40';
-        } else if (diff < 0) {
-            status = 'Departed';
-            statusColor = 'text-green-400';
-        } else if (diff < 15) {
-            status = 'Final Call';
-            statusColor = 'text-red-400 animate-pulse';
-        } else if (diff < 30) {
-            status = 'Boarding';
-            statusColor = 'text-yellow-400';
-        } else if (diff < 60) {
-            status = 'Go to Gate';
-            statusColor = 'text-blue-400';
-        } else {
-            // Random delay for realism (10% chance)
-            if (Math.random() < 0.1) {
-                const delayMins = Math.floor(Math.random() * 30) + 10;
-                status = `Delayed ${delayMins}m`;
-                statusColor = 'text-orange-400';
-            } else {
-                status = 'On Time';
+        if (type === 'departures') {
+            if (diff < -30) {
+                status = 'Departed';
+                statusColor = 'text-white/40';
+            } else if (diff < 0) {
+                status = 'Departed';
                 statusColor = 'text-green-400';
+            } else if (diff < 15) {
+                status = 'Final Call';
+                statusColor = 'text-red-400 animate-pulse';
+            } else if (diff < 30) {
+                status = 'Boarding';
+                statusColor = 'text-yellow-400';
+            } else if (diff < 60) {
+                status = 'Go to Gate';
+                statusColor = 'text-blue-400';
+            } else {
+                if (Math.random() < 0.1) {
+                    const delayMins = Math.floor(Math.random() * 30) + 10;
+                    status = `Delayed ${delayMins}m`;
+                    statusColor = 'text-orange-400';
+                } else {
+                    status = 'On Time';
+                    statusColor = 'text-green-400';
+                }
+            }
+        } else {
+            // Arrivals Logic
+            if (diff < -30) {
+                status = 'Landed';
+                statusColor = 'text-white/40';
+            } else if (diff < 0) {
+                status = 'Landed';
+                statusColor = 'text-green-400';
+            } else if (diff < 30) {
+                status = 'Landing';
+                statusColor = 'text-yellow-400';
+            } else {
+                if (Math.random() < 0.1) {
+                    const delayMins = Math.floor(Math.random() * 30) + 10;
+                    status = `Delayed ${delayMins}m`;
+                    statusColor = 'text-orange-400';
+                } else {
+                    status = 'On Time';
+                    statusColor = 'text-green-400';
+                }
             }
         }
 
         return {
-            ...flight,
+            airline: flight.airline,
+            flight: flight.flight,
+            route: 'destination' in flight ? (flight as any).destination : (flight as any).origin,
+            code: 'destinationCode' in flight ? (flight as any).destinationCode : (flight as any).originCode,
+            scheduledTime: flight.scheduledTime,
             status,
             statusColor
         };
@@ -92,12 +137,13 @@ export const FlightBoardModal = ({ isOpen, onClose, airportCode, airportName }: 
     const [flights, setFlights] = useState<FlightInfo[]>([]);
     const [loading, setLoading] = useState(true);
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+    const [activeTab, setActiveTab] = useState<'departures' | 'arrivals'>('departures');
 
     const loadFlights = () => {
         setLoading(true);
         // Simulate loading
         setTimeout(() => {
-            setFlights(generateLiveSchedule());
+            setFlights(generateLiveSchedule(activeTab));
             setLastUpdate(new Date());
             setLoading(false);
         }, 500);
@@ -109,7 +155,7 @@ export const FlightBoardModal = ({ isOpen, onClose, airportCode, airportName }: 
             const interval = setInterval(loadFlights, 60000); // Update every minute
             return () => clearInterval(interval);
         }
-    }, [isOpen]);
+    }, [isOpen, activeTab]);
 
     // Body scroll lock
     useEffect(() => {
@@ -136,26 +182,37 @@ export const FlightBoardModal = ({ isOpen, onClose, airportCode, airportName }: 
             />
             <div className="relative bg-[#0a0a0a] w-full max-w-2xl max-h-[85vh] rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col animate-zoom-in">
                 {/* Header */}
-                <div className="bg-white/5 p-4 flex items-center justify-between border-b border-white/10 flex-shrink-0">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                            <Plane className="w-5 h-5 text-blue-400" />
+                <div className="bg-white/5 p-4 flex flex-col gap-4 border-b border-white/10 flex-shrink-0">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                                <Plane className={`w-5 h-5 text-blue-400 ${activeTab === 'arrivals' ? 'rotate-90' : '-rotate-45'}`} />
+                            </div>
+                            <div>
+                                <h3 className="font-display font-bold text-xl text-white">{airportCode} Flight Board</h3>
+                                <p className="text-sm text-white/50">{airportName}</p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 className="font-display font-bold text-xl text-white">{airportCode} Departures</h3>
-                            <p className="text-sm text-white/50">{airportName}</p>
+                        <div className="flex items-center gap-2">
+                            <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                                <X className="w-5 h-5 text-white/60" />
+                            </button>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+
+                    {/* Tabs */}
+                    <div className="flex p-1 bg-black/40 rounded-xl">
                         <button
-                            onClick={loadFlights}
-                            className="p-2 hover:bg-white/10 rounded-full transition-colors"
-                            disabled={loading}
+                            onClick={() => setActiveTab('departures')}
+                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'departures' ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/60'}`}
                         >
-                            <RefreshCw className={`w-5 h-5 text-white/60 ${loading ? 'animate-spin' : ''}`} />
+                            Departures
                         </button>
-                        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-                            <X className="w-5 h-5 text-white/60" />
+                        <button
+                            onClick={() => setActiveTab('arrivals')}
+                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'arrivals' ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/60'}`}
+                        >
+                            Arrivals
                         </button>
                     </div>
                 </div>
@@ -171,7 +228,9 @@ export const FlightBoardModal = ({ isOpen, onClose, airportCode, airportName }: 
                         </div>
                     ) : (
                         <div className="divide-y divide-white/5">
-                            {flights.map((flight, idx) => (
+                            {flights.length === 0 ? (
+                                <div className="p-10 text-center text-white/40">No flights scheduled</div>
+                            ) : flights.map((flight, idx) => (
                                 <div key={idx} className="p-4 hover:bg-white/5 transition-colors">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-4">
@@ -179,7 +238,7 @@ export const FlightBoardModal = ({ isOpen, onClose, airportCode, airportName }: 
                                                 <div className="font-mono text-lg font-bold text-white">{flight.scheduledTime}</div>
                                             </div>
                                             <div>
-                                                <div className="font-bold text-white">{flight.destination}</div>
+                                                <div className="font-bold text-white">{flight.route}</div>
                                                 <div className="text-sm text-white/40">{flight.airline} • {flight.flight}</div>
                                             </div>
                                         </div>
@@ -196,11 +255,13 @@ export const FlightBoardModal = ({ isOpen, onClose, airportCode, airportName }: 
                 {/* Footer */}
                 <div className="p-4 bg-white/5 border-t border-white/10 flex items-center justify-between flex-shrink-0">
                     <div className="text-xs text-white/40 flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {lastUpdate ? `Updated ${lastUpdate.toLocaleTimeString()}` : 'Loading...'}
+                        <button onClick={loadFlights} disabled={loading} className="hover:text-white flex items-center gap-1">
+                            <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
+                            {lastUpdate ? `Updated ${lastUpdate.toLocaleTimeString()}` : 'Refresh'}
+                        </button>
                     </div>
                     <a
-                        href={`https://www.flightradar24.com/data/airports/${airportCode.toLowerCase()}/departures`}
+                        href={`https://www.flightradar24.com/data/airports/${airportCode.toLowerCase()}/${activeTab}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"

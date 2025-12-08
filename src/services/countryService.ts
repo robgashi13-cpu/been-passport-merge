@@ -170,31 +170,93 @@ export const findNearestCountry = (lat: number, lng: number): string | null => {
     return closestCountry;
 };
 
-export const fetchCountryCities = async (countryName: string): Promise<string[]> => {
+// Manual overrides for countries with poor API coverage or recognition issues
+const CITY_OVERRIDES: Record<string, string[]> = {
+    "Kosovo": ["Pristina", "Prizren", "Peja", "Gjakova", "Mitrovica", "Ferizaj", "Gjilan"],
+    "Vatican City": ["Vatican City"],
+    "Monaco": ["Monaco", "Monte Carlo", "La Condamine", "Fontvieille"],
+    "Palestine": ["Ramallah", "Gaza City", "Bethlehem", "Hebron", "Nablus", "Jericho"],
+    "Taiwan": ["Taipei", "Kaohsiung", "Taichung", "Tainan", "Taoyuan"],
+    "Hong Kong": ["Hong Kong", "Kowloon", "Victoria"],
+    "Macao": ["Macau"]
+};
+
+const BASE_URL = 'https://countriesnow.space/api/v0.1/countries';
+
+export const fetchCountryStates = async (countryName: string): Promise<{ name: string; state_code: string }[]> => {
     try {
-        const response = await axios.post('https://countriesnow.space/api/v0.1/countries/cities', {
-            country: countryName
+        const response = await fetch(`${BASE_URL}/states`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ country: countryName })
         });
-        if (response.data && !response.data.error && response.data.data.length > 0) {
-            return response.data.data;
+        const data = await response.json();
+        if (!data.error) {
+            return data.data.states || [];
+        }
+        return [];
+    } catch (error) {
+        console.error('Error fetching states:', error);
+        return [];
+    }
+};
+
+export const fetchStateCities = async (countryName: string, stateName: string): Promise<string[]> => {
+    try {
+        const response = await fetch(`${BASE_URL}/state/cities`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ country: countryName, state: stateName })
+        });
+        const data = await response.json();
+        if (!data.error) {
+            return data.data || [];
+        }
+        return [];
+    } catch (error) {
+        console.error('Error fetching state cities:', error);
+        return [];
+    }
+};
+
+export const fetchCountryCities = async (countryName: string): Promise<string[]> => {
+    // Check overrides first
+    const normalizedName = countryName.toLowerCase();
+    for (const [key, cities] of Object.entries(CITY_OVERRIDES)) {
+        if (key.toLowerCase() === normalizedName) {
+            return cities;
+        }
+    }
+
+    try {
+        const response = await fetch(`${BASE_URL}/cities`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ country: countryName }),
+        });
+
+        const data = await response.json();
+
+        if (!data.error) {
+            return data.data;
         }
 
-        // Fallback: Use Capital from local data if API returns empty
-        const localCountry = countries.find(c => c.name === countryName);
+        // Fallback to local capital if API fails or country not found
+        const localCountry = countries.find(c => c.name.toLowerCase() === countryName.toLowerCase());
         if (localCountry?.capital) {
             return [localCountry.capital];
         }
 
         return [];
     } catch (error) {
-        console.warn(`Failed to fetch cities for ${countryName}`, error);
-
-        // Fallback on error too
-        const localCountry = countries.find(c => c.name === countryName);
+        console.error('Error fetching cities:', error);
+        // Fallback
+        const localCountry = countries.find(c => c.name.toLowerCase() === countryName.toLowerCase());
         if (localCountry?.capital) {
             return [localCountry.capital];
         }
-
         return [];
     }
 };

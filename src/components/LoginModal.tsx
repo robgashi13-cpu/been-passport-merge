@@ -31,6 +31,23 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
     const [newPassword, setNewPassword] = useState('');
     const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
+    const { updateAvatar } = useUser();
+    const [isEditingAvatar, setIsEditingAvatar] = useState(false);
+    const [newAvatarUrl, setNewAvatarUrl] = useState('');
+
+    const handleAvatarUpdate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+        const success = await updateAvatar(newAvatarUrl);
+        setIsLoading(false);
+        if (success) {
+            setIsEditingAvatar(false);
+            setSuccessMessage('Profile picture updated!');
+            setTimeout(() => setSuccessMessage(''), 3000);
+        } else {
+            setError('Failed to update profile picture');
+        }
+    };
 
     const handleChangePassword = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -124,11 +141,44 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                     <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
 
                         <div className="text-center mb-6">
-                            <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
-                                <User className="w-10 h-10" />
+                            <div className="relative w-24 h-24 mx-auto mb-4 group">
+                                <div className="w-full h-full rounded-full bg-white/10 flex items-center justify-center overflow-hidden border-2 border-white/20">
+                                    {user.avatarUrl ? (
+                                        <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User className="w-10 h-10 text-white/50" />
+                                    )}
+                                </div>
+                                <button
+                                    onClick={() => setIsEditingAvatar(!isEditingAvatar)}
+                                    className="absolute bottom-0 right-0 bg-blue-500 rounded-full p-2 border border-black hover:bg-blue-400 transition-colors shadow-lg"
+                                >
+                                    {isEditingAvatar ? <X className="w-3 h-3 text-white" /> : <Camera className="w-3 h-3 text-white" />}
+                                </button>
                             </div>
-                            <h3 className="text-xl font-bold">{user.name}</h3>
-                            <p className="text-muted-foreground">{user.email}</p>
+
+                            {isEditingAvatar ? (
+                                <form onSubmit={handleAvatarUpdate} className="mb-4 animate-fade-in space-y-2">
+                                    <input
+                                        type="url"
+                                        placeholder="Paste image URL..."
+                                        className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-center"
+                                        value={newAvatarUrl}
+                                        onChange={(e) => setNewAvatarUrl(e.target.value)}
+                                        autoFocus
+                                    />
+                                    <div className="flex justify-center gap-2">
+                                        <button type="submit" className="text-xs bg-blue-500/20 text-blue-400 px-3 py-1 rounded-md" disabled={isLoading}>
+                                            Save
+                                        </button>
+                                    </div>
+                                </form>
+                            ) : (
+                                <>
+                                    <h3 className="text-xl font-bold">{user.name}</h3>
+                                    <p className="text-muted-foreground">{user.email}</p>
+                                </>
+                            )}
                         </div>
 
                         {/* Tabs */}

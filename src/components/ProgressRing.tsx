@@ -15,7 +15,8 @@ const ProgressRing = ({ percentage, visited, total, size }: ProgressRingProps) =
   const isCompact = size && size < 100;
   const isMedium = size && size >= 100 && size < 200;
   const strokeWidth = isCompact ? 6 : isMedium ? 10 : 12;
-  const normalizedRadius = radius - strokeWidth / 2;
+  // Reduce radius slightly to accommodate stroke cap and prevent clipping
+  const normalizedRadius = radius - strokeWidth / 2 - 2;
   const circumference = normalizedRadius * 2 * Math.PI;
   const strokeDashoffset = circumference - (animatedPercentage / 100) * circumference;
 
@@ -77,6 +78,9 @@ const ProgressRing = ({ percentage, visited, total, size }: ProgressRingProps) =
         <span className={`font-display font-bold text-gradient-white ${isCompact ? 'text-lg' : isMedium ? 'text-3xl' : 'text-5xl'}`}>
           {animatedPercentage}%
         </span>
+        {!isCompact && !isMedium && (
+          <span className="text-[10px] uppercase font-bold tracking-widest text-white/40 mt-1">World Explored</span>
+        )}
       </div>
     </div>
   );

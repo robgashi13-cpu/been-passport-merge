@@ -6,28 +6,29 @@ export interface City {
     longitude?: number;
     bestSeason?: string;
     imageUrl?: string;
+    visitorCount?: string; // Annual visitors
 }
 
 export const citiesByCountry: Record<string, City[]> = {
     // === NORTH AMERICA ===
     "US": [
-        { name: "New York City", population: 8419600, latitude: 40.7128, longitude: -74.0060, bestSeason: "Apr-Jun, Sep-Nov", imageUrl: "https://images.unsplash.com/photo-1496442226666-8d4a0ee53e6e?q=80&w=2070&auto=format&fit=crop" },
-        { name: "Los Angeles", population: 3980400, latitude: 34.0522, longitude: -118.2437, bestSeason: "Mar-May, Sep-Nov", imageUrl: "https://images.unsplash.com/photo-1542259685-455bda5afae9?q=80&w=2069&auto=format&fit=crop" },
-        { name: "Chicago", population: 2716000, latitude: 41.8781, longitude: -87.6298, bestSeason: "Jun-Sep", imageUrl: "https://images.unsplash.com/photo-1494522855154-9297ac14b55f?q=80&w=2070&auto=format&fit=crop" },
-        { name: "Houston", population: 2328000, latitude: 29.7604, longitude: -95.3698, bestSeason: "Feb-Apr, Oct-Nov", imageUrl: "https://images.unsplash.com/photo-1530089711124-9ca31fb9e115?q=80&w=2069&auto=format&fit=crop" },
-        { name: "Phoenix", population: 1680992, bestSeason: "Nov-Apr", imageUrl: "https://images.unsplash.com/photo-1521625458514-65191cfaaf9e?q=80&w=2070&auto=format&fit=crop" },
-        { name: "Philadelphia", population: 1584064, bestSeason: "Mar-May" },
-        { name: "San Antonio", population: 1547253, bestSeason: "Nov-Apr" },
-        { name: "San Diego", population: 1423851, bestSeason: "Mar-May, Sep-Nov", imageUrl: "https://images.unsplash.com/photo-1505963957242-f87595c26927?q=80&w=2070&auto=format&fit=crop" },
-        { name: "Dallas", population: 1343573, bestSeason: "Sep-Nov, Mar-May" },
-        { name: "San Jose", population: 1021795, bestSeason: "Jun-Sep" },
-        { name: "Washington, D.C.", population: 689545, isCapital: true, bestSeason: "Sep-Nov, Mar-May", imageUrl: "https://images.unsplash.com/photo-1617581629397-a72507c3de9e?q=80&w=2070&auto=format&fit=crop" },
-        { name: "Miami", population: 442241, bestSeason: "Nov-Apr", imageUrl: "https://images.unsplash.com/photo-1535498730771-e735b998cd64?q=80&w=2068&auto=format&fit=crop" },
-        { name: "San Francisco", population: 873965, bestSeason: "Sep-Nov", imageUrl: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?q=80&w=2089&auto=format&fit=crop" },
-        { name: "Seattle", population: 737015, bestSeason: "Jun-Sep", imageUrl: "https://images.unsplash.com/photo-1502175353174-a7a70e73b362?q=80&w=2119&auto=format&fit=crop" },
-        { name: "Boston", population: 675647, bestSeason: "Jun-Oct" },
-        { name: "Las Vegas", population: 641903, bestSeason: "Mar-May, Sep-Nov", imageUrl: "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?q=80&w=2074&auto=format&fit=crop" },
-        { name: "Orlando", population: 307573, bestSeason: "Jan-Apr" }
+        { name: "New York City", population: 8419600, latitude: 40.7128, longitude: -74.0060, bestSeason: "Apr-Jun, Sep-Nov", imageUrl: "https://images.unsplash.com/photo-1496442226666-8d4a0ee53e6e?q=80&w=2070&auto=format&fit=crop", visitorCount: "56.4M" },
+        { name: "Los Angeles", population: 3980400, latitude: 34.0522, longitude: -118.2437, bestSeason: "Mar-May, Sep-Nov", imageUrl: "https://images.unsplash.com/photo-1542259685-455bda5afae9?q=80&w=2069&auto=format&fit=crop", visitorCount: "47.3M" },
+        { name: "Chicago", population: 2716000, latitude: 41.8781, longitude: -87.6298, bestSeason: "Jun-Sep", imageUrl: "https://images.unsplash.com/photo-1494522855154-9297ac14b55f?q=80&w=2070&auto=format&fit=crop", visitorCount: "57.6M" },
+        { name: "Houston", population: 2328000, latitude: 29.7604, longitude: -95.3698, bestSeason: "Feb-Apr, Oct-Nov", imageUrl: "https://images.unsplash.com/photo-1530089711124-9ca31fb9e115?q=80&w=2069&auto=format&fit=crop", visitorCount: "22.3M" },
+        { name: "Phoenix", population: 1680992, bestSeason: "Nov-Apr", imageUrl: "https://images.unsplash.com/photo-1521625458514-65191cfaaf9e?q=80&w=2070&auto=format&fit=crop", visitorCount: "19.5M" },
+        { name: "Philadelphia", population: 1584064, bestSeason: "Mar-May", imageUrl: "https://images.unsplash.com/photo-1517006830768-5229712a4336?q=80&w=2068&auto=format&fit=crop", visitorCount: "43.3M" },
+        { name: "San Antonio", population: 1547253, bestSeason: "Nov-Apr", imageUrl: "https://images.unsplash.com/photo-1531218150217-54595bc2b934?q=80&w=2028&auto=format&fit=crop", visitorCount: "34M" },
+        { name: "San Diego", population: 1423851, bestSeason: "Mar-May, Sep-Nov", imageUrl: "https://images.unsplash.com/photo-1505963957242-f87595c26927?q=80&w=2070&auto=format&fit=crop", visitorCount: "35.1M" },
+        { name: "Dallas", population: 1343573, bestSeason: "Sep-Nov, Mar-May", imageUrl: "https://images.unsplash.com/photo-1545199659-4ac91833c827?q=80&w=2072&auto=format&fit=crop", visitorCount: "25.7M" },
+        { name: "San Jose", population: 1021795, bestSeason: "Jun-Sep", imageUrl: "https://images.unsplash.com/photo-1550547781-b5e0bd1d5966?q=80&w=2070&auto=format&fit=crop", visitorCount: "10M" },
+        { name: "Washington, D.C.", population: 689545, isCapital: true, bestSeason: "Sep-Nov, Mar-May", imageUrl: "https://images.unsplash.com/photo-1617581629397-a72507c3de9e?q=80&w=2070&auto=format&fit=crop", visitorCount: "23.8M" },
+        { name: "Miami", population: 442241, bestSeason: "Nov-Apr", imageUrl: "https://images.unsplash.com/photo-1535498730771-e735b998cd64?q=80&w=2068&auto=format&fit=crop", visitorCount: "27.2M" },
+        { name: "San Francisco", population: 873965, bestSeason: "Sep-Nov", imageUrl: "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?q=80&w=2089&auto=format&fit=crop", visitorCount: "21.9M" },
+        { name: "Seattle", population: 737015, bestSeason: "Jun-Sep", imageUrl: "https://images.unsplash.com/photo-1502175353174-a7a70e73b362?q=80&w=2119&auto=format&fit=crop", visitorCount: "33.9M" },
+        { name: "Boston", population: 675647, bestSeason: "Jun-Oct", imageUrl: "https://images.unsplash.com/photo-1506190503958-48b8bb5a6f31?q=80&w=2070&auto=format&fit=crop", visitorCount: "19M" },
+        { name: "Las Vegas", population: 641903, bestSeason: "Mar-May, Sep-Nov", imageUrl: "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?q=80&w=2074&auto=format&fit=crop", visitorCount: "41.8M" },
+        { name: "Orlando", population: 307573, bestSeason: "Jan-Apr", imageUrl: "https://images.unsplash.com/photo-1597466599360-3b9775841aec?q=80&w=2064&auto=format&fit=crop", visitorCount: "74M" }
     ],
     "CA": [
         { name: "Toronto", population: 2731571, imageUrl: "https://images.unsplash.com/photo-1507992781348-3102646f4153?q=80&w=2068&auto=format&fit=crop" },
@@ -48,21 +49,21 @@ export const citiesByCountry: Record<string, City[]> = {
     ],
     // === EUROPE ===
     "GB": [
-        { name: "London", population: 8982000, isCapital: true, bestSeason: "May-Sep", imageUrl: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=2068&auto=format&fit=crop" },
-        { name: "Birmingham", population: 1141816, bestSeason: "May-Sep" },
-        { name: "Manchester", population: 553230, bestSeason: "Jun-Aug" },
-        { name: "Edinburgh", population: 524930, bestSeason: "Jun-Aug", imageUrl: "https://images.unsplash.com/photo-1506377295352-d31584529bc0?q=80&w=2069&auto=format&fit=crop" }
+        { name: "London", population: 8982000, isCapital: true, bestSeason: "May-Sep", imageUrl: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=2068&auto=format&fit=crop", visitorCount: "20.3M" },
+        { name: "Birmingham", population: 1141816, bestSeason: "May-Sep", imageUrl: "https://images.unsplash.com/photo-1616766943806-a63901b54a3a?q=80&w=2070&auto=format&fit=crop", visitorCount: "42M (Domestic)" },
+        { name: "Manchester", population: 553230, bestSeason: "Jun-Aug", imageUrl: "https://images.unsplash.com/photo-1543835683-ec548e69e22b?q=80&w=2070&auto=format&fit=crop", visitorCount: "1.6M (Intl)" },
+        { name: "Edinburgh", population: 524930, bestSeason: "Jun-Aug", imageUrl: "https://images.unsplash.com/photo-1506377295352-d31584529bc0?q=80&w=2069&auto=format&fit=crop", visitorCount: "2.5M (Intl)" }
     ],
     "FR": [
-        { name: "Paris", population: 2165423, isCapital: true, bestSeason: "Apr-Oct", imageUrl: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=2073&auto=format&fit=crop" },
-        { name: "Marseille", population: 868277, bestSeason: "May-Oct" },
-        { name: "Lyon", population: 518635, bestSeason: "Apr-Oct" },
-        { name: "Nice", population: 340017, bestSeason: "May-Oct", imageUrl: "https://images.unsplash.com/photo-1533642646639-66384eb77659?q=80&w=2070&auto=format&fit=crop" }
+        { name: "Paris", population: 2165423, isCapital: true, bestSeason: "Apr-Oct", imageUrl: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=2073&auto=format&fit=crop", visitorCount: "19.8M" },
+        { name: "Marseille", population: 868277, bestSeason: "May-Oct", imageUrl: "https://images.unsplash.com/photo-1543940251-84d4ae9e9d6d?q=80&w=2070&auto=format&fit=crop", visitorCount: "5M" },
+        { name: "Lyon", population: 518635, bestSeason: "Apr-Oct", imageUrl: "https://images.unsplash.com/photo-1627916668798-8c10507a2336?q=80&w=2071&auto=format&fit=crop", visitorCount: "6M" },
+        { name: "Nice", population: 340017, bestSeason: "May-Oct", imageUrl: "https://images.unsplash.com/photo-1533642646639-66384eb77659?q=80&w=2070&auto=format&fit=crop", visitorCount: "4M" }
     ],
     "DE": [
-        { name: "Berlin", population: 3769000, isCapital: true, bestSeason: "May-Sep", imageUrl: "https://images.unsplash.com/photo-1560969184-10fe8719e654?q=80&w=2070&auto=format&fit=crop" },
-        { name: "Hamburg", population: 1841000, bestSeason: "May-Sep" },
-        { name: "Munich", population: 1472000, bestSeason: "May-Oct", imageUrl: "https://images.unsplash.com/photo-1595867865324-bca5ba4bad47?q=80&w=2070&auto=format&fit=crop" }
+        { name: "Berlin", population: 3769000, isCapital: true, bestSeason: "May-Sep", imageUrl: "https://images.unsplash.com/photo-1560969184-10fe8719e654?q=80&w=2070&auto=format&fit=crop", visitorCount: "13.5M" },
+        { name: "Hamburg", population: 1841000, bestSeason: "May-Sep", imageUrl: "https://images.unsplash.com/photo-1543968332-f99478b1ebdc?q=80&w=2070&auto=format&fit=crop", visitorCount: "7.6M" },
+        { name: "Munich", population: 1472000, bestSeason: "May-Oct", imageUrl: "https://images.unsplash.com/photo-1595867865324-bca5ba4bad47?q=80&w=2070&auto=format&fit=crop", visitorCount: "8.7M" }
     ],
     "IT": [
         { name: "Rome", population: 2873000, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=1996&auto=format&fit=crop" },
@@ -126,135 +127,135 @@ export const citiesByCountry: Record<string, City[]> = {
         { name: "Heraklion", population: 140730 }
     ],
     "TR": [
-        { name: "Istanbul", population: 15462452, imageUrl: "https://images.unsplash.com/photo-1527838832700-50592524d78b?q=80&w=2014&auto=format&fit=crop" },
-        { name: "Ankara", population: 5663322, isCapital: true },
-        { name: "Izmir", population: 4367251 },
+        { name: "Istanbul", population: 15462452, imageUrl: "https://images.unsplash.com/photo-1527838832700-50592524d78b?q=80&w=2014&auto=format&fit=crop", visitorCount: "20.2M" },
+        { name: "Ankara", population: 5663322, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1587886476140-593b48450143?q=80&w=2070&auto=format&fit=crop", visitorCount: "5M" },
+        { name: "Izmir", population: 4367251, imageUrl: "https://images.unsplash.com/photo-1566415714774-4b53106c4b28?q=80&w=2070&auto=format&fit=crop", visitorCount: "3M" },
         { name: "Bursa", population: 3056120 },
-        { name: "Antalya", population: 2511700 }
+        { name: "Antalya", population: 2511700, imageUrl: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?q=80&w=2070&auto=format&fit=crop", visitorCount: "16.5M" }
     ],
     "RU": [
-        { name: "Moscow", population: 12506000, isCapital: true },
-        { name: "Saint Petersburg", population: 5351000 },
+        { name: "Moscow", population: 12506000, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1513326738677-b964603b136d?q=80&w=2070&auto=format&fit=crop", visitorCount: "24M" },
+        { name: "Saint Petersburg", population: 5351000, imageUrl: "https://images.unsplash.com/photo-1556610961-2fecc5927173?q=80&w=2067&auto=format&fit=crop", visitorCount: "10M" },
         { name: "Novosibirsk", population: 1612000 },
         { name: "Yekaterinburg", population: 1483000 },
         { name: "Kazan", population: 1243000 }
     ],
     "PL": [
-        { name: "Warsaw", population: 1790658, isCapital: true },
-        { name: "Kraków", population: 779115 },
+        { name: "Warsaw", population: 1790658, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1519197924294-4ba991a11128?q=80&w=2069&auto=format&fit=crop" },
+        { name: "Kraków", population: 779115, imageUrl: "https://images.unsplash.com/photo-1594950854298-0c3be27b03fb?q=80&w=2070&auto=format&fit=crop" },
         { name: "Łódź", population: 679941 },
         { name: "Wrocław", population: 642869 }
     ],
     "CZ": [
-        { name: "Prague", population: 1324277, isCapital: true },
+        { name: "Prague", population: 1324277, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1541849546-216549ae216d?q=80&w=2070&auto=format&fit=crop", visitorCount: "9.2M" },
         { name: "Brno", population: 381346 },
         { name: "Ostrava", population: 287968 },
         { name: "Plzeň", population: 174842 }
     ],
     "HU": [
-        { name: "Budapest", population: 1752286, isCapital: true },
+        { name: "Budapest", population: 1752286, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1565426873118-a17ed65d7429?q=80&w=2070&auto=format&fit=crop", visitorCount: "5M" },
         { name: "Debrecen", population: 201112 },
         { name: "Szeged", population: 160766 },
         { name: "Miskolc", population: 152901 }
     ],
     "RO": [
-        { name: "Bucharest", population: 1883425, isCapital: true },
-        { name: "Cluj-Napoca", population: 324576 },
+        { name: "Bucharest", population: 1883425, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1553535928-842245d8b7b2?q=80&w=2070&auto=format&fit=crop" },
+        { name: "Cluj-Napoca", population: 324576, imageUrl: "https://images.unsplash.com/photo-1587974928442-77dc3e0dba72?q=80&w=2000&auto=format&fit=crop" },
         { name: "Timișoara", population: 319279 },
         { name: "Iași", population: 290422 }
     ],
     "UA": [
-        { name: "Kyiv", population: 2962180, isCapital: true },
+        { name: "Kyiv", population: 2962180, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1563294379-304b4c7302f3?q=80&w=2070&auto=format&fit=crop" },
         { name: "Kharkiv", population: 1433886 },
-        { name: "Odesa", population: 1015826 },
+        { name: "Odesa", population: 1015826, imageUrl: "https://images.unsplash.com/photo-1596707323565-5c4e87747715?q=80&w=2070&auto=format&fit=crop" },
         { name: "Dnipro", population: 980948 }
     ],
 
     // === ASIA ===
     "CN": [
-        { name: "Beijing", population: 21540000, isCapital: true },
-        { name: "Shanghai", population: 26320000 },
+        { name: "Beijing", population: 21540000, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1508804185872-d7badad00f7d?q=80&w=2070&auto=format&fit=crop", visitorCount: "3.5M (Intl)" },
+        { name: "Shanghai", population: 26320000, imageUrl: "https://images.unsplash.com/photo-1538428494232-9c0d8a3ab403?q=80&w=2070&auto=format&fit=crop", visitorCount: "6M" },
         { name: "Guangzhou", population: 15300000 },
         { name: "Shenzhen", population: 12530000 },
         { name: "Chengdu", population: 16330000 },
         { name: "Tianjin", population: 13860000 },
         { name: "Wuhan", population: 11080000 },
         { name: "Xi'an", population: 12000000 },
-        { name: "Hong Kong", population: 7481800 }
+        { name: "Hong Kong", population: 7481800, imageUrl: "https://images.unsplash.com/photo-1534008897995-27a23e859048?q=80&w=2070&auto=format&fit=crop", visitorCount: "29M" }
     ],
     "JP": [
-        { name: "Tokyo", population: 13960000, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=2094&auto=format&fit=crop" },
+        { name: "Tokyo", population: 13960000, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?q=80&w=2094&auto=format&fit=crop", visitorCount: "30M+" },
         { name: "Yokohama", population: 3724844, imageUrl: "https://images.unsplash.com/photo-1578453912185-3507d4b4a621?q=80&w=2070&auto=format&fit=crop" },
-        { name: "Osaka", population: 2691185, imageUrl: "https://images.unsplash.com/photo-1590559392231-64e320d3f8bc?q=80&w=2109&auto=format&fit=crop" },
+        { name: "Osaka", population: 2691185, imageUrl: "https://images.unsplash.com/photo-1590559392231-64e320d3f8bc?q=80&w=2109&auto=format&fit=crop", visitorCount: "13M" },
         { name: "Nagoya", population: 2295638 },
         { name: "Sapporo", population: 1952356 },
         { name: "Fukuoka", population: 1538681 },
-        { name: "Kyoto", population: 1475183, imageUrl: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2070&auto=format&fit=crop" },
+        { name: "Kyoto", population: 1475183, imageUrl: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2070&auto=format&fit=crop", visitorCount: "53M (Total)" },
         { name: "Kobe", population: 1525152 }
     ],
     "IN": [
-        { name: "Delhi", population: 30291000, isCapital: true },
-        { name: "Mumbai", population: 20411000 },
+        { name: "Delhi", population: 30291000, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1587474260584-136574528ed5?q=80&w=2070&auto=format&fit=crop" },
+        { name: "Mumbai", population: 20411000, imageUrl: "https://images.unsplash.com/photo-1529253355930-ddbe423a2ac7?q=80&w=2065&auto=format&fit=crop" },
         { name: "Bangalore", population: 8443000 },
         { name: "Hyderabad", population: 6809000 },
         { name: "Ahmedabad", population: 5570000 },
         { name: "Chennai", population: 4681000 },
         { name: "Kolkata", population: 4486000 },
-        { name: "Jaipur", population: 3046000 }
+        { name: "Jaipur", population: 3046000, imageUrl: "https://images.unsplash.com/photo-1477587458883-47145ed94245?q=80&w=2070&auto=format&fit=crop" }
     ],
     "KR": [
-        { name: "Seoul", population: 9733509, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1546874177-9e664107314e?q=80&w=2069&auto=format&fit=crop" },
+        { name: "Seoul", population: 9733509, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1546874177-9e664107314e?q=80&w=2069&auto=format&fit=crop", visitorCount: "13.6M" },
         { name: "Busan", population: 3404423, imageUrl: "https://images.unsplash.com/photo-1596425944521-4f1146242555?q=80&w=2070&auto=format&fit=crop" },
         { name: "Incheon", population: 2947217 },
         { name: "Daegu", population: 2431940 }
     ],
     "ID": [
-        { name: "Jakarta", population: 10562088, isCapital: true },
+        { name: "Jakarta", population: 10562088, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1628173429215-ca80521669ac?q=80&w=2070&auto=format&fit=crop" },
         { name: "Surabaya", population: 2874314 },
         { name: "Bandung", population: 2507868 },
         { name: "Medan", population: 2435252 },
-        { name: "Bali (Denpasar)", population: 897300 }
+        { name: "Bali (Denpasar)", population: 897300, imageUrl: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=2038&auto=format&fit=crop", visitorCount: "6.3M" }
     ],
     "TH": [
-        { name: "Bangkok", population: 10539000, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=2128&auto=format&fit=crop" },
-        { name: "Chiang Mai", population: 131091 },
-        { name: "Phuket", population: 79308, imageUrl: "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?q=80&w=2001&auto=format&fit=crop" },
-        { name: "Pattaya", population: 320262 }
+        { name: "Bangkok", population: 10539000, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?q=80&w=2128&auto=format&fit=crop", visitorCount: "22.7M" },
+        { name: "Chiang Mai", population: 131091, imageUrl: "https://images.unsplash.com/photo-1596627008129-2c700cb7550c?q=80&w=2070&auto=format&fit=crop" },
+        { name: "Phuket", population: 79308, imageUrl: "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?q=80&w=2001&auto=format&fit=crop", visitorCount: "9.8M" },
+        { name: "Pattaya", population: 320262, imageUrl: "https://images.unsplash.com/photo-1594950854298-0c3be27b03fb?q=80&w=2070&auto=format&fit=crop" }
     ],
     "VN": [
-        { name: "Hanoi", population: 8053663, isCapital: true },
-        { name: "Ho Chi Minh City", population: 8993082 },
+        { name: "Hanoi", population: 8053663, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1623945532296-1c4b92b6045d?q=80&w=2070&auto=format&fit=crop" },
+        { name: "Ho Chi Minh City", population: 8993082, imageUrl: "https://images.unsplash.com/photo-1583417319070-4a69db38a482?q=80&w=2070&auto=format&fit=crop" },
         { name: "Da Nang", population: 1134310 },
         { name: "Haiphong", population: 2028514 }
     ],
     "SG": [
-        { name: "Singapore", population: 5686000, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1565967511849-76a60a516170?q=80&w=2071&auto=format&fit=crop" }
+        { name: "Singapore", population: 5686000, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1565967511849-76a60a516170?q=80&w=2071&auto=format&fit=crop", visitorCount: "13.6M" }
     ],
     "MY": [
-        { name: "Kuala Lumpur", population: 1731041, isCapital: true },
-        { name: "George Town (Penang)", population: 708127 },
+        { name: "Kuala Lumpur", population: 1731041, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1623945532296-1c4b92b6045d?q=80&w=2070&auto=format&fit=crop", visitorCount: "13.8M" },
+        { name: "George Town (Penang)", population: 708127, imageUrl: "https://images.unsplash.com/photo-1580894569502-d9e030a08e12?q=80&w=2070&auto=format&fit=crop" },
         { name: "Johor Bahru", population: 497067 }
     ],
     "PH": [
-        { name: "Manila", population: 1780148, isCapital: true },
+        { name: "Manila", population: 1780148, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?q=80&w=2070&auto=format&fit=crop" },
         { name: "Quezon City", population: 2936116 },
         { name: "Davao City", population: 1632991 },
-        { name: "Cebu City", population: 922611 }
+        { name: "Cebu City", population: 922611, imageUrl: "https://images.unsplash.com/photo-1598226068228-56db4df10b2f?q=80&w=2071&auto=format&fit=crop" }
     ],
     "AE": [
-        { name: "Abu Dhabi", population: 1483000, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1512453979798-5ea90b792999?q=80&w=2070&auto=format&fit=crop" },
-        { name: "Dubai", population: 3381000, imageUrl: "https://images.unsplash.com/photo-1512453979798-5ea90b792999?q=80&w=2070&auto=format&fit=crop" },
+        { name: "Abu Dhabi", population: 1483000, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1512453979798-5ea90b792999?q=80&w=2070&auto=format&fit=crop", visitorCount: "24M" },
+        { name: "Dubai", population: 3381000, imageUrl: "https://images.unsplash.com/photo-1512453979798-5ea90b792999?q=80&w=2070&auto=format&fit=crop", visitorCount: "17.1M" },
         { name: "Sharjah", population: 1400000 }
     ],
     "SA": [
-        { name: "Riyadh", population: 7676654, isCapital: true },
+        { name: "Riyadh", population: 7676654, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1552554271-460d3d5d9c6e?q=80&w=2070&auto=format&fit=crop" },
         { name: "Jeddah", population: 4697000 },
-        { name: "Mecca", population: 2042000 },
-        { name: "Medina", population: 1488782 }
+        { name: "Mecca", population: 2042000, visitorCount: "20M+" },
+        { name: "Medina", population: 1488782, visitorCount: "10M+" }
     ],
     "IL": [
-        { name: "Jerusalem", population: 936425, isCapital: true },
-        { name: "Tel Aviv", population: 460613 },
+        { name: "Jerusalem", population: 936425, isCapital: true, imageUrl: "https://images.unsplash.com/photo-1516550893923-42d28e5677af?q=80&w=2072&auto=format&fit=crop", visitorCount: "4M" },
+        { name: "Tel Aviv", population: 460613, imageUrl: "https://images.unsplash.com/photo-1544971587-b842c27f8e14?q=80&w=2070&auto=format&fit=crop", visitorCount: "2M" },
         { name: "Haifa", population: 285316 }
     ],
 

@@ -69,7 +69,7 @@ export const WidgetMapGenerator = ({ visitedCountries, onSnapshotReady }: Widget
             // Wait for render
             setTimeout(() => {
                 if (ref.current) {
-                    toPng(ref.current, { cacheBust: true, width: 400, height: 200 })
+                    toPng(ref.current, { cacheBust: true, width: 600, height: 600 })
                         .then((dataUrl) => {
                             // Remove "data:image/png;base64," prefix for Swift Data init if needed
                             // But Data(base64Encoded:) usually wants clean base64.
@@ -92,8 +92,8 @@ export const WidgetMapGenerator = ({ visitedCountries, onSnapshotReady }: Widget
                 position: 'absolute',
                 top: -9999,
                 left: -9999,
-                width: '400px',
-                height: '200px',
+                width: '600px',
+                height: '600px',
                 background: '#eaddcf', // Vintage sea/paper color
                 display: 'flex',
                 alignItems: 'center',
@@ -103,7 +103,7 @@ export const WidgetMapGenerator = ({ visitedCountries, onSnapshotReady }: Widget
         >
             <ComposableMap
                 projection="geoMercator"
-                projectionConfig={{ scale: 60, center: [0, 20] }} // Adjusted for widget aspect ratio
+                projectionConfig={{ scale: 100, center: [0, 0] }} // Square scale center
                 style={{ width: "100%", height: "100%" }}
             >
                 <Geographies geography={worldData}>

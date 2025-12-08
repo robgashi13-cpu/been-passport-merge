@@ -41,55 +41,42 @@ export const BottomNav = ({ activeTab, setActiveTab }: BottomNavProps) => {
             isVisible ? "translate-y-0" : "translate-y-full"
         )}>
             {/* Floating Glass Bar */}
-            <nav className="pointer-events-auto max-w-md mx-auto bg-black/60 backdrop-blur-3xl border border-white/15 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-hidden ring-1 ring-white/5">
-                <ul className="flex items-center justify-between px-2 py-2">
+            <nav className="pointer-events-auto max-w-sm mx-auto bg-black/80 backdrop-blur-2xl border border-white/10 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.5)] overflow-hidden ring-1 ring-white/5">
+                <div className="flex items-center justify-around px-2 py-1">
                     {navItems.map((item) => {
                         const isActive = activeTab === item.id;
                         return (
-                            <li key={item.id} className="relative flex-1">
-                                <button
-                                    onClick={() => {
-                                        setActiveTab(item.id);
-                                        // Haptic feedback
-                                        if (navigator.vibrate) navigator.vibrate(10);
-                                    }}
-                                    className={cn(
-                                        "relative w-full flex flex-col items-center justify-center gap-1 py-3 px-1 transition-all duration-300 ease-spring",
-                                        isActive ? "text-white" : "text-white/50 hover:text-white/80"
-                                    )}
-                                >
-                                    {/* Liquid Active Indicator Background */}
-                                    {isActive && (
-                                        <div className="absolute inset-0 bg-white/10 rounded-full -z-10 animate-fade-in scale-95" />
-                                    )}
+                            <button
+                                key={item.id}
+                                onClick={() => {
+                                    setActiveTab(item.id);
+                                    if (window.navigator && window.navigator.vibrate) {
+                                        window.navigator.vibrate(5);
+                                    }
+                                }}
+                                className={`relative flex flex-col items-center justify-center w-16 h-16 transition-all duration-300 ${isActive ? '-translate-y-1' : 'opacity-60 hover:opacity-100'}`}
+                            >
+                                {/* Active Glow Background */}
+                                {isActive && (
+                                    <div className="absolute inset-0 bg-blue-500/20 blur-xl rounded-full" />
+                                )}
 
-                                    {/* Icon */}
+                                <div className={`relative p-2.5 rounded-2xl transition-all duration-500 ${isActive ? 'bg-gradient-to-tr from-white/10 to-transparent border border-white/20 shadow-[0_0_15px_rgba(56,189,248,0.3)]' : ''}`}>
                                     <item.icon
-                                        className={cn(
-                                            "w-6 h-6 transition-transform duration-300",
-                                            isActive ? "scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]" : "scale-100"
-                                        )}
-                                        strokeWidth={isActive ? 2.5 : 2}
+                                        className={`w-6 h-6 transition-all duration-500 ${isActive ? 'text-blue-400 fill-blue-400/20 stroke-[2.5px] drop-shadow-[0_0_8px_rgba(96,165,250,0.8)]' : 'text-white'}`}
                                     />
+                                </div>
 
-                                    {/* Label (Optional: Hide on very small screens or keep minimal) */}
-                                    <span className={cn(
-                                        "text-[10px] font-medium transition-all duration-300",
-                                        isActive ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 hidden"
-                                    )}>
-                                        {item.label}
+                                {isActive && (
+                                    <span className="absolute -bottom-2 text-[9px] font-bold text-blue-400 tracking-wider animate-slide-up">
+                                        {item.label.toUpperCase()}
                                     </span>
-
-                                    {/* Active Dot */}
-                                    {isActive && (
-                                        <div className="absolute bottom-1 w-1 h-1 bg-white rounded-full shadow-[0_0_5px_white]" />
-                                    )}
-                                </button>
-                            </li>
+                                )}
+                            </button>
                         );
                     })}
-                </ul>
+                </div>
             </nav>
-        </div>
+        </div >
     );
 };

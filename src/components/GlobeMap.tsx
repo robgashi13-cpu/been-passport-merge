@@ -131,154 +131,6 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
         return "#4a4a4a";
     };
 
-    // Initialize Map
-    useEffect(() => {
-        if (map.current) return; // Initialize only once
-        if (!mapContainer.current) return;
-
-        map.current = new mapboxgl.Map({
-            container: mapContainer.current,
-            style: 'mapbox://styles/mapbox/dark-v11',
-            projection: 'globe',
-            zoom: 1.5,
-            center: [30, 15],
-            attributionControl: false
-        });
-
-        const mapInstance = map.current;
-
-        mapInstance.on('style.load', () => {
-            // Atmosphere - Reduced intensity to remove "shadow" look
-            mapInstance.setFog({
-                color: 'rgb(20, 20, 20)', // Lower atmosphere
-                'high-color': 'rgb(0, 0, 0)', // Upper atmosphere
-                'horizon-blend': 0.0, // Remove horizon blend to reduce shadow
-                'space-color': 'rgb(0, 0, 0)', // Background color
-                'star-intensity': 0.0 // Remove starts/noise
-            });
-        });
-
-        mapInstance.on('load', () => {
-            // ... existing code ...
-
-            // Add Kosovo Marker (Since geometry is missing in 110m)
-            const kosovoLngLat: [number, number] = [20.9667, 42.6667];
-
-            // Invisible clickable circle for Kosovo
-            mapInstance.addSource('kosovo-point', {
-                type: 'geojson',
-                data: {
-                    type: 'FeatureCollection',
-                    features: [{
-                        type: 'Feature',
-                        geometry: {
-                            type: 'Point',
-                            coordinates: kosovoLngLat
-                        },
-                        properties: {
-                            iso2: 'XK',
-                            name: 'Kosovo'
-                        }
-                    }]
-                }
-            });
-
-            mapInstance.addLayer({
-                id: 'kosovo-fill',
-                type: 'circle',
-                source: 'kosovo-point',
-                paint: {
-                    'circle-radius': 10,
-                    'circle-color': getCountryColor('XK'), // Use dynamic color
-                    'circle-opacity': 0.8,
-                    'circle-stroke-width': 1,
-                    'circle-stroke-color': 'rgba(255,255,255,0.2)'
-                }
-            });
-
-            // Click Interaction for Kosovo
-            mapInstance.on('click', 'kosovo-fill', (e) => {
-                if (onCountryClick) {
-                    onCountryClick('XK');
-                } else if (toggleVisited) {
-                    toggleVisited('XK');
-                }
-            });
-
-            // Hover Cursor for Kosovo
-            mapInstance.on('mouseenter', 'kosovo-fill', () => {
-                mapInstance.getCanvas().style.cursor = 'pointer';
-            });
-            mapInstance.on('mouseleave', 'kosovo-fill', () => {
-                mapInstance.getCanvas().style.cursor = '';
-            });
-
-            // Load GeoJSON
-            // @ts-ignore
-            const geojson = topojson.feature(worldData, worldData.objects.countries);
-
-            // Enhance GeoJSON with ISO2 codes
-            // @ts-ignore
-            geojson.features.forEach((feature: any) => {
-                const id = feature.id as string;
-                if (numericToIso2[id]) {
-                    feature.properties.iso2 = numericToIso2[id];
-                } else {
-                    // Fallback using names if possible (omitted for brevity/perf, sticking to ID map)
-                }
-            });
-
-            mapInstance.addSource('world', {
-                type: 'geojson',
-                data: geojson as any
-            });
-
-            // Add Fill Layer
-            mapInstance.addLayer({
-                id: 'countries-fill',
-                type: 'fill',
-                source: 'world',
-                paint: {
-                    'fill-color': '#4a4a4a', // Init color, will be updated by useEffect
-                    'fill-opacity': 0.8
-                }
-            });
-
-            // Add Border Layer
-            mapInstance.addLayer({
-                id: 'countries-border',
-                type: 'line',
-                source: 'world',
-                paint: {
-                    'line-color': 'rgba(255,255,255,0.2)',
-                    'line-width': 0.5
-                }
-            });
-
-            // Click Interaction
-            mapInstance.on('click', 'countries-fill', (e) => {
-                const feature = e.features?.[0];
-                if (feature && feature.properties?.iso2) {
-                    const iso2 = feature.properties.iso2;
-                    if (onCountryClick) {
-                        onCountryClick(iso2);
-                    } else if (toggleVisited) {
-                        toggleVisited(iso2);
-                    }
-                }
-            });
-
-            // Hover Cursor
-            mapInstance.on('mouseenter', 'countries-fill', () => {
-                mapInstance.getCanvas().style.cursor = 'pointer';
-            });
-            mapInstance.on('mouseleave', 'countries-fill', () => {
-                mapInstance.getCanvas().style.cursor = '';
-            });
-        });
-
-    }, [onCountryClick, toggleVisited]);
-
     // Update Colors when data changes
     useEffect(() => {
         const mapInstance = map.current;
@@ -288,13 +140,8 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
             if (!mapInstance.getLayer('countries-fill')) return;
 
             const matchExpression: any[] = ['match', ['get', 'iso2']];
-
-            // Build expression for ALL countries (to ensure coverage)
-            // Or just iterate numericToIso2 keys
             const uniqueIso2 = new Set<string>();
             Object.values(numericToIso2).forEach(iso => uniqueIso2.add(iso));
-
-            // Also check `countries` list to be safe if numeric map misses some
             countries.forEach(c => uniqueIso2.add(c.code));
 
             uniqueIso2.forEach(iso2 => {
@@ -313,15 +160,168 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
                 const kosovoColor = getCountryColor('XK');
                 mapInstance.setPaintProperty('kosovo-fill', 'circle-color', kosovoColor);
             }
+
+            // Update Highlight Layer Filter
+            // We need to know which country is "clicked" or active.
+            // The prompt says: "when user clicks a country highlight borders of that country".
+            // We can infer the "active" country might be passed via props or just local state if we want transient highlight.
+            // However, `onCountryClick` usually opens a modal.
+            // Let's assume we want to highlight the `userPassportCode` if viewMode is visa?
+            // Or maybe we need a new state `selectedCountry`?
+            // The user prompt implies interaction. Since `onCountryClick` navigates away, maybe we just highlight on hover?
+            // "when user clicks a country highlight borders...".
+            // If the modal opens on top, the map might still be visible.
+            // Let's add a filter for `hoveredCountry` (from previous logic? Wait, 2D map had hoveredCountry).
+            // Let's assume we use the hovered state or a transient clicked state.
+            // But wait, the 3D globe doesn't have a `selectedCountry` prop.
+            // I'll add a 'highlight-border' layer that is always there but transparent, 
+            // and I will add logic to set a filter on it ?
+            // Actually, best way is to set filter to ['==', 'iso2', ''] until clicked.
+            // But we don't store selected country here.
+            // I will use `hoveredCountry` if I re-introduce it, or just rely on existing props?
+            // User: "when user clicks... highlight borders".
+            // I will implement a local `selectedIso` state that updates on click.
         };
 
         if (mapInstance.isStyleLoaded()) {
             updatePaint();
         } else {
-            mapInstance.once('render', updatePaint); // Wait for style or data
+            mapInstance.once('render', updatePaint);
         }
 
-    }, [visitedCountries, viewMode, userPassportCode, heldVisas]); // Trigger re-paint
+    }, [visitedCountries, viewMode, userPassportCode, heldVisas]);
+
+    // Initialize Map
+    useEffect(() => {
+        if (map.current) return;
+        if (!mapContainer.current) return;
+
+        map.current = new mapboxgl.Map({
+            container: mapContainer.current,
+            style: 'mapbox://styles/mapbox/dark-v11',
+            projection: 'globe',
+            zoom: 1.5,
+            center: [30, 15],
+            attributionControl: false
+        });
+
+        const mapInstance = map.current;
+
+        mapInstance.on('style.load', () => {
+            // Disable atmosphere and stars for "clean" look
+            mapInstance.setFog({
+                'color': 'rgb(0, 0, 0)',
+                'high-color': 'rgb(0, 0, 0)',
+                'horizon-blend': 0.0,
+                'space-color': 'rgb(0, 0, 0)',
+                'star-intensity': 0.0
+            });
+        });
+
+        mapInstance.on('load', () => {
+            // Load GeoJSON
+            // @ts-ignore
+            const geojson = topojson.feature(worldData, worldData.objects.countries);
+
+            // Enhance GeoJSON
+            // @ts-ignore
+            geojson.features.forEach((feature: any) => {
+                const id = feature.id as string;
+                if (numericToIso2[id]) feature.properties.iso2 = numericToIso2[id];
+            });
+
+            mapInstance.addSource('world', {
+                type: 'geojson',
+                data: geojson as any
+            });
+
+            // Fill Layer
+            mapInstance.addLayer({
+                id: 'countries-fill',
+                type: 'fill',
+                source: 'world',
+                paint: {
+                    'fill-color': '#4a4a4a',
+                    'fill-opacity': 0.8
+                }
+            });
+
+            // Base Border Layer (Faint)
+            mapInstance.addLayer({
+                id: 'countries-border',
+                type: 'line',
+                source: 'world',
+                paint: {
+                    'line-color': 'rgba(255,255,255,0.05)', // Very faint
+                    'line-width': 0.5
+                }
+            });
+
+            // Highlight Border Layer (Golden/Bright, hidden by default)
+            mapInstance.addLayer({
+                id: 'highlight-border',
+                type: 'line',
+                source: 'world',
+                layout: {},
+                paint: {
+                    'line-color': '#D4AF37', // Gold
+                    'line-width': 2,
+                    'line-opacity': 1
+                },
+                filter: ['==', 'iso2', ''] // Initially empty
+            });
+
+            // Add Kosovo (Point/Circle) logic...
+            const kosovoLngLat: [number, number] = [20.9667, 42.6667];
+            mapInstance.addSource('kosovo-point', {
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: [{
+                        type: 'Feature',
+                        geometry: { type: 'Point', coordinates: kosovoLngLat },
+                        properties: { iso2: 'XK', name: 'Kosovo' }
+                    }]
+                }
+            });
+
+            mapInstance.addLayer({
+                id: 'kosovo-fill',
+                type: 'circle',
+                source: 'kosovo-point',
+                paint: {
+                    'circle-radius': 8,
+                    'circle-color': '#4a4a4a',
+                    'circle-stroke-width': 1,
+                    'circle-stroke-color': 'rgba(255,255,255,0.2)'
+                }
+            });
+
+            // Click Interaction
+            mapInstance.on('click', 'countries-fill', (e) => {
+                const feature = e.features?.[0];
+                if (feature && feature.properties?.iso2) {
+                    const iso2 = feature.properties.iso2;
+
+                    // Highlight the country
+                    mapInstance.setFilter('highlight-border', ['==', 'iso2', iso2]);
+
+                    // Trigger callback
+                    if (onCountryClick) onCountryClick(iso2);
+                    else if (toggleVisited) toggleVisited(iso2);
+                }
+            });
+
+            // Cursor
+            mapInstance.on('mouseenter', 'countries-fill', () => {
+                mapInstance.getCanvas().style.cursor = 'pointer';
+            });
+            mapInstance.on('mouseleave', 'countries-fill', () => {
+                mapInstance.getCanvas().style.cursor = '';
+            });
+        });
+
+    }, [onCountryClick, toggleVisited]);
 
     const handleZoomIn = () => {
         map.current?.zoomIn();

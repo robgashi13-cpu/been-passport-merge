@@ -1,10 +1,10 @@
-import { fetchCountryData, CountryExtendedData, getStaticTravelInfo, getRichCountryData, RichCountryInfo, fetchCapitalWeather, getWeatherDescription, fetchCountryCities } from '@/services/countryService';
+import { fetchCountryData, CountryExtendedData, getStaticTravelInfo, getRichCountryData, RichCountryInfo, fetchCountryCities, fetchCountryStates, fetchStateCities } from '@/services/countryService';
 import { fetchCountrySummary, WikiSummary } from '@/services/wikiService';
 import { useUser } from '@/contexts/UserContext';
 import { useEffect, useState, useMemo } from 'react';
 import { Country, getCountryByCode, countries } from '@/data/countries';
 import { getVisaRequirementFromMatrix, getVisaRequirementColor, getVisaRequirementLabel } from '@/data/visaMatrix';
-import { X, Globe, Users, MapPin, Plane, CreditCard, Check, AlertCircle, Phone, Plug, AlertTriangle, Calendar as CalendarIcon, Tag, Heart, DollarSign, CloudSun, Sparkles, Car, Droplet, Syringe, Beer, TrendingUp, Briefcase, Activity, Building, Search } from 'lucide-react';
+import { X, Globe, Users, MapPin, Plane, CreditCard, Check, AlertCircle, Phone, Plug, AlertTriangle, Calendar as CalendarIcon, Tag, Heart, DollarSign, CloudSun, Sparkles, Car, Droplet, Syringe, Beer, TrendingUp, Briefcase, Activity, Building, Search, ArrowRight } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface CountryDetailsProps {
@@ -30,8 +30,6 @@ export const CountryDetails = ({
     const [extendedData, setExtendedData] = useState<CountryExtendedData | null>(null);
     const [richData, setRichData] = useState<RichCountryInfo | null>(null);
     const [wikiSummary, setWikiSummary] = useState<WikiSummary | null>(null);
-    const [weather, setWeather] = useState<any>(null);
-    const [weatherDesc, setWeatherDesc] = useState<{ text: string; emoji: string } | null>(null);
 
     const [exchangeRate, setExchangeRate] = useState<number | null>(null);
     const [exchangeLoading, setExchangeLoading] = useState(false);
@@ -43,6 +41,14 @@ export const CountryDetails = ({
     const [citySearch, setCitySearch] = useState('');
     const [isLoadingCities, setIsLoadingCities] = useState(false);
     const [visibleCitiesCount, setVisibleCitiesCount] = useState(50);
+    const [activeTab, setActiveTab] = useState("overview");
+
+    // Region State
+    const [regions, setRegions] = useState<{ name: string; state_code: string }[]>([]);
+    const [viewMode, setViewMode] = useState<'all' | 'regions'>('all');
+    const [expandedRegion, setExpandedRegion] = useState<string | null>(null);
+    const [regionCities, setRegionCities] = useState<Record<string, string[]>>({});
+    const [isLoadingRegionCities, setIsLoadingRegionCities] = useState<string | null>(null);
 
     // Helper to check if visited
     const isCityVisited = (cityName: string) => visitedCities.includes(`${cityName}|${country.code}`);
@@ -59,6 +65,23 @@ export const CountryDetails = ({
         updateVisitedCities(newVisitedCities);
     };
 
+    // Handle Region Click
+    const handleRegionClick = async (stateName: string) => {
+        if (expandedRegion === stateName) {
+            setExpandedRegion(null);
+            return;
+        }
+
+        setExpandedRegion(stateName);
+
+        if (!regionCities[stateName]) {
+            setIsLoadingRegionCities(stateName);
+            const cities = await fetchStateCities(country.name, stateName);
+            setRegionCities(prev => ({ ...prev, [stateName]: cities }));
+            setIsLoadingRegionCities(null);
+        }
+    };
+
     // Calculation for progress
     const visitedCountInCountry = cities.filter(c => isCityVisited(c)).length;
     const progressPercentage = cities.length > 0 ? (visitedCountInCountry / cities.length) * 100 : 0;
@@ -69,17 +92,10 @@ export const CountryDetails = ({
             // Parallel fetches
             fetchCountryData(country.code).then(data => {
                 setExtendedData(data);
-                if (data?.capitalInfo?.latlng) {
-                    fetchCapitalWeather(data.capitalInfo.latlng[0], data.capitalInfo.latlng[1]).then(w => {
-                        setWeather(w);
-                        if (w?.current?.weather_code !== undefined) {
-                            setWeatherDesc(getWeatherDescription(w.current.weather_code));
-                        }
-                    });
-                }
             });
 
-            setRichData(getRichCountryData(country.code));
+            const rich = getRichCountryData(country.code);
+            setRichData(rich);
 
 
             // AI/Wiki Data
@@ -93,6 +109,14 @@ export const CountryDetails = ({
             fetchCountryCities(country.name).then(cityList => {
                 setCities(cityList);
                 setIsLoadingCities(false);
+            });
+
+            // Fetch Regions
+            fetchCountryStates(country.name).then(states => {
+                if (states && states.length > 0) {
+                    setRegions(states);
+                    setViewMode('regions'); // Default to regions if available
+                }
             });
         }
     }, [country?.code, country.name]);
@@ -179,6 +203,14 @@ export const CountryDetails = ({
                         </div>
 
                         <div className="flex items-center gap-2 pr-10">
+                            {/* NEW: Cities Visited Pill (Visible without scrolling tabs) */}
+                            {cities.length > 0 && (
+                                <div className="hidden min-[400px]:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+                                    <MapPin className={`w-3 h-3 ${visitedCountInCountry > 0 ? 'text-green-400' : 'text-white/40'}`} />
+                                    <span className="text-xs font-bold text-white/90 font-numbers">{visitedCountInCountry} <span className="text-white/40">/ {cities.length}</span></span>
+                                </div>
+                            )}
+
                             <button
                                 onClick={onToggleVisited}
                                 className={`flex items-center justify-center w-10 h-10 rounded-full transition-all border
@@ -307,87 +339,188 @@ export const CountryDetails = ({
                                         <h3 className="font-display font-bold text-lg flex items-center gap-2"><Building className="w-5 h-5 text-white/60" /> Cities</h3>
                                         <p className="text-xs text-white/40 mt-1">Tap to mark as visited</p>
                                     </div>
-                                    <div className="text-right">
+                                    <div className="text-right flex flex-col items-end">
                                         <div className="font-numbers text-2xl font-bold text-white">
                                             {visitedCountInCountry} <span className="text-white/30 text-lg">/ {cities.length}</span>
                                         </div>
-                                        <div className="w-24 h-1 bg-white/10 rounded-full mt-2 overflow-hidden">
+                                        <div className="w-24 h-1 bg-white/10 rounded-full mt-2 overflow-hidden mb-2">
                                             <div
                                                 className="h-full bg-green-400 transition-all duration-500 ease-out"
                                                 style={{ width: `${progressPercentage}%` }}
                                             />
                                         </div>
+
+                                        {/* View Mode Toggle */}
+                                        {regions.length > 0 && (
+                                            <div className="flex bg-black/20 p-1 rounded-lg border border-white/5">
+                                                <button
+                                                    onClick={() => setViewMode('all')}
+                                                    className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${viewMode === 'all' ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/60'}`}
+                                                >
+                                                    All
+                                                </button>
+                                                <button
+                                                    onClick={() => setViewMode('regions')}
+                                                    className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${viewMode === 'regions' ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white/60'}`}
+                                                >
+                                                    Regions
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
-                                {/* Search */}
-                                <div className="relative mb-4">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search cities..."
-                                        value={citySearch}
-                                        onChange={(e) => setCitySearch(e.target.value)}
-                                        className="w-full bg-black/20 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/30 transition-colors"
-                                    />
-                                </div>
-
-                                {isLoadingCities ? (
-                                    <div className="flex flex-col items-center justify-center py-10 opacity-50">
-                                        <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin mb-2" />
-                                        <span className="text-xs text-white/50">Loading cities...</span>
-                                    </div>
-                                ) : cities.length > 0 ? (
+                                {viewMode === 'all' ? (
                                     <>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-[400px] overflow-y-auto custom-scrollbar pr-1 content-start">
-                                            {filteredCities.slice(0, visibleCitiesCount).map((city, i) => {
-                                                const visited = isCityVisited(city);
-                                                return (
-                                                    <button
-                                                        key={i}
-                                                        onClick={() => toggleCity(city)}
-                                                        className={`flex items-center gap-2 p-3 rounded-xl transition-all border group text-left relative overflow-hidden
-                                                            ${visited
-                                                                ? 'bg-green-500/10 border-green-500/30 hover:bg-green-500/20'
-                                                                : 'bg-black/20 border-white/5 hover:bg-white/10 hover:border-white/10'
-                                                            }
-                                                        `}
-                                                    >
-                                                        <div className={`w-4 h-4 rounded-full flex items-center justify-center border transition-colors flex-shrink-0
-                                                            ${visited ? 'bg-green-500 border-green-500' : 'border-white/20 group-hover:border-white/40'}
-                                                        `}>
-                                                            {visited && <Check className="w-2.5 h-2.5 text-black font-bold" />}
-                                                        </div>
-                                                        <span className={`text-sm truncate font-medium transition-colors ${visited ? 'text-white' : 'text-white/80 group-hover:text-white'}`}>
-                                                            {city}
-                                                        </span>
-                                                        {visited && (
-                                                            <div className="absolute inset-0 bg-green-400/5 pointer-events-none" />
-                                                        )}
-                                                    </button>
-                                                );
-                                            })}
+                                        {/* Search */}
+                                        <div className="relative mb-4">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                                            <input
+                                                type="text"
+                                                placeholder="Search cities..."
+                                                value={citySearch}
+                                                onChange={(e) => setCitySearch(e.target.value)}
+                                                className="w-full bg-black/20 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                                            />
+                                        </div>
 
-                                            {/* Load More Trigger */}
-                                            {visibleCitiesCount < filteredCities.length && (
-                                                <div className="col-span-full flex justify-center py-4">
-                                                    <button
-                                                        onClick={() => setVisibleCitiesCount(prev => prev + 50)}
-                                                        className="text-xs text-white/50 hover:text-white border border-white/10 rounded-full px-4 py-2 transition-all hover:bg-white/5"
-                                                    >
-                                                        Load More Cities ({filteredCities.length - visibleCitiesCount} remaining)
-                                                    </button>
+                                        {isLoadingCities ? (
+                                            <div className="flex flex-col items-center justify-center py-10 opacity-50">
+                                                <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin mb-2" />
+                                                <span className="text-xs text-white/50">Loading cities...</span>
+                                            </div>
+                                        ) : cities.length > 0 ? (
+                                            <>
+                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-[400px] overflow-y-auto custom-scrollbar pr-1 content-start">
+                                                    {filteredCities.slice(0, visibleCitiesCount).map((city, i) => {
+                                                        const visited = isCityVisited(city);
+                                                        return (
+                                                            <button
+                                                                key={i}
+                                                                onClick={() => toggleCity(city)}
+                                                                className={`flex items-center gap-2 p-3 rounded-xl transition-all border group text-left relative overflow-hidden
+                                                                    ${visited
+                                                                        ? 'bg-green-500/10 border-green-500/30 hover:bg-green-500/20'
+                                                                        : 'bg-black/20 border-white/5 hover:bg-white/10 hover:border-white/10'
+                                                                    }
+                                                                `}
+                                                            >
+                                                                <div className={`w-4 h-4 rounded-full flex items-center justify-center border transition-colors flex-shrink-0
+                                                                    ${visited ? 'bg-green-500 border-green-500' : 'border-white/20 group-hover:border-white/40'}
+                                                                `}>
+                                                                    {visited && <Check className="w-2.5 h-2.5 text-black font-bold" />}
+                                                                </div>
+                                                                <span className={`text-sm truncate font-medium transition-colors ${visited ? 'text-white' : 'text-white/80 group-hover:text-white'}`}>
+                                                                    {city}
+                                                                </span>
+                                                                {visited && (
+                                                                    <div className="absolute inset-0 bg-green-400/5 pointer-events-none" />
+                                                                )}
+                                                            </button>
+                                                        );
+                                                    })}
+
+                                                    {/* Load More Trigger */}
+                                                    {visibleCitiesCount < filteredCities.length && (
+                                                        <div className="col-span-full flex justify-center py-4">
+                                                            <button
+                                                                onClick={() => setVisibleCitiesCount(prev => prev + 50)}
+                                                                className="text-xs text-white/50 hover:text-white border border-white/10 rounded-full px-4 py-2 transition-all hover:bg-white/5"
+                                                            >
+                                                                Load More Cities ({filteredCities.length - visibleCitiesCount} remaining)
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )}
-                                        </div>
-                                        <div className="mt-4 text-[10px] text-white/30 text-center uppercase tracking-widest flex justify-between px-2">
-                                            <span>Showing {Math.min(visibleCitiesCount, filteredCities.length)} of {filteredCities.length}</span>
-                                            <span>{Math.round((Math.min(visibleCitiesCount, filteredCities.length) / filteredCities.length) * 100)}% Loaded</span>
-                                        </div>
+                                                <div className="mt-4 text-[10px] text-white/30 text-center uppercase tracking-widest flex justify-between px-2">
+                                                    <span>Showing {Math.min(visibleCitiesCount, filteredCities.length)} of {filteredCities.length}</span>
+                                                    <span>{Math.round((Math.min(visibleCitiesCount, filteredCities.length) / filteredCities.length) * 100)}% Loaded</span>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="text-center py-10 text-white/40 text-sm">
+                                                No cities found.
+                                            </div>
+                                        )}
                                     </>
                                 ) : (
-                                    <div className="text-center py-10 text-white/40 text-sm">
-                                        No cities found.
+                                    // REGIONS VIEW
+                                    <div className="space-y-2 max-h-[450px] overflow-y-auto custom-scrollbar pr-1">
+                                        {regions.map((region, i) => {
+                                            const isExpanded = expandedRegion === region.name;
+                                            const cities = regionCities[region.name] || [];
+                                            const loading = isLoadingRegionCities === region.name;
+                                            const visitedCount = cities.filter(c => isCityVisited(c)).length;
+                                            const isRegionVisited = cities.length > 0 && visitedCount > 0;
+
+                                            return (
+                                                <div key={i} className="bg-black/20 rounded-xl border border-white/5 overflow-hidden transition-all">
+                                                    <button
+                                                        onClick={() => handleRegionClick(region.name)}
+                                                        className={`w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors ${isExpanded ? 'bg-white/5' : ''}`}
+                                                    >
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-colors
+                                                                ${isRegionVisited ? 'bg-green-500/20 border-green-500/30 text-green-400' : 'bg-white/5 border-white/10 text-white/40'}
+                                                            `}>
+                                                                {isRegionVisited ? <Check className="w-4 h-4" /> : <MapPin className="w-4 h-4" />}
+                                                            </div>
+                                                            <div className="text-left">
+                                                                <div className="font-bold text-sm text-white">{region.name}</div>
+                                                                <div className="text-[10px] text-white/40 uppercase tracking-wider">{region.state_code}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            {cities.length > 0 && (
+                                                                <span className="text-xs text-white/40 font-numbers">{visitedCount}/{cities.length}</span>
+                                                            )}
+                                                            <ArrowRight className={`w-4 h-4 text-white/30 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
+                                                        </div>
+                                                    </button>
+
+                                                    {isExpanded && (
+                                                        <div className="p-4 pt-0 border-t border-white/5 bg-black/10 animate-fade-in">
+                                                            {loading ? (
+                                                                <div className="flex justify-center py-4">
+                                                                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                                                                </div>
+                                                            ) : cities.length > 0 ? (
+                                                                <div className="grid grid-cols-2 gap-2 mt-4">
+                                                                    {cities.map((city, idx) => {
+                                                                        const visited = isCityVisited(city);
+                                                                        return (
+                                                                            <button
+                                                                                key={idx}
+                                                                                onClick={() => toggleCity(city)}
+                                                                                className={`flex items-center gap-2 p-2.5 rounded-lg transition-all border text-left
+                                                                                    ${visited
+                                                                                        ? 'bg-green-500/10 border-green-500/20 hover:bg-green-500/20'
+                                                                                        : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10'
+                                                                                    }
+                                                                                `}
+                                                                            >
+                                                                                <div className={`w-3 h-3 rounded-full flex items-center justify-center border flex-shrink-0
+                                                                                    ${visited ? 'bg-green-500 border-green-500' : 'border-white/20'}
+                                                                                `}>
+                                                                                    {visited && <Check className="w-2 h-2 text-black font-bold" />}
+                                                                                </div>
+                                                                                <span className={`text-xs truncate font-medium ${visited ? 'text-white' : 'text-white/70'}`}>
+                                                                                    {city}
+                                                                                </span>
+                                                                            </button>
+                                                                        )
+                                                                    })}
+                                                                </div>
+                                                            ) : (
+                                                                <div className="text-center py-4 text-xs text-white/30">
+                                                                    No cities found in this region.
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>
@@ -527,54 +660,47 @@ export const CountryDetails = ({
 
                         {/* WEATHER TAB */}
                         <TabsContent value="weather" className="space-y-6 mt-2 animate-slide-up">
-                            {/* Live Weather Card */}
-                            <div className="relative bg-gradient-to-br from-blue-500/80 to-cyan-400/80 rounded-3xl p-8 border border-white/10 shadow-glow text-white overflow-hidden backdrop-blur-md">
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-white/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+                            {/* Climate Info - Prominent */}
+                            <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-3xl p-8 border border-white/10 shadow-glow relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:opacity-30 transition-opacity">
+                                    <CloudSun className="w-32 h-32 text-white" />
+                                </div>
 
-                                <div className="relative z-10 flex justify-between items-start">
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-2 opacity-80">
-                                            <MapPin className="w-4 h-4" />
-                                            <span className="text-sm font-bold uppercase tracking-widest">{extendedData?.capital?.[0] || country.name}</span>
-                                        </div>
-                                        <div className="flex items-baseline gap-1">
-                                            <span className="font-numbers text-7xl font-bold tracking-tight">
-                                                {weather?.current?.temperature_2m !== undefined ? Math.round(weather.current.temperature_2m) : '--'}
-                                            </span>
-                                            <span className="text-3xl font-light opacity-60">°C</span>
-                                        </div>
-                                        <div className="mt-4 text-xl font-medium flex items-center gap-2">
-                                            {weatherDesc?.emoji} {weatherDesc?.text || 'Loading...'}
+                                <div className="relative z-10">
+                                    <div className="bg-white/10 backdrop-blur-md w-fit px-3 py-1 rounded-full text-xs font-bold text-white mb-4 flex items-center gap-2 border border-white/10">
+                                        <Sparkles className="w-3 h-3 text-yellow-400" />
+                                        Climate Analysis
+                                    </div>
+
+                                    <h4 className="font-display text-2xl font-bold text-white mb-4 flex items-center gap-3">
+                                        <span className="text-4xl">{richData?.climate.seasonEmojis || '🌍'}</span>
+                                        Climate Overview
+                                    </h4>
+
+                                    <p className="text-lg text-white/80 leading-relaxed font-light">
+                                        {richData?.climate.text || "Climate data is currently being updated for this region."}
+                                    </p>
+
+                                    <div className="mt-8 flex flex-wrap gap-3">
+                                        <div className="bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10 flex items-center gap-3">
+                                            <div className="bg-green-500/20 p-2 rounded-full text-green-400">
+                                                <CalendarIcon className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <div className="text-[10px] uppercase text-white/50 font-bold tracking-wider">Best Time</div>
+                                                <div className="text-white font-bold">{richData?.climate.bestTime || "Year-round"}</div>
+                                            </div>
                                         </div>
 
-                                        {/* Google Weather Link */}
                                         <a
-                                            href={`https://www.google.com/search?q=weather+in+${extendedData?.capital?.[0] || country.name}+${country.name}`}
+                                            href={`https://www.google.com/search?q=weather+in+${extendedData?.capital?.[0] || country.name}+forecast`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="mt-6 inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-xs font-bold transition-colors border border-white/10"
+                                            className="bg-white/5 hover:bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10 flex items-center gap-2 transition-all group/btn"
                                         >
-                                            View Daily Forecast on Google ↗
+                                            <span className="text-sm font-medium text-white group-hover/btn:text-blue-300">View Detailed Forecast</span>
+                                            <ArrowRight className="w-4 h-4 text-white/50 group-hover/btn:translate-x-1 transition-transform" />
                                         </a>
-                                    </div>
-
-                                    <CloudSun className="w-20 h-20 text-white/40" />
-                                </div>
-                            </div>
-
-                            {/* Climate Info */}
-                            <div className="bg-white/5 rounded-3xl p-6 border border-white/5">
-                                <div className="flex items-start gap-4">
-                                    <div className="bg-white/10 p-3 rounded-full text-2xl">
-                                        {richData?.climate.seasonEmojis || '🌍'}
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-lg mb-1">Climate Overview</h4>
-                                        <p className="text-sm text-white/70 leading-relaxed mb-4">{richData?.climate.text}</p>
-
-                                        <div className="inline-flex items-center gap-2 bg-green-500/10 text-green-400 px-3 py-1.5 rounded-full text-xs font-bold border border-green-500/20">
-                                            <Check className="w-3 h-3" /> Best time: {richData?.climate.bestTime}
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -582,6 +708,29 @@ export const CountryDetails = ({
 
                         {/* DETAILS / SAFETY TAB */}
                         <TabsContent value="details" className="space-y-6 mt-2 animate-slide-up">
+
+                            {/* Demographics / Religion */}
+                            {richData?.religionDistribution && (
+                                <div className="bg-white/5 rounded-3xl p-6 border border-white/5">
+                                    <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2 text-white"><Users className="w-5 h-5 text-white/60" /> Religious Diversity</h3>
+                                    <div className="space-y-4">
+                                        {richData.religionDistribution.map((rel, i) => (
+                                            <div key={i}>
+                                                <div className="flex justify-between text-sm mb-1.5">
+                                                    <span className="text-white/80 font-medium">{rel.name}</span>
+                                                    <span className="text-white/40 font-numbers">{rel.percentage}%</span>
+                                                </div>
+                                                <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full"
+                                                        style={{ width: `${rel.percentage}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Macro Stats (GDP / HDI) */}
                             <div className="grid grid-cols-2 gap-4">

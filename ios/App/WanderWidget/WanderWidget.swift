@@ -150,7 +150,7 @@ struct WanderWidget: Widget {
         }
         .configurationDisplayName("Travel Stats")
         .description("Your travel progress at a glance.")
-        .supportedFamilies([.systemMedium])
+        .supportedFamilies([.systemMedium, .systemLarge, .systemExtraLarge])
         .disableContentMarginsIfAvailable()
     }
 }

@@ -1,4 +1,6 @@
-import { RichCountryInfo } from "@/types/country";
+// This tool call is just to verify I need to read types/country.ts first.
+// I will not execute this replace yet.
+// I'll read the file first.
 
 // Helper to define common plug types
 const PLUGS = {
@@ -32,14 +34,19 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
             { date: "Dec 25", name: "Christmas" }
         ],
         mainAirports: [{ code: "JFK", name: "John F. Kennedy" }, { code: "LAX", name: "Los Angeles Intl" }],
-        climate: { text: "Extremely diverse. Tropical in FL, Arctic in AK, arid in SW.", bestTime: "Spring/Fall", seasonEmojis: "🌸🍂" },
+        climate: { text: "Extremely diverse. Tropical in FL, Arctic in AK, arid in SW.", bestTime: "Spring/Fall", seasonEmojis: "🌸🍁" },
         emergency: { police: "911", ambulance: "911", fire: "911" },
         alcohol: { drinkingAge: 21, purchaseAge: 21 },
         waterRating: "Safe",
         vaccinations: "Routine",
         hdi: 0.921,
         gdp: "$26.8 Trillion",
-        visitors2025: "79M"
+        visitors2025: "79M",
+        religionDistribution: [
+            { name: "Christianity", percentage: 65 },
+            { name: "Unaffiliated", percentage: 28 },
+            { name: "Other", percentage: 7 }
+        ]
     },
     "CA": {
         description: "Second largest country by area, known for its polite locals, maple syrup, and stunning wilderness.",
@@ -61,7 +68,12 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         vaccinations: "Routine",
         hdi: 0.936,
         gdp: "$2.1 Trillion",
-        visitors2025: "22M"
+        visitors2025: "22M",
+        religionDistribution: [
+            { name: "Christianity", percentage: 53 },
+            { name: "Unaffiliated", percentage: 34 },
+            { name: "Other", percentage: 13 }
+        ]
     },
     "MX": {
         description: "A land of color and contrast, boasting ancient Mayan ruins, colonial cities, spicy cuisine, and world-class beaches.",
@@ -107,7 +119,12 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         vaccinations: "Routine",
         hdi: 0.929,
         gdp: "$3.1 Trillion",
-        visitors2025: "37M"
+        visitors2025: "37M",
+        religionDistribution: [
+            { name: "Christianity", percentage: 46 },
+            { name: "Unaffiliated", percentage: 37 },
+            { name: "Other", percentage: 17 }
+        ]
     },
     "FR": {
         description: "The global capital of art, fashion, and gastronomy. From the Eiffel Tower to the lavender fields of Provence.",
@@ -129,7 +146,13 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         vaccinations: "Routine",
         hdi: 0.901,
         gdp: "$2.9 Trillion",
-        visitors2025: "90M"
+        visitors2025: "90M",
+        religionDistribution: [
+            { name: "Christianity", percentage: 50 },
+            { name: "Unaffiliated", percentage: 33 },
+            { name: "Islam", percentage: 4 },
+            { name: "Other", percentage: 13 }
+        ]
     },
     "DE": {
         description: "An economic powerhouse known for precision engineering, historic castles, hearty food, and Oktoberfest.",
@@ -151,7 +174,12 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         vaccinations: "Routine",
         hdi: 0.947,
         gdp: "$4.3 Trillion",
-        visitors2025: "35M"
+        visitors2025: "35M",
+        religionDistribution: [
+            { name: "Christianity", percentage: 54 },
+            { name: "Unaffiliated", percentage: 40 },
+            { name: "Islam", percentage: 5 }
+        ]
     },
     "IT": {
         description: "Home to the Roman Empire and the Renaissance. Italy dazzles with its art, architecture, and cuisine.",
@@ -418,6 +446,11 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         vaccinations: "Routine",
         hdi: 0.911,
         gdp: "$507 Billion",
-        visitors2025: "22M"
+        visitors2025: "22M",
+        religionDistribution: [
+            { name: "Islam", percentage: 76 },
+            { name: "Christianity", percentage: 9 },
+            { name: "Other", percentage: 15 }
+        ]
     },
 };

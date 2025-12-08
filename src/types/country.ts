@@ -45,4 +45,5 @@ export interface RichCountryInfo {
     hdi?: number;
     gdp?: string;
     visitors2025?: string;
+    religionDistribution?: { name: string; percentage: number }[];
 }

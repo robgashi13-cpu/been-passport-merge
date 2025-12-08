@@ -7,6 +7,7 @@ export interface UserData {
     name: string;
     email: string;
     passportCode: string;
+    avatarUrl?: string; // Added
     visitedCountries: string[];
     bucketList: string[];
     visitedCities: string[];
@@ -23,6 +24,7 @@ interface UserContextType {
     logout: () => void;
     updatePassport: (passportCode: string) => void;
     updatePassword: (password: string) => Promise<boolean>;
+    updateAvatar: (url: string) => Promise<boolean>; // Added
     updateVisitedCountries: (countries: string[]) => void;
     updateVisitedCities: (cities: string[]) => void;
     updateBucketList: (countries: string[]) => void;
@@ -127,6 +129,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                     name: profile?.display_name || metadata?.name || 'Traveler',
                     email: email || '',
                     passportCode: travelData?.passport_code || metadata?.passport_code || 'US',
+                    avatarUrl: profile?.avatar_url || metadata?.avatar_url, // Populate
                     visitedCountries: travelData?.visited_countries || [],
                     bucketList: travelData?.bucket_list || [],
                     visitedCities: travelData?.visited_cities || [],
@@ -226,6 +229,30 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    const updateAvatar = async (url: string): Promise<boolean> => {
+        if (!user) return false;
+        try {
+            setUser(prev => prev ? { ...prev, avatarUrl: url } : null);
+
+            // Update auth metadata
+            await supabase.auth.updateUser({
+                data: { avatar_url: url }
+            });
+
+            // Update profiles table
+            const { error } = await supabase
+                .from('profiles')
+                .update({ avatar_url: url })
+                .eq('user_id', user.id);
+
+            if (error) throw error;
+            return true;
+        } catch (error) {
+            console.error('Update avatar error:', error);
+            return false;
+        }
+    };
+
     // Check active session on mount
     useEffect(() => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -321,6 +348,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             signup,
             logout,
             updatePassword,
+            updateAvatar, // Added
             updatePassport,
             updateVisitedCountries,
             updateVisitedCities,

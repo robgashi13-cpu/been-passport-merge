@@ -1,14 +1,17 @@
+import { useState, useMemo } from 'react';
 import { getTopDestinations, PopularDestination } from '@/data/destinations';
 import { getCountryByCode } from '@/data/countries';
 import { citiesByCountry } from '@/data/cities';
 import { MapPin, Star, Calendar, DollarSign, TrendingUp, Sparkles, Plane, Globe, ArrowRight, Users, Navigation } from 'lucide-react';
-import { useMemo } from 'react';
+import { ExploreCityModal } from './ExploreCityModal'; // Import new modal
 
 interface ExploreDestinationsProps {
     onCountryClick?: (countryCode: string) => void;
 }
 
 export const ExploreDestinations = ({ onCountryClick }: ExploreDestinationsProps) => {
+    const [selectedCity, setSelectedCity] = useState<(PopularDestination & { imageUrl?: string }) | null>(null);
+
     // Enrich destinations with real images from cities.ts
     const topDestinations = useMemo(() => {
         const raw = getTopDestinations(12);
@@ -24,11 +27,15 @@ export const ExploreDestinations = ({ onCountryClick }: ExploreDestinationsProps
 
     const featured = topDestinations[0];
 
+    const handleCityClick = (city: PopularDestination & { imageUrl?: string }) => {
+        setSelectedCity(city);
+    };
+
     return (
         <div className="space-y-8 animate-fade-in pb-10">
             {/* Hero Section */}
             <div className="relative overflow-hidden rounded-[2rem] border border-white/10 p-8 md:p-12 min-h-[400px] flex flex-col justify-end group cursor-pointer transition-all hover:border-white/20"
-                onClick={() => onCountryClick?.(featured.countryCode)}>
+                onClick={() => handleCityClick(featured)}>
 
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
@@ -72,30 +79,7 @@ export const ExploreDestinations = ({ onCountryClick }: ExploreDestinationsProps
                 </div>
             </div>
 
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-3 gap-3 md:gap-4">
-                <div className="bg-white/5 border border-white/5 rounded-2xl p-4 md:p-6 text-center hover-lift backdrop-blur-sm">
-                    <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center mx-auto mb-3">
-                        <Globe className="w-5 h-5 text-blue-400" />
-                    </div>
-                    <div className="font-display text-2xl md:text-3xl font-bold text-white">{topDestinations.length}</div>
-                    <div className="text-xs text-white/50 uppercase tracking-wider font-medium mt-1">Curated Cities</div>
-                </div>
-                <div className="bg-white/5 border border-white/5 rounded-2xl p-4 md:p-6 text-center hover-lift backdrop-blur-sm">
-                    <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-3">
-                        <TrendingUp className="w-5 h-5 text-green-400" />
-                    </div>
-                    <div className="font-display text-2xl md:text-3xl font-bold text-white">2025</div>
-                    <div className="text-xs text-white/50 uppercase tracking-wider font-medium mt-1">Travel Trends</div>
-                </div>
-                <div className="bg-white/5 border border-white/5 rounded-2xl p-4 md:p-6 text-center hover-lift backdrop-blur-sm">
-                    <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center mx-auto mb-3">
-                        <Plane className="w-5 h-5 text-purple-400" />
-                    </div>
-                    <div className="font-display text-2xl md:text-3xl font-bold text-white">12+</div>
-                    <div className="text-xs text-white/50 uppercase tracking-wider font-medium mt-1">Countries</div>
-                </div>
-            </div>
+            {/* Quick Stats Grid - Removed per user request */}
 
             {/* Destination Grid */}
             <div>
@@ -109,11 +93,18 @@ export const ExploreDestinations = ({ onCountryClick }: ExploreDestinationsProps
                             key={destination.id}
                             destination={destination}
                             rank={idx + 2}
-                            onClick={() => onCountryClick?.(destination.countryCode)}
+                            onClick={() => handleCityClick(destination)}
                         />
                     ))}
                 </div>
             </div>
+
+            {/* Fullscreen City Modal */}
+            <ExploreCityModal
+                isOpen={!!selectedCity}
+                onClose={() => setSelectedCity(null)}
+                destination={selectedCity}
+            />
         </div>
     );
 };
@@ -135,9 +126,16 @@ const DestinationCard = ({ destination, rank, onClick }: DestinationCardProps) =
             {/* Background Image */}
             <div className="absolute inset-0 z-0">
                 <img
-                    src={destination.imageUrl || `https://source.unsplash.com/random/800x600/?${destination.cityName}`}
+                    src={destination.imageUrl || `https://source.unsplash.com/1600x900/?${destination.cityName},landmark`}
                     alt={destination.cityName}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                    onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null; // Prevent infinite loop
+                        // Fallback to a reliable source
+                        target.src = `https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=1000&auto=format&fit=crop`;
+                        // Or try dynamic again if needed, but static high-quality fallback is safer for "no empty icon"
+                    }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90 group-hover:opacity-80 transition-opacity" />
             </div>
@@ -149,7 +147,10 @@ const DestinationCard = ({ destination, rank, onClick }: DestinationCardProps) =
                             <span className="text-lg">{country?.flagEmoji}</span>
                             {destination.countryName}
                         </span>
-                        <div className="bg-white/10 backdrop-blur-md px-2 py-0.5 rounded-lg border border-white/10 text-xs text-white font-medium"> # {rank}</div>
+                        <div className="bg-white/10 backdrop-blur-md px-2 py-0.5 rounded-lg border border-white/10 text-xs text-white font-medium flex items-center gap-1.5">
+                            <Users className="w-3 h-3 text-white/70" />
+                            {destination.visitorCount}
+                        </div>
                     </div>
 
                     <h4 className="font-display text-3xl font-bold text-white mb-3 shadow-black drop-shadow-lg">{destination.cityName}</h4>
