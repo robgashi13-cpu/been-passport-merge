@@ -1,11 +1,15 @@
-import { useState, useRef, useCallback, useEffect } from "react";
-import { ComposableMap, Geographies, Geography, Sphere, Graticule } from "react-simple-maps";
+import { useRef, useEffect, useState } from "react";
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import * as topojson from 'topojson-client';
 import { countries } from '@/data/countries';
 import { getVisaRequirementFromMatrix } from '@/data/visaMatrix';
 import { VISA_SUBSTITUTIONS, getVisaPowerGroups } from '@/data/visaSubstitutions';
 import { MapPin, CreditCard, ZoomIn, ZoomOut } from 'lucide-react';
-
 import worldData from '@/data/world-110m.json';
+
+// Set Mapbox Token
+mapboxgl.accessToken = 'pk.eyJ1Ijoicm9iZ2FzaGkiLCJhIjoiY21pd2E4cWd4MHN3eDNjc2Izc2xodHdqMSJ9.c-oiis0Y-BfqI6Pr4BENiQ';
 
 interface GlobeMapProps {
     visitedCountries: string[];
@@ -15,7 +19,7 @@ interface GlobeMapProps {
     onCountryClick?: (code: string) => void;
 }
 
-// Numeric ID to ISO2 mapping
+// Numeric ID to ISO2 mapping (Reused from previous implementation)
 const numericToIso2: Record<string, string> = {
     "8": "AL", "20": "AD", "40": "AT", "112": "BY", "56": "BE", "70": "BA", "100": "BG",
     "191": "HR", "196": "CY", "203": "CZ", "208": "DK", "233": "EE", "246": "FI", "250": "FR",
@@ -48,162 +52,226 @@ const numericToIso2: Record<string, string> = {
     "585": "PW", "598": "PG", "882": "WS", "90": "SB", "776": "TO", "798": "TV", "548": "VU",
 };
 
-const nameToIso2: Record<string, string> = {
-    "czechia": "CZ", "united states of america": "US", "united states": "US",
-    "united kingdom": "GB", "bosnia and herz.": "BA", "north macedonia": "MK",
-    "south korea": "KR", "north korea": "KP", "democratic republic of the congo": "CD",
-    "dem. rep. congo": "CD", "republic of the congo": "CG", "côte d'ivoire": "CI",
-    "ivory coast": "CI", "central african republic": "CF", "south sudan": "SS",
-    "equatorial guinea": "GQ", "dominican republic": "DO", "united arab emirates": "AE",
-    "saudi arabia": "SA", "new zealand": "NZ", "papua new guinea": "PG",
-    "solomon islands": "SB", "timor-leste": "TL", "w. sahara": "EH",
-    "western sahara": "EH", "falkland is.": "FK", "somaliland": "SO", "kosovo": "XK",
-};
-
-const getIso2Code = (geo: any): string | null => {
-    const id = geo.id;
-    const name = geo.properties?.name || geo.properties?.NAME || "";
-    if (id && numericToIso2[id]) return numericToIso2[id];
-    const nameLower = name.toLowerCase().trim();
-    if (nameToIso2[nameLower]) return nameToIso2[nameLower];
-    const country = countries.find(c =>
-        c.name.toLowerCase() === nameLower ||
-        nameLower.includes(c.name.toLowerCase()) ||
-        c.name.toLowerCase().includes(nameLower)
-    );
-    if (country) return country.code;
-    return null;
-};
-
-const getCountryFillColor = (
-    iso2: string | null,
-    visitedCountries: string[],
-    viewMode: 'visited' | 'visa',
-    userPassportCode?: string,
-    heldVisas?: string[]
-): string => {
-    if (!iso2) return "rgba(60, 60, 60, 0.3)";
-
-    if (viewMode === 'visited') {
-        if (visitedCountries.includes(iso2)) {
-            return "rgba(255, 255, 255, 0.9)";
-        }
-        return "rgba(80, 80, 80, 0.5)";
-    }
-
-    if (userPassportCode) {
-        if (userPassportCode === iso2) {
-            return "rgba(255, 255, 255, 0.9)";
-        }
-        let visaInfo = getVisaRequirementFromMatrix(userPassportCode, iso2);
-        if ((!visaInfo || visaInfo.requirement === 'visa-required') && heldVisas && heldVisas.length > 0) {
-            if (heldVisas.includes(iso2)) return "rgba(34, 197, 94, 0.7)";
-            const powerGroups = getVisaPowerGroups(heldVisas);
-            const hasAccess = powerGroups.some(group => VISA_SUBSTITUTIONS[group]?.includes(iso2));
-            if (hasAccess) return "rgba(34, 197, 94, 0.7)";
-        }
-        if (visaInfo) {
-            switch (visaInfo.requirement) {
-                case 'visa-free': return "rgba(34, 197, 94, 0.7)";
-                case 'visa-on-arrival': return "rgba(132, 204, 22, 0.7)";
-                case 'e-visa': return "rgba(234, 179, 8, 0.7)";
-                case 'eta': return "rgba(249, 115, 22, 0.7)";
-                case 'visa-required': return "rgba(239, 68, 68, 0.6)";
-            }
-        }
-    }
-    return "rgba(80, 80, 80, 0.5)";
-};
-
 const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas = [], onCountryClick }: GlobeMapProps) => {
-    // Full 360 rotation without latitude clamping
-    const [rotation, setRotation] = useState<[number, number, number]>([0, -20, 0]);
-    const [isDragging, setIsDragging] = useState(false);
-    const lastMousePos = useRef<{ x: number; y: number } | null>(null);
+    const mapContainer = useRef<HTMLDivElement>(null);
+    const map = useRef<mapboxgl.Map | null>(null);
     const [viewMode, setViewMode] = useState<'visited' | 'visa'>('visited');
-    const [scale, setScale] = useState(320);
-    const initialDistance = useRef<number | null>(null);
-    const initialScale = useRef<number>(320);
 
-    const handleMouseDown = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-        if ('touches' in e && e.touches.length === 2) {
-            // Pinch start
-            const dx = e.touches[0].clientX - e.touches[1].clientX;
-            const dy = e.touches[0].clientY - e.touches[1].clientY;
-            initialDistance.current = Math.sqrt(dx * dx + dy * dy);
-            initialScale.current = scale;
-            return;
-        }
-        setIsDragging(true);
-        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-        lastMousePos.current = { x: clientX, y: clientY };
-    }, [scale]);
+    // Color Calculation Function (Keep this logic separate for reuse)
+    const getCountryColor = (iso2: string) => {
+        if (!iso2) return "rgba(60, 60, 60, 0.3)";
 
-    const handleMouseMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-        if ('touches' in e && e.touches.length === 2 && initialDistance.current) {
-            // Pinch zoom
-            const dx = e.touches[0].clientX - e.touches[1].clientX;
-            const dy = e.touches[0].clientY - e.touches[1].clientY;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            const newScale = Math.max(150, Math.min(800, initialScale.current * (distance / initialDistance.current)));
-            setScale(newScale);
-            return;
-        }
-
-        if (!isDragging || !lastMousePos.current) return;
-        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-        const dx = clientX - lastMousePos.current.x;
-        const dy = clientY - lastMousePos.current.y;
-
-        // Full 360 rotation - no clamping on latitude
-        setRotation(prev => [
-            prev[0] + dx * 0.5, // Inverted: Drag left moves left
-            prev[1] - dy * 0.5, // Inverted: Drag up moves up
-            prev[2]
-        ]);
-        lastMousePos.current = { x: clientX, y: clientY };
-    }, [isDragging]);
-
-    const handleMouseUp = useCallback(() => {
-        setIsDragging(false);
-        lastMousePos.current = null;
-        initialDistance.current = null;
-    }, []);
-
-    const handleWheel = useCallback((e: React.WheelEvent) => {
-        e.preventDefault();
-        const delta = e.deltaY > 0 ? -30 : 30;
-        setScale(prev => Math.max(150, Math.min(800, prev + delta)));
-    }, []);
-
-    const handleCountryClick = (geo: any) => {
-        const iso2 = getIso2Code(geo);
-        if (iso2) {
-            if (onCountryClick) {
-                onCountryClick(iso2);
-            } else if (toggleVisited) {
-                toggleVisited(iso2);
+        if (viewMode === 'visited') {
+            if (visitedCountries.includes(iso2)) {
+                return "#ffffff"; // White for visited
             }
+            return "#4a4a4a"; // Dark Gray for unvisited
         }
+
+        if (userPassportCode) {
+            if (userPassportCode === iso2) {
+                return "#ffffff"; // Home Country
+            }
+            let visaInfo = getVisaRequirementFromMatrix(userPassportCode, iso2);
+
+            // Check Access (including Held Visas)
+            let isAccessGranted = false;
+            let accessColor = "#ef4444"; // Red (Visa Required)
+
+            if (visaInfo) {
+                switch (visaInfo.requirement) {
+                    case 'visa-free':
+                        isAccessGranted = true;
+                        accessColor = "#22c55e"; // Green
+                        break;
+                    case 'visa-on-arrival':
+                        isAccessGranted = true;
+                        accessColor = "#84cc16"; // Lime
+                        break;
+                    case 'e-visa':
+                        isAccessGranted = true;
+                        accessColor = "#eab308"; // Yellow
+                        break;
+                    case 'eta':
+                        isAccessGranted = true;
+                        accessColor = "#f97316"; // Orange
+                        break;
+                    case 'visa-required':
+                        isAccessGranted = false;
+                        accessColor = "#ef4444"; // Red
+                        break;
+                }
+            }
+
+            // Held Visa Logic
+            if ((!visaInfo || visaInfo.requirement === 'visa-required') && heldVisas && heldVisas.length > 0) {
+                if (heldVisas.includes(iso2)) {
+                    // Direct unlock
+                    isAccessGranted = true;
+                    accessColor = "#22c55e";
+                } else {
+                    // Substitution check
+                    const powerGroups = getVisaPowerGroups(heldVisas);
+                    const hasAccess = powerGroups.some(group => VISA_SUBSTITUTIONS[group]?.includes(iso2));
+                    if (hasAccess) {
+                        isAccessGranted = true;
+                        accessColor = "#22c55e";
+                    }
+                }
+            }
+
+            return accessColor;
+        }
+        return "#4a4a4a";
+    };
+
+    // Initialize Map
+    useEffect(() => {
+        if (map.current) return; // Initialize only once
+        if (!mapContainer.current) return;
+
+        map.current = new mapboxgl.Map({
+            container: mapContainer.current,
+            style: 'mapbox://styles/mapbox/dark-v11',
+            projection: 'globe',
+            zoom: 1.5,
+            center: [30, 15],
+            attributionControl: false
+        });
+
+        const mapInstance = map.current;
+
+        mapInstance.on('style.load', () => {
+            // Atmosphere
+            mapInstance.setFog({
+                color: 'rgb(20, 20, 20)', // Lower atmosphere
+                'high-color': 'rgb(0, 0, 0)', // Upper atmosphere
+                'horizon-blend': 0.05, // Atmosphere thickness (default 0.2 at low zooms)
+                'space-color': 'rgb(0, 0, 0)', // Background color
+                'star-intensity': 0.6 // Background star brightness (default 0.35 at low zoooms )
+            });
+        });
+
+        mapInstance.on('load', () => {
+            // Load GeoJSON
+            // @ts-ignore
+            const geojson = topojson.feature(worldData, worldData.objects.countries);
+
+            // Enhance GeoJSON with ISO2 codes
+            // @ts-ignore
+            geojson.features.forEach((feature: any) => {
+                const id = feature.id as string;
+                if (numericToIso2[id]) {
+                    feature.properties.iso2 = numericToIso2[id];
+                } else {
+                    // Fallback using names if possible (omitted for brevity/perf, sticking to ID map)
+                }
+            });
+
+            mapInstance.addSource('world', {
+                type: 'geojson',
+                data: geojson as any
+            });
+
+            // Add Fill Layer
+            mapInstance.addLayer({
+                id: 'countries-fill',
+                type: 'fill',
+                source: 'world',
+                paint: {
+                    'fill-color': '#4a4a4a', // Init color, will be updated by useEffect
+                    'fill-opacity': 0.8
+                }
+            });
+
+            // Add Border Layer
+            mapInstance.addLayer({
+                id: 'countries-border',
+                type: 'line',
+                source: 'world',
+                paint: {
+                    'line-color': 'rgba(255,255,255,0.2)',
+                    'line-width': 0.5
+                }
+            });
+
+            // Click Interaction
+            mapInstance.on('click', 'countries-fill', (e) => {
+                const feature = e.features?.[0];
+                if (feature && feature.properties?.iso2) {
+                    const iso2 = feature.properties.iso2;
+                    if (onCountryClick) {
+                        onCountryClick(iso2);
+                    } else if (toggleVisited) {
+                        toggleVisited(iso2);
+                    }
+                }
+            });
+
+            // Hover Cursor
+            mapInstance.on('mouseenter', 'countries-fill', () => {
+                mapInstance.getCanvas().style.cursor = 'pointer';
+            });
+            mapInstance.on('mouseleave', 'countries-fill', () => {
+                mapInstance.getCanvas().style.cursor = '';
+            });
+        });
+
+    }, [onCountryClick, toggleVisited]);
+
+    // Update Colors when data changes
+    useEffect(() => {
+        const mapInstance = map.current;
+        if (!mapInstance) return;
+
+        const updatePaint = () => {
+            if (!mapInstance.getLayer('countries-fill')) return;
+
+            const matchExpression: any[] = ['match', ['get', 'iso2']];
+
+            // Build expression for ALL countries (to ensure coverage)
+            // Or just iterate numericToIso2 keys
+            const uniqueIso2 = new Set<string>();
+            Object.values(numericToIso2).forEach(iso => uniqueIso2.add(iso));
+
+            // Also check `countries` list to be safe if numeric map misses some
+            countries.forEach(c => uniqueIso2.add(c.code));
+
+            uniqueIso2.forEach(iso2 => {
+                const color = getCountryColor(iso2);
+                matchExpression.push(iso2);
+                matchExpression.push(color);
+            });
+
+            // Default fallback
+            matchExpression.push('rgba(60,60,60,0.3)');
+
+            mapInstance.setPaintProperty('countries-fill', 'fill-color', matchExpression);
+        };
+
+        if (mapInstance.isStyleLoaded()) {
+            updatePaint();
+        } else {
+            mapInstance.once('render', updatePaint); // Wait for style or data
+        }
+
+    }, [visitedCountries, viewMode, userPassportCode, heldVisas]); // Trigger re-paint
+
+    const handleZoomIn = () => {
+        map.current?.zoomIn();
+    };
+
+    const handleZoomOut = () => {
+        map.current?.zoomOut();
     };
 
     return (
-        <div
-            className="w-full h-full fixed inset-0 z-[9999] bg-black touch-none cursor-grab active:cursor-grabbing flex flex-col"
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-            onTouchStart={handleMouseDown}
-            onTouchMove={handleMouseMove}
-            onTouchEnd={handleMouseUp}
-            onWheel={handleWheel}
-        >
+        <div className="w-full h-full relative bg-black">
+            <div ref={mapContainer} className="w-full h-full" />
+
             {/* View Mode Toggle Buttons - Top */}
-            <div className="absolute top-20 left-0 right-0 flex justify-center z-[10000] pointer-events-auto" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-                <div className="bg-black/60 backdrop-blur-md p-1 rounded-xl flex gap-1 border border-white/10">
+            <div className="absolute top-20 left-0 right-0 flex justify-center z-[10] pointer-events-none" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+                <div className="bg-black/60 backdrop-blur-md p-1 rounded-xl flex gap-1 border border-white/10 pointer-events-auto">
                     <button
                         onClick={(e) => { e.stopPropagation(); setViewMode('visited'); }}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === 'visited'
@@ -236,76 +304,19 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
             </div>
 
             {/* Zoom Controls */}
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 z-[10000] flex flex-col gap-2 pointer-events-auto">
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 z-[10] flex flex-col gap-2">
                 <button
-                    onClick={(e) => { e.stopPropagation(); setScale(prev => Math.min(800, prev + 50)); }}
+                    onClick={handleZoomIn}
                     className="w-10 h-10 bg-black/60 backdrop-blur-md rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white/10"
                 >
                     <ZoomIn className="w-5 h-5" />
                 </button>
                 <button
-                    onClick={(e) => { e.stopPropagation(); setScale(prev => Math.max(150, prev - 50)); }}
+                    onClick={handleZoomOut}
                     className="w-10 h-10 bg-black/60 backdrop-blur-md rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white/10"
                 >
                     <ZoomOut className="w-5 h-5" />
                 </button>
-            </div>
-
-            {/* Globe - Centered higher */}
-            <div className="flex-1 flex items-center justify-center" style={{ marginTop: '-60px' }}>
-                <ComposableMap
-                    projection="geoOrthographic"
-                    projectionConfig={{
-                        scale: scale,
-                        center: [0, 0],
-                        rotate: rotation
-                    }}
-                    style={{ width: "100%", height: "100%", maxHeight: "70vh" }}
-                >
-                    <Sphere id="globe-sphere" fill="#0a0a0a" stroke="#333" strokeWidth={0.5} />
-                    <Graticule stroke="#222" strokeWidth={0.3} />
-                    <Geographies geography={worldData}>
-                        {({ geographies }) =>
-                            geographies.map((geo) => {
-                                const iso2 = getIso2Code(geo);
-                                const isVisited = iso2 ? visitedCountries.includes(iso2) : false;
-                                const fillColor = getCountryFillColor(iso2, visitedCountries, viewMode, userPassportCode, heldVisas);
-
-                                return (
-                                    <Geography
-                                        key={geo.rsmKey}
-                                        geography={geo}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleCountryClick(geo);
-                                        }}
-                                        style={{
-                                            default: {
-                                                fill: fillColor,
-                                                stroke: "rgba(255, 255, 255, 0.3)",
-                                                strokeWidth: 0.5,
-                                                outline: "none",
-                                                cursor: "pointer",
-                                                transition: "fill 0.3s ease"
-                                            },
-                                            hover: {
-                                                fill: isVisited ? "rgba(255, 255, 255, 1)" : "rgba(200, 200, 200, 0.6)",
-                                                stroke: "rgba(255, 255, 255, 0.8)",
-                                                strokeWidth: 1,
-                                                outline: "none",
-                                                cursor: "pointer",
-                                            },
-                                            pressed: {
-                                                fill: "rgba(255, 255, 255, 0.9)",
-                                                outline: "none"
-                                            }
-                                        }}
-                                    />
-                                );
-                            })
-                        }
-                    </Geographies>
-                </ComposableMap>
             </div>
 
             {/* Instructions */}
