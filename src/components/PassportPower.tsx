@@ -522,44 +522,7 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
               {/* Complete Visa List */}
               <VisaCountryList passportCode={effectivePassport} heldVisas={effectiveHeldVisas} />
 
-              {/* Change Passport */}
-              <div className="bg-gradient-card rounded-xl border border-border/50 p-4">
-                <button
-                  onClick={() => setShowAllVisas(!showAllVisas)}
-                  className="w-full flex items-center justify-between"
-                >
-                  <span className="font-medium">Change Your Passport</span>
-                  <ChevronDown className={`w - 5 h - 5 transition - transform ${showAllVisas ? 'rotate-180' : ''} `} />
-                </button>
 
-                {showAllVisas && (
-                  <div className="mt-4 space-y-2 max-h-64 overflow-y-auto">
-                    <div className="relative mb-3">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="pl-9 h-9 text-sm"
-                      />
-                    </div>
-                    {filteredCountries.slice(0, 20).map((country) => (
-                      <button
-                        key={country.code}
-                        onClick={() => setUserPassport(country.code)}
-                        className={`w - full flex items - center gap - 3 p - 2 rounded - lg transition - colors ${effectivePassport === country.code
-                          ? 'bg-white/20 ring-1 ring-white/30'
-                          : 'hover:bg-white/10'
-                          } `}
-                      >
-                        <span className="text-xl">{country.flagEmoji}</span>
-                        <span className="flex-1 text-left text-sm">{country.name}</span>
-                        <span className="text-xs text-muted-foreground">#{country.passportRank}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
             </>
           ) : (
             <div className="text-center py-12 text-muted-foreground">

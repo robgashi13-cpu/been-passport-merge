@@ -97,13 +97,13 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
       <LevelCard visitedCountries={visitedCountries} />
 
       {/* Stats Merged Card */}
-      <div className="bg-gradient-card rounded-2xl border border-white/10 p-4">
-        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
+      <div className="bg-gradient-card rounded-2xl border border-border/50 p-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
 
           {/* Progress Ring - Clickable - Smaller size */}
           <div
             onClick={() => setShowCountryBrowser(true)}
-            className="cursor-pointer hover:scale-105 transition-transform flex flex-col items-center justify-center sm:block"
+            className="cursor-pointer hover:scale-105 transition-transform flex flex-col items-center justify-center p-2"
           >
             <ProgressRing
               percentage={stats.percentage}
@@ -114,57 +114,55 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
           </div>
 
           {/* Divider (Desktop Only) */}
-          <div className="hidden sm:block w-px h-10 bg-white/10 flex-shrink-0" />
+          <div className="hidden sm:block w-px h-16 bg-border/20" />
 
-          {/* Countries Visited */}
-          <div
-            onClick={() => setShowVisitedModal(true)}
-            className="flex-1 min-w-[80px] cursor-pointer hover:bg-white/5 rounded-lg p-1.5 transition-colors flex flex-col justify-center items-center sm:items-start text-center sm:text-left"
-          >
-            <div className="flex items-center gap-1 text-white/60 text-[9px] uppercase font-bold tracking-wider mb-0.5">
-              <MapPin className="w-2.5 h-2.5" />
-              <span>Countries</span>
-            </div>
-            <div className="flex items-baseline gap-0.5">
-              <span className="font-display font-bold text-xl md:text-2xl">{stats.visitedCount}</span>
-              <span className="text-[10px] text-white/40 font-medium">/{stats.totalCountries}</span>
-            </div>
-          </div>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-3 gap-2 w-full sm:w-auto">
 
-          {/* Divider (Desktop Only) */}
-          <div className="hidden sm:block w-px h-10 bg-white/10 flex-shrink-0" />
+            {/* Countries Visited */}
+            <div
+              onClick={() => setShowVisitedModal(true)}
+              className="cursor-pointer hover:bg-white/5 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl p-3 transition-colors flex flex-col items-center sm:items-start text-center sm:text-left"
+            >
+              <div className="flex items-center gap-1 text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-1">
+                <MapPin className="w-3 h-3" />
+                <span>Countries</span>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className="font-display font-bold text-2xl text-foreground">{stats.visitedCount}</span>
+                <span className="text-xs text-muted-foreground font-medium">/{stats.totalCountries}</span>
+              </div>
+            </div>
 
-          {/* Continents Unlocked */}
-          <div
-            onClick={() => setShowContinentModal(true)}
-            className="flex-1 min-w-[80px] cursor-pointer hover:bg-white/5 rounded-lg p-1.5 transition-colors flex flex-col justify-center items-center sm:items-start text-center sm:text-left h-full"
-          >
-            <div className="flex items-center gap-1 text-white/60 text-[9px] uppercase font-bold tracking-wider mb-0.5">
-              <Globe className="w-2.5 h-2.5" />
-              <span>Continents</span>
+            {/* Continents Unlocked */}
+            <div
+              onClick={() => setShowContinentModal(true)}
+              className="cursor-pointer hover:bg-white/5 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl p-3 transition-colors flex flex-col items-center sm:items-start text-center sm:text-left"
+            >
+              <div className="flex items-center gap-1 text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-1">
+                <Globe className="w-3 h-3" />
+                <span>Continents</span>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className="font-display font-bold text-2xl text-foreground">{unlockedContinentCount}</span>
+                <span className="text-xs text-muted-foreground font-medium">/{totalContinents}</span>
+              </div>
             </div>
-            <div className="flex items-baseline gap-0.5">
-              <span className="font-display font-bold text-xl md:text-2xl">{unlockedContinentCount}</span>
-              <span className="text-[10px] text-white/40 font-medium">/{totalContinents}</span>
-            </div>
-          </div>
 
-          {/* Divider (Desktop Only) */}
-          <div className="hidden sm:block w-px h-10 bg-white/10 flex-shrink-0" />
-
-          {/* Passport Power */}
-          <div
-            onClick={() => setShowPassportModal(true)}
-            className="flex-1 min-w-[80px] cursor-pointer hover:bg-white/5 rounded-lg p-1.5 transition-colors flex flex-col justify-center items-center sm:items-start text-center sm:text-left h-full"
-          >
-            <div className="flex items-center gap-1 text-white/60 text-[9px] uppercase font-bold tracking-wider mb-1">
-              <Trophy className="w-2.5 h-2.5" />
-              <span>Passport</span>
+            {/* Passport Power */}
+            <div
+              onClick={() => setShowPassportModal(true)}
+              className="cursor-pointer hover:bg-white/5 dark:hover:bg-white/5 hover:bg-black/5 rounded-xl p-3 transition-colors flex flex-col items-center sm:items-start text-center sm:text-left"
+            >
+              <div className="flex items-center gap-1 text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-1">
+                <Trophy className="w-3 h-3" />
+                <span>Passport</span>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className="font-display font-bold text-2xl text-foreground">{stats.userPassport?.passportRank || '-'}</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight truncate max-w-[80px]">{stats.userPassport?.name || 'Select'}</p>
             </div>
-            <div className="flex items-baseline gap-1">
-              <span className="font-display font-bold text-xl md:text-2xl">{stats.passportRank || '-'}</span>
-            </div>
-            <p className="text-[9px] text-white/40 mt-0.5 leading-tight truncate max-w-[80px]">{stats.userPassport?.name || 'Select'}</p>
           </div>
         </div>
       </div>
@@ -182,19 +180,19 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
       {/* Local Airport Traffic Button */}
       <button
         onClick={() => setShowFlightModal(true)}
-        className="bg-gradient-card rounded-2xl border border-white/10 p-4 hover-lift flex items-center justify-between group cursor-pointer w-full text-left"
+        className="bg-gradient-card rounded-2xl border border-border/50 p-4 hover-lift flex items-center justify-between group cursor-pointer w-full text-left"
       >
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
             <span className="text-2xl">✈️</span>
           </div>
           <div>
-            <h3 className="font-bold text-white group-hover:text-blue-400 transition-colors">Local Airport Traffic</h3>
+            <h3 className="font-bold text-foreground group-hover:text-blue-400 transition-colors">Local Airport Traffic</h3>
             <p className="text-sm text-muted-foreground">View live flights from Pristina (PRN)</p>
           </div>
         </div>
-        <div className="bg-white/10 p-2 rounded-full group-hover:bg-blue-500/20 transition-colors">
-          <Globe className="w-5 h-5 text-white/70 group-hover:text-blue-400" />
+        <div className="bg-secondary p-2 rounded-full group-hover:bg-blue-500/20 transition-colors">
+          <Globe className="w-5 h-5 text-muted-foreground group-hover:text-blue-400" />
         </div>
       </button>
 
@@ -209,8 +207,8 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
         onClose={() => setShowPassportModal(false)}
         userPassportCode={stats.userPassport?.code || null}
         passportScore={stats.passportScore}
-        passportRank={stats.passportRank}
-        heldVisas={stats.heldVisas}
+        passportRank={stats.userPassport?.passportRank}
+        heldVisas={heldVisas}
       />
       <FlightBoardModal
         isOpen={showFlightModal}

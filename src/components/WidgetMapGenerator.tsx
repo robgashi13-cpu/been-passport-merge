@@ -60,10 +60,10 @@ const numericToIso2: Record<string, string> = {
 };
 
 
-export const WidgetMapGenerator = ({ visitedCountries, onSnapshotReady }: WidgetMapGeneratorProps) => {
+export const WidgetMapGenerator = ({ visitedCountries, livedCountries = [], bucketList = [], onSnapshotReady }: WidgetMapGeneratorProps & { livedCountries?: string[], bucketList?: string[] }) => {
     const ref = useRef<HTMLDivElement>(null);
 
-    // Trigger snapshot when visitedCountries changes
+    // Trigger snapshot when data changes
     useEffect(() => {
         if (ref.current) {
             // Wait for render
@@ -71,9 +71,6 @@ export const WidgetMapGenerator = ({ visitedCountries, onSnapshotReady }: Widget
                 if (ref.current) {
                     toPng(ref.current, { cacheBust: true, width: 600, height: 600 })
                         .then((dataUrl) => {
-                            // Remove "data:image/png;base64," prefix for Swift Data init if needed
-                            // But Data(base64Encoded:) usually wants clean base64.
-                            // Actually, let's keep it mostly as is, but strip the header in the parent if needed.
                             const cleanBase64 = dataUrl.replace('data:image/png;base64,', '');
                             onSnapshotReady(cleanBase64);
                         })
@@ -83,7 +80,7 @@ export const WidgetMapGenerator = ({ visitedCountries, onSnapshotReady }: Widget
                 }
             }, 1000); // Delay to ensure map loads
         }
-    }, [visitedCountries, onSnapshotReady]);
+    }, [visitedCountries, livedCountries, bucketList, onSnapshotReady]);
 
     return (
         <div
@@ -94,23 +91,37 @@ export const WidgetMapGenerator = ({ visitedCountries, onSnapshotReady }: Widget
                 left: -9999,
                 width: '600px',
                 height: '600px',
-                background: '#eaddcf', // Vintage sea/paper color
+                background: '#0a0a0a', // Dark theme matching app
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                border: '4px solid #8b4513' // Optional vintage border frame
             }}
         >
             <ComposableMap
                 projection="geoMercator"
-                projectionConfig={{ scale: 100, center: [0, 0] }} // Square scale center
+                projectionConfig={{ scale: 100, center: [0, 0] }}
                 style={{ width: "100%", height: "100%" }}
             >
                 <Geographies geography={worldData}>
                     {({ geographies }) =>
                         geographies.map((geo) => {
                             const iso2 = numericToIso2[geo.id];
-                            const isVisited = iso2 && visitedCountries.includes(iso2);
+
+                            let fillColor = "#1a1a1a"; // Default dark grey
+                            let strokeColor = "#333333";
+
+                            if (iso2) {
+                                if (livedCountries.includes(iso2)) {
+                                    fillColor = "#3b82f6"; // Blue-500
+                                    strokeColor = "#60a5fa";
+                                } else if (visitedCountries.includes(iso2)) {
+                                    fillColor = "#ffffff"; // White
+                                    strokeColor = "#e5e5e5";
+                                } else if (bucketList.includes(iso2)) {
+                                    fillColor = "#f97316"; // Orange-500
+                                    strokeColor = "#fb923c";
+                                }
+                            }
 
                             return (
                                 <Geography
@@ -118,11 +129,23 @@ export const WidgetMapGenerator = ({ visitedCountries, onSnapshotReady }: Widget
                                     geography={geo}
                                     style={{
                                         default: {
-                                            fill: isVisited ? "#8b4513" : "#d6c6b0", // Ink Brown vs Dark Parchment
-                                            stroke: "#5e503f", // Dark Coffee stroke
+                                            fill: fillColor,
+                                            stroke: strokeColor,
                                             strokeWidth: 0.5,
                                             outline: "none",
                                         },
+                                        hover: {
+                                            fill: fillColor,
+                                            stroke: strokeColor,
+                                            strokeWidth: 0.5,
+                                            outline: "none",
+                                        },
+                                        pressed: {
+                                            fill: fillColor,
+                                            stroke: strokeColor,
+                                            strokeWidth: 0.5,
+                                            outline: "none",
+                                        }
                                     }}
                                 />
                             );

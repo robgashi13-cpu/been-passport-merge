@@ -34,7 +34,7 @@ export const ExploreDestinations = ({ onCountryClick }: ExploreDestinationsProps
     return (
         <div className="space-y-8 animate-fade-in pb-10">
             {/* Hero Section */}
-            <div className="relative overflow-hidden rounded-[2rem] border border-white/10 p-8 md:p-12 min-h-[400px] flex flex-col justify-end group cursor-pointer transition-all hover:border-white/20"
+            <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-8 md:p-12 min-h-[400px] flex flex-col justify-end group cursor-pointer transition-all hover:border-border"
                 onClick={() => handleCityClick(featured)}>
 
                 {/* Background Image */}
@@ -83,7 +83,7 @@ export const ExploreDestinations = ({ onCountryClick }: ExploreDestinationsProps
 
             {/* Destination Grid */}
             <div>
-                <h3 className="font-display text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <h3 className="font-display text-xl font-bold text-foreground mb-6 flex items-center gap-2">
                     <Navigation className="w-5 h-5 text-sky-400" />
                     Popular Destinations
                 </h3>
@@ -120,7 +120,7 @@ const DestinationCard = ({ destination, rank, onClick }: DestinationCardProps) =
 
     return (
         <div
-            className="group relative h-[320px] rounded-3xl overflow-hidden cursor-pointer border border-white/5 hover:border-white/20 transition-all duration-500 shadow-2xl"
+            className="group relative h-[320px] rounded-3xl overflow-hidden cursor-pointer border border-border/50 hover:border-border transition-all duration-500 shadow-2xl"
             onClick={onClick}
         >
             {/* Background Image */}

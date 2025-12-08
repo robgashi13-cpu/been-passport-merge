@@ -20,13 +20,33 @@ interface AddTripModalProps {
 }
 
 export const AddTripModal = ({ isOpen, onClose, initialCountryCode, initialDate }: AddTripModalProps) => {
-    const { addTrip } = useUser();
+    const { addTrip, trips, updateTrips } = useUser();
     const [countryCode, setCountryCode] = useState(initialCountryCode || '');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [cityName, setCityName] = useState('');
     const [notes, setNotes] = useState('');
     const [transportMode, setTransportMode] = useState<string>('plane');
+
+    // Check for existing trips on this start date
+    const existingTripOnDate = trips.find(t => {
+        if (!initialDate) return false;
+        const tStart = new Date(t.startDate);
+        const iDate = new Date(initialDate);
+        return tStart.getDate() === iDate.getDate() &&
+            tStart.getMonth() === iDate.getMonth() &&
+            tStart.getFullYear() === iDate.getFullYear();
+    });
+
+    const handleDeleteTrip = () => {
+        if (!existingTripOnDate) return;
+        if (window.confirm(`Delete trip to ${existingTripOnDate.countryName}?`)) {
+            const newTrips = trips.filter(t => t.id !== existingTripOnDate.id);
+            updateTrips(newTrips);
+            toast.success("Trip deleted");
+            onClose();
+        }
+    };
 
     useEffect(() => {
         if (initialCountryCode) setCountryCode(initialCountryCode);
@@ -36,9 +56,19 @@ export const AddTripModal = ({ isOpen, onClose, initialCountryCode, initialDate 
         if (initialDate) {
             const dateStr = initialDate.toISOString().split('T')[0];
             setStartDate(dateStr);
-            setEndDate(dateStr); // Sets end date same as start date for convenience
+            setEndDate(dateStr);
+
+            // Pre-fill if editing/viewing existing trip
+            if (existingTripOnDate) {
+                setCountryCode(existingTripOnDate.countryCode);
+                setCityName(existingTripOnDate.cityName || '');
+                setNotes(existingTripOnDate.notes || '');
+                setTransportMode(existingTripOnDate.transportMode || 'plane');
+                setEndDate(new Date(existingTripOnDate.endDate).toISOString().split('T')[0]);
+                setStartDate(new Date(existingTripOnDate.startDate).toISOString().split('T')[0]);
+            }
         }
-    }, [initialDate, isOpen]);
+    }, [initialDate, isOpen, existingTripOnDate]);
 
     // Body scroll lock
     useEffect(() => {
@@ -64,20 +94,27 @@ export const AddTripModal = ({ isOpen, onClose, initialCountryCode, initialDate 
         if (!country) return;
 
         const newTrip: TripEntry = {
-            id: uuidv4(),
+            id: existingTripOnDate ? existingTripOnDate.id : uuidv4(), // Keep ID if editing
             countryCode,
             countryName: country.name,
             cityName: cityName || undefined,
-            // Construct dates using local time components to avoid UTC shifts
             startDate: new Date(+startDate.split('-')[0], +startDate.split('-')[1] - 1, +startDate.split('-')[2]),
             endDate: new Date(+endDate.split('-')[0], +endDate.split('-')[1] - 1, +endDate.split('-')[2]),
             transportMode: transportMode as any,
             notes: notes || undefined,
-            createdAt: new Date(),
+            createdAt: existingTripOnDate ? existingTripOnDate.createdAt : new Date(),
         };
 
-        addTrip(newTrip);
-        toast.success(`Trip to ${country.name} added!`);
+        if (existingTripOnDate) {
+            // Update existing
+            const newTrips = trips.map(t => t.id === existingTripOnDate.id ? newTrip : t);
+            updateTrips(newTrips);
+            toast.success("Trip updated!");
+        } else {
+            addTrip(newTrip);
+            toast.success(`Trip to ${country.name} added!`);
+        }
+
         onClose();
 
         // Reset form
@@ -99,15 +136,26 @@ export const AddTripModal = ({ isOpen, onClose, initialCountryCode, initialDate 
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-white/10 bg-white/5">
                     <div>
-                        <h2 className="text-xl font-display font-bold">Add Trip</h2>
-                        <p className="text-sm text-muted-foreground">Log a past or future trip</p>
+                        <h2 className="text-xl font-display font-bold">{existingTripOnDate ? 'Edit Trip' : 'Add Trip'}</h2>
+                        <p className="text-sm text-muted-foreground">{existingTripOnDate ? 'Manage this trip details' : 'Log a past or future trip'}</p>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-white/10 rounded-full transition-colors"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {existingTripOnDate && (
+                            <button
+                                type="button"
+                                onClick={handleDeleteTrip} // Use the handler we defined
+                                className="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold rounded-lg border border-red-500/20 transition-colors"
+                            >
+                                Delete
+                            </button>
+                        )}
+                        <button
+                            onClick={onClose}
+                            className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Form */}
@@ -205,7 +253,7 @@ export const AddTripModal = ({ isOpen, onClose, initialCountryCode, initialDate 
 
                     <Button type="submit" className="w-full bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold py-6 rounded-xl">
                         <Save className="w-5 h-5 mr-2" />
-                        Save Trip
+                        {existingTripOnDate ? 'Update Trip' : 'Save Trip'}
                     </Button>
 
                 </form>

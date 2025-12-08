@@ -10,6 +10,7 @@ export interface UserData {
     avatarUrl?: string; // Added
     visitedCountries: string[];
     bucketList: string[];
+    livedCountries: string[]; // Added
     visitedCities: string[];
     heldVisas: string[];
     createdAt: Date;
@@ -28,6 +29,7 @@ interface UserContextType {
     updateVisitedCountries: (countries: string[]) => void;
     updateVisitedCities: (cities: string[]) => void;
     updateBucketList: (countries: string[]) => void;
+    updateLivedCountries: (countries: string[]) => void; // Added
     updateHeldVisas: (visas: string[]) => void;
     trips: any[];
     addTrip: (trip: any) => void;
@@ -38,6 +40,7 @@ interface UserContextType {
     bucketList: string[];
     heldVisas: string[];
     passportCode: string;
+    livedCountries: string[]; // Added
 }
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -51,6 +54,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const [guestVisited, setGuestVisited] = useState<string[]>([]);
     const [guestPassport, setGuestPassport] = useState<string>("US");
     const [guestBucket, setGuestBucket] = useState<string[]>([]);
+    const [guestLived, setGuestLived] = useState<string[]>([]); // Added
     const [guestHeld, setGuestHeld] = useState<string[]>([]);
     const [guestCities, setGuestCities] = useState<string[]>([]);
 
@@ -64,6 +68,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                 if (savedPassport) setGuestPassport(savedPassport);
                 const savedBucket = localStorage.getItem('bucketList');
                 if (savedBucket) setGuestBucket(JSON.parse(savedBucket));
+                const savedLived = localStorage.getItem('livedCountries');
+                if (savedLived) setGuestLived(JSON.parse(savedLived));
                 const savedHeld = localStorage.getItem('heldVisas');
                 if (savedHeld) setGuestHeld(JSON.parse(savedHeld));
                 const savedCities = localStorage.getItem('visitedCities');
@@ -78,10 +84,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             localStorage.setItem('visitedCountries', JSON.stringify(guestVisited));
             localStorage.setItem('userPassport', guestPassport);
             localStorage.setItem('bucketList', JSON.stringify(guestBucket));
+            localStorage.setItem('livedCountries', JSON.stringify(guestLived));
             localStorage.setItem('heldVisas', JSON.stringify(guestHeld));
             localStorage.setItem('visitedCities', JSON.stringify(guestCities));
         }
-    }, [guestVisited, guestPassport, guestBucket, guestHeld, guestCities, user]);
+    }, [guestVisited, guestPassport, guestBucket, guestLived, guestHeld, guestCities, user]);
 
     useEffect(() => {
         const savedTrips = localStorage.getItem('wanderlust_trips');
@@ -132,6 +139,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                     avatarUrl: profile?.avatar_url || metadata?.avatar_url, // Populate
                     visitedCountries: travelData?.visited_countries || [],
                     bucketList: travelData?.bucket_list || [],
+                    // @ts-ignore
+                    livedCountries: travelData?.lived_countries || [],
                     visitedCities: travelData?.visited_cities || [],
                     heldVisas: travelData?.held_visas || [],
                     createdAt: new Date(profile?.created_at || travelData?.created_at || Date.now())
@@ -321,6 +330,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    const updateLivedCountries = async (list: string[]) => {
+        if (user) {
+            setUser(prev => prev ? { ...prev, livedCountries: list } : null);
+            try {
+                // @ts-ignore
+                await supabase.from('user_travel_data').update({ lived_countries: list }).eq('user_id', user.id);
+            } catch (e) { console.error(e); }
+        } else {
+            setGuestLived(list);
+        }
+    };
+
     const updateHeldVisas = async (visas: string[]) => {
         if (user) {
             setUser(prev => prev ? { ...prev, heldVisas: visas } : null);
@@ -338,6 +359,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const visitedCities = user ? user.visitedCities : guestCities;
     const heldVisas = user ? user.heldVisas : guestHeld;
     const passportCode = user ? user.passportCode : guestPassport;
+    const livedCountries = user ? user.livedCountries : guestLived;
 
     return (
         <UserContext.Provider value={{
@@ -348,12 +370,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             signup,
             logout,
             updatePassword,
-            updateAvatar, // Added
+            updateAvatar,
             updatePassport,
             updateVisitedCountries,
             updateVisitedCities,
             updateBucketList,
             updateHeldVisas,
+            updateLivedCountries,
             trips,
             addTrip,
             updateTrips,
@@ -362,7 +385,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             visitedCities,
             bucketList,
             heldVisas,
-            passportCode
+            passportCode,
+            livedCountries
         }}>
             {children}
         </UserContext.Provider>

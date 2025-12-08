@@ -1,6 +1,4 @@
-// This tool call is just to verify I need to read types/country.ts first.
-// I will not execute this replace yet.
-// I'll read the file first.
+import { RichCountryInfo } from '@/types/country';
 
 // Helper to define common plug types
 const PLUGS = {
@@ -42,6 +40,8 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         hdi: 0.921,
         gdp: "$26.8 Trillion",
         visitors2025: "79M",
+        gini: 41.4,
+        area: 9833520,
         religionDistribution: [
             { name: "Christianity", percentage: 65 },
             { name: "Unaffiliated", percentage: 28 },
@@ -69,6 +69,8 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         hdi: 0.936,
         gdp: "$2.1 Trillion",
         visitors2025: "22M",
+        gini: 33.3,
+        area: 9984670,
         religionDistribution: [
             { name: "Christianity", percentage: 53 },
             { name: "Unaffiliated", percentage: 34 },
@@ -95,7 +97,9 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         vaccinations: "Hep A, Typhoid",
         hdi: 0.774,
         gdp: "$1.4 Trillion",
-        visitors2025: "38M"
+        visitors2025: "38M",
+        gini: 45.4,
+        area: 1964375,
     },
 
     // --- EUROPE ---
@@ -120,6 +124,8 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         hdi: 0.929,
         gdp: "$3.1 Trillion",
         visitors2025: "37M",
+        gini: 35.1,
+        area: 242495,
         religionDistribution: [
             { name: "Christianity", percentage: 46 },
             { name: "Unaffiliated", percentage: 37 },
@@ -147,6 +153,8 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         hdi: 0.901,
         gdp: "$2.9 Trillion",
         visitors2025: "90M",
+        gini: 32.7,
+        area: 551695,
         religionDistribution: [
             { name: "Christianity", percentage: 50 },
             { name: "Unaffiliated", percentage: 33 },
@@ -175,6 +183,8 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         hdi: 0.947,
         gdp: "$4.3 Trillion",
         visitors2025: "35M",
+        gini: 31.9,
+        area: 357022,
         religionDistribution: [
             { name: "Christianity", percentage: 54 },
             { name: "Unaffiliated", percentage: 40 },
@@ -201,7 +211,9 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         vaccinations: "Routine",
         hdi: 0.892,
         gdp: "$2.1 Trillion",
-        visitors2025: "60M"
+        visitors2025: "60M",
+        gini: 35.9,
+        area: 301340,
     },
     "ES": {
         description: "A passionate nation of fiestas, flamenco, and tapas. Combines Moorish history with modern vibrancy.",
@@ -223,7 +235,9 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         vaccinations: "Routine",
         hdi: 0.904,
         gdp: "$1.5 Trillion",
-        visitors2025: "82M"
+        visitors2025: "82M",
+        gini: 34.7,
+        area: 505990,
     },
     "AL": {
         description: "A hidden gem in the Balkans with pristine beaches along the Albanian Riviera and rugged mountains.",
@@ -288,7 +302,9 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         vaccinations: "Routine",
         hdi: 0.925,
         gdp: "$4.2 Trillion",
-        visitors2025: "25M"
+        visitors2025: "25M",
+        gini: 32.9,
+        area: 377975,
     },
     "CN": {
         description: "One of the world's oldest civilizations, featuring the Great Wall and hyper-modern cities.",
@@ -310,7 +326,9 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         vaccinations: "Hep A, Typhoid",
         hdi: 0.768,
         gdp: "$17.9 Trillion",
-        visitors2025: "60M"
+        visitors2025: "60M",
+        gini: 38.2,
+        area: 9596961,
     },
     "IN": {
         description: "A sensory explosion of colors, spices, and spirituality.",
@@ -332,7 +350,9 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         vaccinations: "Hep A, Typhoid, Malaria",
         hdi: 0.633,
         gdp: "$3.4 Trillion",
-        visitors2025: "15M"
+        visitors2025: "15M",
+        gini: 35.7,
+        area: 3287263,
     },
     "TH": {
         description: "The land of smiles, famous for its tropical beaches and ornate temples.",
@@ -354,7 +374,9 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         vaccinations: "Hep A, Typhoid",
         hdi: 0.777,
         gdp: "$495 Billion",
-        visitors2025: "28M"
+        visitors2025: "28M",
+        gini: 36.4,
+        area: 513120,
     },
     "ID": {
         description: "An archipelago of thousands of islands, with Bali being the crown jewel.",
@@ -375,7 +397,9 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         vaccinations: "Hep A, Typhoid",
         hdi: 0.718,
         gdp: "$1.3 Trillion",
-        visitors2025: "11M"
+        visitors2025: "11M",
+        gini: 38.3,
+        area: 1904569,
     },
 
     // --- OCEANIA ---
@@ -399,7 +423,9 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         vaccinations: "Routine",
         hdi: 0.951,
         gdp: "$1.7 Trillion",
-        visitors2025: "7M"
+        visitors2025: "7M",
+        gini: 34.4,
+        area: 7692024,
     },
 
     // --- LATIN AMERICA ---
@@ -423,7 +449,9 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         vaccinations: "Yellow Fever, Hep A",
         hdi: 0.754,
         gdp: "$1.9 Trillion",
-        visitors2025: "6M"
+        visitors2025: "6M",
+        gini: 53.4,
+        area: 8515767,
     },
 
     // --- MIDDLE EAST ---
@@ -447,6 +475,8 @@ export const RICH_COUNTRIES_DB: Record<string, RichCountryInfo> = {
         hdi: 0.911,
         gdp: "$507 Billion",
         visitors2025: "22M",
+        gini: 26.0,
+        area: 83600,
         religionDistribution: [
             { name: "Islam", percentage: 76 },
             { name: "Christianity", percentage: 9 },

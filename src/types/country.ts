@@ -46,4 +46,6 @@ export interface RichCountryInfo {
     gdp?: string;
     visitors2025?: string;
     religionDistribution?: { name: string; percentage: number }[];
+    gini?: number;
+    area?: number; // sq km
 }

@@ -6,7 +6,7 @@ import { countries } from '@/data/countries';
 import { getVisaRequirementFromMatrix } from '@/data/visaMatrix';
 import { VISA_SUBSTITUTIONS, getVisaPowerGroups } from '@/data/visaSubstitutions';
 import { MapPin, CreditCard, ZoomIn, ZoomOut } from 'lucide-react';
-import worldData from '@/data/world-110m.json';
+import worldData from '@/data/world-50m.json';
 
 // Set Mapbox Token
 mapboxgl.accessToken = 'pk.eyJ1Ijoicm9iZ2FzaGkiLCJhIjoiY21pd2E4cWd4MHN3eDNjc2Izc2xodHdqMSJ9.c-oiis0Y-BfqI6Pr4BENiQ';
@@ -17,6 +17,8 @@ interface GlobeMapProps {
     userPassportCode?: string;
     heldVisas?: string[];
     onCountryClick?: (code: string) => void;
+    livedCountries?: string[];
+    bucketList?: string[];
 }
 
 // Numeric ID to ISO2 mapping (Reused from previous implementation)
@@ -49,10 +51,10 @@ const numericToIso2: Record<string, string> = {
     "690": "SC", "694": "SL", "706": "SO", "710": "ZA", "728": "SS", "729": "SD", "834": "TZ",
     "768": "TG", "788": "TN", "800": "UG", "894": "ZM", "716": "ZW",
     "36": "AU", "242": "FJ", "296": "KI", "584": "MH", "583": "FM", "520": "NR", "554": "NZ",
-    "585": "PW", "598": "PG", "882": "WS", "90": "SB", "776": "TO", "798": "TV", "548": "VU",
+    "585": "PW", "598": "PG", "882": "WS", "90": "SB", "776": "TO", "798": "TV", "548": "VU", "304": "GL",
 };
 
-const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas = [], onCountryClick }: GlobeMapProps) => {
+const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas = [], onCountryClick, livedCountries = [], bucketList = [] }: GlobeMapProps) => {
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<mapboxgl.Map | null>(null);
     const [viewMode, setViewMode] = useState<'visited' | 'visa'>('visited');
@@ -68,8 +70,15 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
         if (!iso2) return "rgba(60, 60, 60, 0.3)";
 
         if (viewMode === 'visited') {
+            // Priority: Lived > Visited > Bucket
+            if (livedCountries && livedCountries.includes(iso2)) {
+                return "#3b82f6"; // Blue for Lived
+            }
+            if (bucketList && bucketList.includes(iso2)) {
+                return "#f97316"; // Orange for Bucket List
+            }
             if (visitedCountries.includes(iso2)) {
-                return "#ffffff"; // White for visited
+                return "#ffffff"; // White for Visited
             }
             return "#4a4a4a"; // Dark Gray for unvisited
         }
@@ -160,27 +169,6 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
                 const kosovoColor = getCountryColor('XK');
                 mapInstance.setPaintProperty('kosovo-fill', 'circle-color', kosovoColor);
             }
-
-            // Update Highlight Layer Filter
-            // We need to know which country is "clicked" or active.
-            // The prompt says: "when user clicks a country highlight borders of that country".
-            // We can infer the "active" country might be passed via props or just local state if we want transient highlight.
-            // However, `onCountryClick` usually opens a modal.
-            // Let's assume we want to highlight the `userPassportCode` if viewMode is visa?
-            // Or maybe we need a new state `selectedCountry`?
-            // The user prompt implies interaction. Since `onCountryClick` navigates away, maybe we just highlight on hover?
-            // "when user clicks a country highlight borders...".
-            // If the modal opens on top, the map might still be visible.
-            // Let's add a filter for `hoveredCountry` (from previous logic? Wait, 2D map had hoveredCountry).
-            // Let's assume we use the hovered state or a transient clicked state.
-            // But wait, the 3D globe doesn't have a `selectedCountry` prop.
-            // I'll add a 'highlight-border' layer that is always there but transparent, 
-            // and I will add logic to set a filter on it ?
-            // Actually, best way is to set filter to ['==', 'iso2', ''] until clicked.
-            // But we don't store selected country here.
-            // I will use `hoveredCountry` if I re-introduce it, or just rely on existing props?
-            // User: "when user clicks... highlight borders".
-            // I will implement a local `selectedIso` state that updates on click.
         };
 
         if (mapInstance.isStyleLoaded()) {
@@ -189,7 +177,7 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
             mapInstance.once('render', updatePaint);
         }
 
-    }, [visitedCountries, viewMode, userPassportCode, heldVisas]);
+    }, [visitedCountries, viewMode, userPassportCode, heldVisas, livedCountries, bucketList]);
 
     // Initialize Map
     useEffect(() => {
@@ -212,9 +200,10 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
             mapInstance.setFog({
                 'color': 'rgb(0, 0, 0)',
                 'high-color': 'rgb(0, 0, 0)',
-                'horizon-blend': 0.0,
+                'horizon-blend': 0.05,
                 'space-color': 'rgb(0, 0, 0)',
-                'star-intensity': 0.0
+                'star-intensity': 0.0,
+                'range': [0.1, 10] // Adjusted for cleaner globe presentation
             });
         });
 
@@ -297,9 +286,19 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
                 }
             });
 
-            // Click Interaction
-            mapInstance.on('click', 'countries-fill', (e) => {
-                const feature = e.features?.[0];
+            // Click Interaction (Optimized with Bounding Box)
+            mapInstance.on('click', (e) => {
+                const bbox: [mapboxgl.PointLike, mapboxgl.PointLike] = [
+                    [e.point.x - 5, e.point.y - 5],
+                    [e.point.x + 5, e.point.y + 5]
+                ];
+
+                const features = mapInstance.queryRenderedFeatures(bbox, {
+                    layers: ['countries-fill']
+                });
+
+                const feature = features[0];
+
                 if (feature && feature.properties?.iso2) {
                     const iso2 = feature.properties.iso2;
 

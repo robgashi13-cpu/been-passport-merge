@@ -6,7 +6,7 @@
 /* iOS Safe Area Fixes & Native Feel */
 body {
   padding-bottom: env(safe-area-inset-bottom);
-  background-color: black;
+  background-color: hsl(var(--background));
   /* Prevent white bar at bottom */
   -webkit-tap-highlight-color: transparent;
   /* Remove tap highlight */
@@ -78,69 +78,98 @@ a {
 
 @layer base {
   :root {
-    /* Pure black & white foundation with gold accents - GLASS MODE */
+    /* LIGHT MODE DEFAULTS */
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
+    --radius: 1rem;
+
+    /* Custom Tokens - Light */
+    --gold: 45 90% 45%;
+    --glass-border: rgba(0, 0, 0, 0.1);
+    --glass-bg: rgba(255, 255, 255, 0.8);
+    --glass-bg-hover: rgba(240, 240, 240, 0.8);
+
+    --gradient-dark: radial-gradient(circle at 50% 0%, #ffffff 0%, #e2e8f0 100%);
+    /* Adjusted for light */
+    --gradient-card: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+    --gradient-glow: radial-gradient(circle at center, rgba(56, 189, 248, 0.2), transparent 70%);
+    --gradient-white: linear-gradient(180deg, #334155 0%, #0f172a 100%);
+    /* Dark text gradient for light mode */
+    --gradient-gold: linear-gradient(135deg, #D4AF37 0%, #F4D03F 50%, #AA8C2C 100%);
+
+    --shadow-white: 0 4px 20px -2px rgba(0, 0, 0, 0.1);
+    --shadow-glow: 0 0 20px rgba(0, 0, 0, 0.05);
+
+    --bg-image: radial-gradient(circle at 50% -20%, #eff6ff 0%, #ffffff 60%);
+
+    --font-display: 'Outfit', sans-serif;
+    --font-body: 'Outfit', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  .dark {
+    /* DARK MODE ITEMS */
     --background: 240 10% 4%;
-    /* Dark Blue-Black base */
     --foreground: 0 0% 98%;
-
     --card: 240 10% 6%;
-    /* Slightly lighter */
     --card-foreground: 0 0% 98%;
-
     --popover: 240 10% 5%;
     --popover-foreground: 0 0% 98%;
-
     --primary: 0 0% 98%;
     --primary-foreground: 240 10% 4%;
-
     --secondary: 240 10% 12%;
     --secondary-foreground: 0 0% 98%;
-
     --muted: 240 10% 15%;
     --muted-foreground: 240 5% 65%;
-
     --accent: 45 85% 55%;
     --accent-foreground: 240 10% 4%;
-
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-
     --border: 0 0% 100%;
-    /* Will be used with opacity */
     --input: 240 10% 15%;
     --ring: 45 85% 55%;
 
-    --radius: 1rem;
-
-    /* Custom premium tokens */
     --gold: 45 85% 55%;
     --glass-border: rgba(255, 255, 255, 0.08);
     --glass-bg: rgba(20, 20, 25, 0.7);
     --glass-bg-hover: rgba(40, 40, 50, 0.7);
 
-    /* Modern Gradients */
     --gradient-dark: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #000000 100%);
     --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
     --gradient-glow: radial-gradient(circle at center, rgba(56, 189, 248, 0.15), transparent 70%);
     --gradient-white: linear-gradient(180deg, #FFFFFF 0%, #E2E8F0 100%);
     --gradient-gold: linear-gradient(135deg, #D4AF37 0%, #F4D03F 50%, #AA8C2C 100%);
 
-    /* Shadows */
     --shadow-white: 0 4px 20px -2px rgba(255, 255, 255, 0.1);
     --shadow-glow: 0 0 20px rgba(255, 255, 255, 0.15);
 
-    /* Premium Fantasies */
-    --font-display: 'Outfit', sans-serif;
-    --font-body: 'Outfit', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --bg-image: radial-gradient(circle at 50% -20%, #111122 0%, #000000 60%);
   }
 }
 
 @layer base {
   body {
-    @apply bg-black text-foreground font-body antialiased;
-    background-image: radial-gradient(circle at 50% -20%, #111122 0%, #000000 60%);
+    @apply bg-background text-foreground font-body antialiased;
+    background-image: var(--bg-image);
     background-attachment: fixed;
+    transition: background-image 0.5s ease-in-out, background-color 0.5s ease-in-out;
   }
 }
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Header from '@/components/Header';
 import Dashboard from '@/components/Dashboard';
+import { WidgetMapGenerator } from '@/components/WidgetMapGenerator';
 import WorldMap from '@/components/WorldMap';
 import CountryList from '@/components/CountryList';
 import PassportPower from '@/components/PassportPower';
@@ -38,7 +39,7 @@ const Index = () => {
   const [isSheetOpen, setSheetOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
-  const { user, isLoggedIn, updateHeldVisas, trips, updateTrips } = useUser();
+  const { user, isLoggedIn, updateHeldVisas, trips, updateTrips, livedCountries } = useUser();
 
   const {
     visitedCountries,
@@ -299,6 +300,7 @@ const Index = () => {
                 <TabsContent value="calendar" className="mt-0">
                   <TravelCalendar
                     trips={trips}
+                    onClearAll={() => updateTrips([])}
                     onDateClick={(date) => {
                       setSelectedDate(date);
                       setShowAddTripModal(true);
@@ -352,6 +354,14 @@ const Index = () => {
           achievement={newAchievement}
           onClose={clearAchievement}
           duration={duration}
+        />
+
+        {/* Hidden Widget Generator */}
+        <WidgetMapGenerator
+          visitedCountries={visitedCountries}
+          livedCountries={livedCountries}
+          bucketList={bucketList || []}
+          onSnapshotReady={handleWidgetSnapshot}
         />
       </div >
     </div >

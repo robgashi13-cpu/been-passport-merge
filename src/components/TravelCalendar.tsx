@@ -6,9 +6,10 @@ import { ChevronLeft, ChevronRight, MapPin, Plane, Calendar, Clock } from 'lucid
 interface TravelCalendarProps {
     trips: TripEntry[];
     onDateClick?: (date: Date) => void;
+    onClearAll?: () => void;
 }
 
-export const TravelCalendar = ({ trips, onDateClick }: TravelCalendarProps) => {
+export const TravelCalendar = ({ trips, onDateClick, onClearAll }: TravelCalendarProps) => {
     const [currentDate, setCurrentDate] = useState(new Date());
 
     const currentYear = currentDate.getFullYear();
@@ -75,9 +76,23 @@ export const TravelCalendar = ({ trips, onDateClick }: TravelCalendarProps) => {
                 <h2 className="font-display text-2xl font-bold mb-1 animate-slide-up">
                     Travel <span className="text-gradient-white">Calendar</span>
                 </h2>
-                <p className="text-xs text-muted-foreground animate-slide-up" style={{ animationDelay: "0.1s" }}>
-                    Your travel timeline
-                </p>
+                <div className="flex items-center justify-center gap-2 animate-slide-up" style={{ animationDelay: "0.1s" }}>
+                    <p className="text-xs text-muted-foreground">
+                        Your travel timeline
+                    </p>
+                    {trips.length > 0 && (
+                        <button
+                            onClick={() => {
+                                if (window.confirm('Are you sure you want to clear all trips? This cannot be undone.')) {
+                                    onClearAll?.();
+                                }
+                            }}
+                            className="text-[10px] text-red-400 hover:text-red-300 underline"
+                        >
+                            Clear All
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Currently Traveling Banner - Compact */}
