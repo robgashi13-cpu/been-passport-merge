@@ -42,9 +42,15 @@ export const calculateDays = (startOrTrip: Date | TripEntry, end?: Date): number
     s.setHours(0, 0, 0, 0);
     e.setHours(0, 0, 0, 0);
 
+    // Calculate difference in milliseconds
     const diffTime = e.getTime() - s.getTime();
-    const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
-    return days;
+
+    // If same day, return 1
+    if (diffTime === 0) return 1;
+
+    // Otherwise, calculate days and add 1 to include both start and end
+    const diffDays = Math.abs(diffTime) / (1000 * 60 * 60 * 24);
+    return Math.floor(diffDays) + 1;
 };
 
 // Calculate total days from multiple trips

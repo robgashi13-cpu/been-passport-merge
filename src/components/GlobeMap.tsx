@@ -60,6 +60,18 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
     const [viewMode, setViewMode] = useState<'visited' | 'visa'>('visited');
     const [showHint, setShowHint] = useState(true);
 
+    // Cache map data in localStorage for instant rendering
+    useEffect(() => {
+        const cacheKey = 'globeMapCache';
+        const cache = {
+            visitedCountries,
+            livedCountries,
+            bucketList,
+            timestamp: Date.now()
+        };
+        localStorage.setItem(cacheKey, JSON.stringify(cache));
+    }, [visitedCountries, livedCountries, bucketList]);
+
     useEffect(() => {
         const timer = setTimeout(() => setShowHint(false), 2500); // 1.5s visible + 1s fade start
         return () => clearTimeout(timer);
