@@ -272,7 +272,7 @@ export const CountryDetails = ({
             <div className="flex-1 overflow-y-auto no-scrollbar bg-black/20">
                 <div className="px-4 md:px-10 pb-10">
                     <Tabs defaultValue="overview" className="w-full space-y-6">
-                        <div className="sticky top-0 z-40 bg-black/80 pt-4 pb-4 -mx-4 px-8 backdrop-blur-xl border-b border-white/5 flex gap-2 overflow-x-auto no-scrollbar snap-x">
+                        <TabsList className="sticky top-0 z-40 bg-black/80 pt-4 pb-4 -mx-4 px-8 backdrop-blur-xl border-b border-white/5 flex gap-2 overflow-x-auto no-scrollbar snap-x h-auto w-[calc(100%+2rem)] justify-start rounded-none">
                             {['overview', 'cities', 'visa', 'transport', 'weather', 'details'].map((tab) => (
                                 <TabsTrigger
                                     key={tab}
@@ -282,7 +282,7 @@ export const CountryDetails = ({
                                     {tab}
                                 </TabsTrigger>
                             ))}
-                        </div>
+                        </TabsList>
 
                         {/* OVERVIEW TAB */}
                         <TabsContent value="overview" className="space-y-6 mt-0 animate-in slide-in-from-bottom-5 duration-500">
