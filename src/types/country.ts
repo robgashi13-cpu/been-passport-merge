@@ -14,6 +14,7 @@ export interface CountryExtendedData {
     region?: string;
     subregion?: string;
     continents?: string[];
+    area?: number;
 }
 
 export interface RichCountryInfo {

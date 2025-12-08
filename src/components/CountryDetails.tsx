@@ -4,7 +4,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useEffect, useState, useMemo } from 'react';
 import { Country, getCountryByCode, countries } from '@/data/countries';
 import { getVisaRequirementFromMatrix, getVisaRequirementColor, getVisaRequirementLabel } from '@/data/visaMatrix';
-import { X, Globe, Users, MapPin, Plane, CreditCard, Check, AlertCircle, Phone, Plug, AlertTriangle, Calendar as CalendarIcon, Tag, Heart, DollarSign, CloudSun, Sparkles, Car, Droplet, Syringe, Beer, TrendingUp, Briefcase, Activity, Building, Search, ArrowRight, Home, Bookmark, ShieldAlert, Cloud, Info } from 'lucide-react';
+import { X, Globe, Users, MapPin, Plane, CreditCard, Check, AlertCircle, Phone, Plug, AlertTriangle, Calendar as CalendarIcon, Tag, Heart, DollarSign, CloudSun, Sparkles, Car, Droplet, Syringe, Beer, TrendingUp, Briefcase, Activity, Building, Search, ArrowRight, Home, Bookmark, ShieldAlert, Cloud, Info, ChevronRight } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface CountryDetailsProps {
@@ -186,201 +186,156 @@ export const CountryDetails = ({
         return cities.filter(c => c.toLowerCase().includes(citySearch.toLowerCase()));
     }, [cities, citySearch]);
 
-    const content = (
-        <div className={`bg-background/95 backdrop-blur-2xl border border-border/50 w-full animate-scale-in flex flex-col relative overflow-hidden ${isModal ? 'rounded-2xl max-w-2xl max-h-[90vh]' : 'h-full bg-transparent border-none animate-none'}`}>
+    return (
+        <div className={`bg-black/95 backdrop-blur-3xl w-full h-full animate-in fade-in zoom-in-95 duration-300 flex flex-col relative overflow-hidden ${isModal ? 'rounded-3xl max-w-4xl max-h-[92vh] border border-white/10 shadow-2xl shadow-black/50' : 'h-full bg-transparent border-none animate-none'}`}>
 
-            {/* Modal Close Button (Fixed Overlay) */}
+            {/* Modal Close Button (Floating) */}
             {isModal && (
                 <button
                     onClick={onClose}
                     aria-label="Close country details"
-                    className="absolute top-4 right-4 z-50 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors backdrop-blur-sm focus-visible:ring-2 focus-visible:ring-blue-400 border border-white/10 text-white/70"
+                    className="absolute top-5 right-5 z-50 p-2.5 bg-black/40 hover:bg-black/60 rounded-full transition-all backdrop-blur-md border border-white/10 text-white/80 hover:text-white hover:rotate-90 duration-300"
                 >
                     <X className="w-5 h-5" />
                 </button>
             )}
 
-            {/* Scrollable Area containing Header & Tabs */}
-            <div className="flex-1 overflow-y-auto no-scrollbar">
+            {/* Premium Header with Dynamic Gradient Mesh */}
+            <div className="relative pt-10 pb-8 px-6 md:px-10 overflow-hidden shrink-0">
+                {/* Dynamic Background */}
+                <div className="absolute inset-0 z-0">
+                    <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/20 blur-[120px] rounded-full mix-blend-screen" />
+                    <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-purple-500/10 blur-[100px] rounded-full mix-blend-screen" />
+                </div>
 
-                {/* Header (Scrolls away) */}
-                <div className="p-5 pb-2 pt-6">
-                    <div className="flex items-center justify-between">
+                <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div className="flex flex-col gap-4">
                         <div className="flex items-center gap-4">
-                            <span className="text-5xl drop-shadow-2xl">{country.flagEmoji}</span>
-                            <div>
-                                <h2 className="font-display text-2xl font-bold tracking-tight text-foreground leading-tight">{country.name}</h2>
-                                <p className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{country.continent} • {country.code}</p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 pr-10">
-                            {/* NEW: Regions Visited Pill (Visible without scrolling tabs) */}
-                            {cities.length > 0 && (
-                                <div className="hidden min-[400px]:flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/50 border border-border/50 backdrop-blur-md self-center">
-                                    <MapPin className={`w-3.5 h-3.5 ${visitedCountInCountry > 0 ? 'text-green-500' : 'text-muted-foreground'}`} />
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="text-xs text-muted-foreground/80">Regions</span>
-                                        <span className="text-sm font-bold text-foreground font-numbers">{visitedCountInCountry}</span>
-                                        <span className="text-xs text-muted-foreground/60">/ {cities.length}</span>
-                                    </div>
+                            <span className="text-7xl md:text-8xl drop-shadow-2xl hover:scale-105 transition-transform cursor-default select-none">
+                                {country.flagEmoji}
+                            </span>
+                            <div className="flex flex-col justify-center">
+                                <h2 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-white leading-none mb-2">
+                                    {country.name}
+                                </h2>
+                                <div className="flex items-center gap-3">
+                                    <span className="px-3 py-1 rounded-full bg-white/10 border border-white/10 text-xs font-bold uppercase tracking-wider text-white/80 backdrop-blur-sm">
+                                        {country.continent}
+                                    </span>
+                                    <span className="text-white/40 text-xs font-mono">{country.code}</span>
                                 </div>
-                            )}
-
-                            <div className="flex items-center gap-2">
-                                {/* Lived Toggle */}
-                                <button
-                                    onClick={() => updateLivedCountries(livedCountries.includes(country.code) ? livedCountries.filter(c => c !== country.code) : [...livedCountries, country.code])}
-                                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-all border group relative
-                                    ${livedCountries.includes(country.code)
-                                            ? 'bg-blue-500/20 text-blue-500 border-blue-500/30'
-                                            : 'bg-secondary/50 text-muted-foreground/50 hover:bg-secondary border-border/20 hover:border-border/50'
-                                        }`}
-                                    title="Mark as Lived"
-                                >
-                                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-popover border border-border px-2 py-1 rounded text-[10px] text-popover-foreground opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                                        Lived
-                                    </div>
-                                    <Home className="w-5 h-5" />
-                                </button>
-
-                                {/* Bucket List Toggle */}
-                                <button
-                                    onClick={() => updateBucketList(bucketList.includes(country.code) ? bucketList.filter(c => c !== country.code) : [...bucketList, country.code])}
-                                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-all border group relative
-                                    ${bucketList.includes(country.code)
-                                            ? 'bg-orange-500/20 text-orange-500 border-orange-500/30'
-                                            : 'bg-secondary/50 text-muted-foreground/50 hover:bg-secondary border-border/20 hover:border-border/50'
-                                        }`}
-                                    title="Bucket List"
-                                >
-                                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-popover border border-border px-2 py-1 rounded text-[10px] text-popover-foreground opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                                        Bucket List
-                                    </div>
-                                    <Bookmark className="w-5 h-5" />
-                                </button>
-
-                                {/* Visited Toggle */}
-                                <button
-                                    onClick={onToggleVisited}
-                                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-all border group relative
-                                    ${isVisited
-                                            ? 'bg-green-500/20 text-green-500 border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.2)]'
-                                            : 'bg-secondary/50 text-muted-foreground hover:bg-secondary border-border/20 hover:border-border/50'
-                                        }`}
-                                    title="Mark as Visited"
-                                >
-                                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-popover border border-border px-2 py-1 rounded text-[10px] text-popover-foreground opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                                        Visited
-                                    </div>
-                                    {isVisited ? <Check className="w-5 h-5" /> : <Plane className="w-5 h-5" />}
-                                </button>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div className="p-4 pt-2">
-                    <Tabs defaultValue="overview" className="w-full space-y-4">
-                        <div className="sticky top-0 z-40 bg-gradient-to-b from-black/95 via-black/90 to-transparent pt-3 pb-4 -mx-4 px-4 backdrop-blur-2xl border-b border-white/5">
-                            <TabsList className="flex w-full gap-1 p-1 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 rounded-2xl border border-blue-500/20 shadow-lg shadow-blue-500/5 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory">
-                                <TabsTrigger value="overview" className="flex-shrink-0 snap-start rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 text-white/60 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-blue-400">Overview</TabsTrigger>
-                                <TabsTrigger value="cities" className="flex-shrink-0 snap-start rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 text-white/60 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-blue-400">Cities</TabsTrigger>
-                                <TabsTrigger value="visa" className="flex-shrink-0 snap-start rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 text-white/60 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-blue-400">Visa</TabsTrigger>
-                                <TabsTrigger value="transport" className="flex-shrink-0 snap-start rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 text-white/60 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-blue-400">Transit</TabsTrigger>
-                                <TabsTrigger value="weather" className="flex-shrink-0 snap-start rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 text-white/60 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-blue-400">Weather</TabsTrigger>
-                                <TabsTrigger value="details" className="flex-shrink-0 snap-start rounded-xl px-3 py-2.5 text-[11px] font-bold uppercase tracking-wider transition-all data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/50 text-white/60 hover:text-white/80 focus-visible:ring-2 focus-visible:ring-blue-400">Details</TabsTrigger>
-                            </TabsList>
+                    {/* Action Bar */}
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => updateLivedCountries(livedCountries.includes(country.code) ? livedCountries.filter(c => c !== country.code) : [...livedCountries, country.code])}
+                            className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition-all border font-medium text-sm
+                            ${livedCountries.includes(country.code)
+                                    ? 'bg-blue-500 text-white border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.5)]'
+                                    : 'bg-white/5 text-white/60 hover:bg-white/10 border-white/10 hover:border-white/20 hover:text-white'
+                                }`}
+                        >
+                            <Home className="w-4 h-4" />
+                            {livedCountries.includes(country.code) ? 'Lived' : 'Lived'}
+                        </button>
+
+                        <button
+                            onClick={onToggleVisited}
+                            className={`flex items-center gap-2 px-6 py-2.5 rounded-full transition-all border font-bold text-sm
+                            ${isVisited
+                                    ? 'bg-emerald-500 text-white border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.5)]'
+                                    : 'bg-white/5 text-white/60 hover:bg-white/10 border-white/10 hover:border-white/20 hover:text-white'
+                                }`}
+                        >
+                            {isVisited ? <Check className="w-4 h-4" /> : <Plane className="w-4 h-4" />}
+                            {isVisited ? 'Visited' : 'Mark Visited'}
+                        </button>
+
+                        <button
+                            onClick={() => updateBucketList(bucketList.includes(country.code) ? bucketList.filter(c => c !== country.code) : [...bucketList, country.code])}
+                            className={`flex items-center justify-center w-10 h-10 rounded-full transition-all border
+                            ${bucketList.includes(country.code)
+                                    ? 'bg-orange-500 text-white border-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.5)]'
+                                    : 'bg-white/5 text-white/60 hover:bg-white/10 border-white/10 hover:border-white/20 hover:text-white'
+                                }`}
+                        >
+                            <Bookmark className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto no-scrollbar bg-black/20">
+                <div className="px-4 md:px-10 pb-10">
+                    <Tabs defaultValue="overview" className="w-full space-y-6">
+                        <div className="sticky top-0 z-40 bg-black/80 pt-4 pb-4 -mx-4 px-8 backdrop-blur-xl border-b border-white/5 flex gap-2 overflow-x-auto no-scrollbar snap-x">
+                            {['overview', 'cities', 'visa', 'transport', 'weather', 'details'].map((tab) => (
+                                <TabsTrigger
+                                    key={tab}
+                                    value={tab}
+                                    className="snap-start rounded-full px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all data-[state=active]:bg-white data-[state=active]:text-black data-[state=active]:shadow-lg text-white/50 hover:text-white border border-transparent data-[state=active]:scale-105"
+                                >
+                                    {tab}
+                                </TabsTrigger>
+                            ))}
                         </div>
 
-                        {/* OVERVIEW TAB - Modern Bento Grid */}
-                        <TabsContent value="overview" className="space-y-4 mt-0 animate-slide-up">
-                            {/* Summary Card with AI Badge */}
-                            {/* Summary Card with AI Badge */}
-                            <div className="relative bg-gradient-card rounded-3xl p-5 border border-border/50 overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-4 opacity-50">
-                                    <Sparkles className="w-24 h-24 text-white/5 -rotate-12" />
-                                </div>
-
-                                <div className="flex items-center gap-2 mb-3">
-                                    <div className="bg-gradient-to-r from-purple-500 to-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-lg shadow-purple-500/20">
-                                        <Sparkles className="w-3 h-3" /> AI Summary
+                        {/* OVERVIEW TAB */}
+                        <TabsContent value="overview" className="space-y-6 mt-0 animate-in slide-in-from-bottom-5 duration-500">
+                            {/* Hero Summary */}
+                            <div className="relative bg-gradient-to-br from-white/10 to-white/5 rounded-3xl p-6 border border-white/10 overflow-hidden">
+                                <Sparkles className="absolute top-4 right-4 w-6 h-6 text-yellow-400/50" />
+                                <div className="flex items-center gap-2 mb-4">
+                                    <div className="px-2 py-0.5 rounded-md bg-gradient-to-r from-purple-500 to-indigo-500 text-[10px] font-bold text-white uppercase tracking-wider">
+                                        AI Insight
                                     </div>
                                 </div>
-
-                                <div className="relative z-10">
-                                    <p className={`text-foreground/80 leading-relaxed font-light text-sm transition-all overflow-hidden ${isDescExpanded ? 'max-h-full' : 'max-h-[4.5em] line-clamp-3'}`}>
-                                        {wikiSummary?.extract || richData?.description || "Loading detailed information..."}
-                                    </p>
-                                    {(wikiSummary?.extract || richData?.description) && (
-                                        <button
-                                            onClick={() => setDescExpanded(!isDescExpanded)}
-                                            className="text-[10px] font-bold uppercase tracking-wider text-blue-400 mt-2 hover:text-blue-300 flex items-center gap-1"
-                                        >
-                                            {isDescExpanded ? 'Show Less' : 'Read More'}
-                                        </button>
-                                    )}
-                                </div>
+                                <p className="text-white/80 leading-relaxed font-light text-base md:text-lg">
+                                    {isDescExpanded ? (wikiSummary?.extract || richData?.description) : (wikiSummary?.extract || richData?.description)?.slice(0, 200) + "..."}
+                                </p>
+                                <button
+                                    onClick={() => setDescExpanded(!isDescExpanded)}
+                                    className="text-xs font-bold text-blue-400 mt-3 hover:text-blue-300 flex items-center gap-1 uppercase tracking-wider"
+                                >
+                                    {isDescExpanded ? 'Read Less' : 'Read More'} <ChevronRight className="w-3 h-3" />
+                                </button>
                             </div>
 
-                            {/* Stats Grid */}
+                            {/* Key Stats Bento Grid */}
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div className="bg-secondary/50 rounded-2xl p-5 border border-border/50 hover:border-border transition-colors">
-                                    <div className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-2 flex items-center gap-1.5"><Users className="w-3 h-3" /> Population</div>
-                                    <div className="font-numbers text-xl md:text-2xl text-foreground font-medium">
-                                        {extendedData?.population ? (extendedData.population / 1000000).toFixed(1) + 'M' : '-'}
-                                    </div>
-                                </div>
-                                <div className="bg-secondary/50 rounded-2xl p-5 border border-border/50 hover:border-border transition-colors">
-                                    <div className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-2 flex items-center gap-1.5"><MapPin className="w-3 h-3" /> Capital</div>
-                                    <div className="font-display text-lg text-foreground font-medium truncate">
-                                        {extendedData?.capital?.[0] || 'N/A'}
-                                    </div>
-                                </div>
-                                <div className="bg-secondary/50 rounded-2xl p-5 border border-border/50 hover:border-border transition-colors">
-                                    <div className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-2 flex items-center gap-1.5"><Globe className="w-3 h-3" /> Language</div>
-                                    <div className="font-display text-lg text-foreground font-medium truncate">
-                                        {extendedData?.languages ? Object.values(extendedData.languages)[0] : 'N/A'}
-                                    </div>
-                                </div>
-                                <div className="bg-secondary/50 rounded-2xl p-5 border border-border/50 hover:border-border transition-colors">
-                                    <div className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider mb-2 flex items-center gap-1.5"><Heart className="w-3 h-3" /> Religion</div>
-                                    <div className="font-display text-lg text-foreground font-medium truncate">
-                                        {richData?.majorReligion || 'N/A'}
-                                    </div>
-                                </div>
+                                <StatCard icon={<Users />} label="Population" value={extendedData?.population ? (extendedData.population / 1000000).toFixed(1) + 'M' : 'N/A'} />
+                                <StatCard icon={<MapPin />} label="Capital" value={extendedData?.capital?.[0] || 'N/A'} />
+                                <StatCard icon={<Globe />} label="Language" value={extendedData?.languages ? Object.values(extendedData.languages)[0] : 'N/A'} />
+                                <StatCard icon={<Heart />} label="Vibe" value={richData?.majorReligion || 'Diverse'} />
                             </div>
 
                             {/* Tags */}
                             {richData?.knownFor && (
                                 <div className="flex flex-wrap gap-2">
                                     {richData.knownFor.map((tag, i) => (
-                                        <span key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/50 border border-border/50 text-xs font-medium text-foreground/70 hover:bg-secondary/70 transition-colors cursor-default">
-                                            <Tag className="w-3 h-3 opacity-50" />
-                                            {tag}
+                                        <span key={i} className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-white/70 hover:bg-white/10 transition-colors cursor-default">
+                                            #{tag}
                                         </span>
                                     ))}
                                 </div>
                             )}
 
-                            {/* Holidays */}
-                            <div className="bg-secondary/30 rounded-3xl p-6 border border-border/50">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className="font-display font-bold text-lg flex items-center gap-2"><CalendarIcon className="w-4 h-4 text-muted-foreground" /> Public Holidays</h3>
-                                    <a
-                                        href={`https://www.google.com/search?q=public+holidays+in+${country.name}+2025`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-[10px] font-bold text-muted-foreground hover:text-foreground transition-colors bg-secondary/50 px-3 py-1.5 rounded-full flex items-center gap-1 uppercase tracking-wider"
-                                    >
-                                        Search Google ↗
-                                    </a>
+                            {/* Holidays Section */}
+                            <div className="bg-white/5 rounded-3xl p-6 border border-white/10 hover:border-white/20 transition-colors">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="font-display font-bold text-xl text-white flex items-center gap-2">
+                                        <CalendarIcon className="w-5 h-5 text-white/50" /> Public Holidays
+                                    </h3>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     {richData?.publicHolidays.slice(0, 4).map((h, i) => (
-                                        <div key={i} className="flex justify-between items-center bg-secondary/20 p-3 rounded-xl border border-border/20">
-                                            <span className="font-medium text-sm text-foreground/90">{h.name}</span>
-                                            <span className="font-numbers text-xs text-muted-foreground bg-secondary/30 px-2 py-1 rounded-md">{h.date}</span>
+                                        <div key={i} className="flex justify-between items-center bg-black/20 p-4 rounded-2xl border border-white/5">
+                                            <span className="font-medium text-sm text-white/90">{h.name}</span>
+                                            <span className="font-mono text-xs text-white/50 bg-white/5 px-2 py-1 rounded-md border border-white/5">{h.date}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -388,407 +343,194 @@ export const CountryDetails = ({
                         </TabsContent>
 
                         {/* CITIES TAB */}
-                        <TabsContent value="cities" className="space-y-4 mt-2 animate-slide-up">
-                            <div className="bg-secondary/30 rounded-3xl p-5 border border-border/50 min-h-[300px]">
-                                <div className="flex justify-between items-end mb-4">
+                        <TabsContent value="cities" className="space-y-6 mt-0 animate-in slide-in-from-bottom-5 duration-500">
+                            <div className="bg-gradient-to-br from-emerald-500/10 to-blue-500/10 rounded-3xl p-8 border border-emerald-500/20 relative overflow-hidden">
+                                <div className="flex flex-col md:flex-row justify-between items-end gap-6 relative z-10">
                                     <div>
-                                        <h3 className="font-display font-bold text-lg flex items-center gap-2"><Building className="w-5 h-5 text-muted-foreground" /> Cities</h3>
-                                        <p className="text-xs text-muted-foreground mt-1">Tap to mark as visited</p>
+                                        <h3 className="text-2xl font-bold text-white mb-2">Exploration Status</h3>
+                                        <div className="flex items-center gap-2 text-white/60 text-sm">
+                                            <span>{visitedCountInCountry} regions visited</span>
+                                            <span className="w-1 h-1 bg-white/40 rounded-full"></span>
+                                            <span>{Math.round(progressPercentage)}% complete</span>
+                                        </div>
                                     </div>
-                                    <div className="text-right flex flex-col items-end">
-                                        <div className="font-numbers text-2xl font-bold text-foreground">
-                                            {visitedCountInCountry} <span className="text-muted-foreground text-lg">/ {cities.length}</span>
+                                    <div className="w-full md:w-64">
+                                        <div className="h-2 w-full bg-black/20 rounded-full overflow-hidden">
+                                            <div className="h-full bg-emerald-500 transition-all duration-1000 ease-out" style={{ width: `${progressPercentage}%` }} />
                                         </div>
-                                        <div className="w-24 h-1 bg-secondary/50 rounded-full mt-2 overflow-hidden mb-2">
-                                            <div
-                                                className="h-full bg-green-400 transition-all duration-500 ease-out"
-                                                style={{ width: `${progressPercentage}%` }}
-                                            />
-                                        </div>
-
-                                        {/* View Mode Toggle */}
-                                        {regions.length > 0 && (
-                                            <div className="flex bg-muted p-1 rounded-lg border border-border/20">
-                                                <button
-                                                    onClick={() => setViewMode('all')}
-                                                    className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${viewMode === 'all' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-                                                >
-                                                    All
-                                                </button>
-                                                <button
-                                                    onClick={() => setViewMode('regions')}
-                                                    className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${viewMode === 'regions' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-                                                >
-                                                    Regions
-                                                </button>
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
+                            </div>
 
-                                {viewMode === 'all' ? (
-                                    <>
-                                        {/* Search */}
-                                        <div className="relative mb-4">
-                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
-                                            <input
-                                                type="text"
-                                                placeholder="Search cities..."
-                                                value={citySearch}
-                                                onChange={(e) => setCitySearch(e.target.value)}
-                                                className="w-full bg-black/20 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/30 transition-colors"
-                                            />
-                                        </div>
-
-                                        {isLoadingCities ? (
-                                            <div className="flex flex-col items-center justify-center py-10 opacity-50">
-                                                <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin mb-2" />
-                                                <span className="text-xs text-white/50">Loading cities...</span>
-                                            </div>
-                                        ) : cities.length > 0 ? (
-                                            <>
-                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-[400px] overflow-y-auto custom-scrollbar pr-1 content-start">
-                                                    {filteredCities.slice(0, visibleCitiesCount).map((city, i) => {
-                                                        const visited = isCityVisited(city);
-                                                        return (
-                                                            <button
-                                                                key={i}
-                                                                onClick={() => toggleCity(city)}
-                                                                className={`flex items-center gap-2 p-3 rounded-xl transition-all border group text-left relative overflow-hidden
-                                                                    ${visited
-                                                                        ? 'bg-green-500/10 border-green-500/30 hover:bg-green-500/20'
-                                                                        : 'bg-secondary/50 border-border/20 hover:bg-secondary hover:border-border/50'
-                                                                    }
-                                                                `}
-                                                            >
-                                                                <div className={`w-4 h-4 rounded-full flex items-center justify-center border transition-colors flex-shrink-0
-                                                                    ${visited ? 'bg-green-500 border-green-500' : 'border-white/20 group-hover:border-white/40'}
-                                                                `}>
-                                                                    {visited && <Check className="w-2.5 h-2.5 text-black font-bold" />}
-                                                                </div>
-                                                                <span className={`text-sm truncate font-medium transition-colors ${visited ? 'text-white' : 'text-white/80 group-hover:text-white'}`}>
-                                                                    {city}
-                                                                </span>
-                                                                {visited && (
-                                                                    <div className="absolute inset-0 bg-green-400/5 pointer-events-none" />
-                                                                )}
-                                                            </button>
-                                                        );
-                                                    })}
-
-                                                    {/* Load More Trigger */}
-                                                    {visibleCitiesCount < filteredCities.length && (
-                                                        <div className="col-span-full flex justify-center py-4">
-                                                            <button
-                                                                onClick={() => setVisibleCitiesCount(prev => prev + 50)}
-                                                                className="text-xs text-white/50 hover:text-white border border-white/10 rounded-full px-4 py-2 transition-all hover:bg-white/5"
-                                                            >
-                                                                Load More Cities ({filteredCities.length - visibleCitiesCount} remaining)
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="mt-4 text-[10px] text-white/50 text-center uppercase tracking-widest flex justify-between px-2">
-                                                    <span>Showing {Math.min(visibleCitiesCount, filteredCities.length)} of {filteredCities.length}</span>
-                                                    <span>{Math.round((Math.min(visibleCitiesCount, filteredCities.length) / filteredCities.length) * 100)}% Loaded</span>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div className="text-center py-10 text-muted-foreground text-sm">
-                                                No cities found.
-                                            </div>
-                                        )}
-                                    </>
-                                ) : (
-                                    // REGIONS VIEW
-                                    <div className="space-y-2 max-h-[450px] overflow-y-auto custom-scrollbar pr-1">
-                                        {regions.map((region, i) => {
-                                            const isExpanded = expandedRegion === region.name;
-                                            const cities = regionCities[region.name] || [];
-                                            const loading = isLoadingRegionCities === region.name;
-                                            const visitedCount = cities.filter(c => isCityVisited(c)).length;
-                                            const isRegionVisited = cities.length > 0 && visitedCount > 0;
-
-                                            return (
-                                                <div key={i} className="bg-secondary/20 rounded-xl border border-border/20 overflow-hidden transition-all">
-                                                    <button
-                                                        onClick={() => handleRegionClick(region.name)}
-                                                        className={`w-full flex items-center justify-between p-4 hover:bg-secondary/40 transition-colors ${isExpanded ? 'bg-secondary/40' : ''}`}
-                                                    >
-                                                        <div className="flex items-center gap-3">
-                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center border transition-colors
-                                                                ${isRegionVisited ? 'bg-green-500/20 border-green-500/30 text-green-500' : 'bg-secondary border-border/20 text-muted-foreground'}
-                                                            `}>
-                                                                {isRegionVisited ? <Check className="w-4 h-4" /> : <MapPin className="w-4 h-4" />}
-                                                            </div>
-                                                            <div className="text-left">
-                                                                <div className="font-bold text-sm text-foreground">{region.name}</div>
-                                                                <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{region.state_code}</div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            {cities.length > 0 && (
-                                                                <span className="text-xs text-muted-foreground font-numbers">{visitedCount}/{cities.length}</span>
-                                                            )}
-                                                            <ArrowRight className={`w-4 h-4 text-white/50 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
-                                                        </div>
-                                                    </button>
-
-                                                    {isExpanded && (
-                                                        <div className="p-4 pt-0 border-t border-border/10 bg-muted/10 animate-fade-in">
-                                                            {loading ? (
-                                                                <div className="flex justify-center py-4">
-                                                                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                                                                </div>
-                                                            ) : cities.length > 0 ? (
-                                                                <div className="grid grid-cols-2 gap-2 mt-4">
-                                                                    {cities.map((city, idx) => {
-                                                                        const visited = isCityVisited(city);
-                                                                        return (
-                                                                            <button
-                                                                                key={idx}
-                                                                                onClick={() => toggleCity(city)}
-                                                                                className={`flex items-center gap-2 p-2.5 rounded-lg transition-all border text-left
-                                                                                    ${visited
-                                                                                        ? 'bg-green-500/10 border-green-500/20 hover:bg-green-500/20'
-                                                                                        : 'bg-background border-border/20 hover:bg-secondary hover:border-border/50'
-                                                                                    }
-                                                                                `}
-                                                                            >
-                                                                                <div className={`w-3 h-3 rounded-full flex items-center justify-center border flex-shrink-0
-                                                                                    ${visited ? 'bg-green-500 border-green-500' : 'border-white/20'}
-                                                                                `}>
-                                                                                    {visited && <Check className="w-2 h-2 text-black font-bold" />}
-                                                                                </div>
-                                                                                <span className={`text-xs truncate font-medium ${visited ? 'text-white' : 'text-white/70'}`}>
-                                                                                    {city}
-                                                                                </span>
-                                                                            </button>
-                                                                        )
-                                                                    })}
-                                                                </div>
-                                                            ) : (
-                                                                <div className="text-center py-4 text-xs text-white/50">
-                                                                    No cities found in this region.
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                            {/* Search & Filter */}
+                            <div className="flex gap-3">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search cities..."
+                                        value={citySearch}
+                                        onChange={(e) => setCitySearch(e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-10 pr-4 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/30 transition-colors focus:bg-white/10"
+                                    />
+                                </div>
+                                {regions.length > 0 && (
+                                    <button
+                                        onClick={() => setViewMode(viewMode === 'all' ? 'regions' : 'all')}
+                                        className="px-5 rounded-2xl bg-white/5 border border-white/10 text-sm font-bold text-white/80 hover:bg-white/10 transition-colors uppercase tracking-wider"
+                                    >
+                                        {viewMode === 'all' ? 'Regions' : 'All Cities'}
+                                    </button>
                                 )}
                             </div>
+
+                            {/* Grid */}
+                            <div className="min-h-[300px]">
+                                {isLoadingCities ? (
+                                    <div className="flex flex-col items-center justify-center py-20 text-white/30">
+                                        <div className="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin mb-4" />
+                                        <span className="text-xs uppercase tracking-widest">Loading Cities...</span>
+                                    </div>
+                                ) : (
+                                    cityListRender(
+                                        viewMode === 'all' ? filteredCities.slice(0, visibleCitiesCount) : regions,
+                                        viewMode,
+                                        isCityVisited,
+                                        toggleCity,
+                                        handleRegionClick,
+                                        expandedRegion,
+                                        regionCities,
+                                        isLoadingRegionCities,
+                                        visitedCities,
+                                        country
+                                    )
+                                )}
+                            </div>
+                            {viewMode === 'all' && visibleCitiesCount < filteredCities.length && (
+                                <button
+                                    onClick={() => setVisibleCitiesCount(prev => prev + 50)}
+                                    className="w-full py-4 text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors border-t border-white/5 hover:bg-white/5"
+                                >
+                                    Load More
+                                </button>
+                            )}
                         </TabsContent>
 
                         {/* VISA TAB */}
-                        <TabsContent value="visa" className="space-y-6 mt-2 animate-slide-up">
-                            {userPassportCode && userPassportCode !== country.code && (
-                                <div className="bg-gradient-to-r from-blue-600/20 to-indigo-600/20 rounded-3xl p-1 border border-blue-500/30">
-                                    <div className="bg-card/40 backdrop-blur-md rounded-[22px] p-6">
-                                        <h3 className="text-muted-foreground uppercase tracking-wider text-xs font-bold mb-4 flex items-center gap-2">
-                                            <CreditCard className="w-3.5 h-3.5" />
-                                            Visa Requirement for {userPassport?.name}
-                                        </h3>
+                        <TabsContent value="visa" className="space-y-6 mt-0 animate-in slide-in-from-bottom-5 duration-500">
+                            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
+                                <div className="absolute top-0 right-0 p-8 opacity-20">
+                                    <CreditCard className="w-32 h-32 rotate-12" />
+                                </div>
 
-                                        {userVisaInfo ? (
-                                            <div className="flex flex-col gap-4">
-                                                <div className="flex items-center justify-between">
-                                                    <span
-                                                        className="font-display text-2xl md:text-3xl font-bold"
-                                                        style={{ color: getVisaRequirementColor(userVisaInfo.requirement) }}
-                                                    >
-                                                        {getVisaRequirementLabel(userVisaInfo.requirement)}
-                                                    </span>
-                                                    {userVisaInfo.duration && (
-                                                        <span className="font-numbers text-lg font-medium text-foreground/80 bg-secondary/30 px-3 py-1 rounded-lg">
-                                                            {userVisaInfo.duration} Days
-                                                        </span>
-                                                    )}
-                                                </div>
+                                <h3 className="text-white/80 text-sm font-bold uppercase tracking-wider mb-2">Visa Requirement</h3>
+                                <div className="relative z-10">
+                                    {userPassportCode && userPassportCode !== country.code ? (
+                                        userVisaInfo ? (
+                                            <>
+                                                <div className="text-5xl font-display font-bold mb-4">{getVisaRequirementLabel(userVisaInfo.requirement)}</div>
+                                                {userVisaInfo.duration && (
+                                                    <div className="inline-block bg-white/20 border border-white/20 rounded-lg px-3 py-1 text-sm font-medium mb-4">
+                                                        Allowed Stay: {userVisaInfo.duration} Days
+                                                    </div>
+                                                )}
                                                 {userVisaInfo.notes && (
-                                                    <p className="text-sm text-muted-foreground bg-secondary/20 p-3 rounded-xl border border-border/20">
-                                                        ℹ️ {userVisaInfo.notes}
+                                                    <p className="text-white/80 max-w-lg bg-black/20 p-4 rounded-xl border border-white/10 text-sm leading-relaxed">
+                                                        {userVisaInfo.notes}
                                                     </p>
                                                 )}
-                                                <a
-                                                    href={`https://en.wikipedia.org/wiki/Visa_requirements_for_${userPassport?.name?.replace(/ /g, '_')}_citizens`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1 mt-2"
-                                                >
-                                                    Verify on Wikipedia ↗
-                                                </a>
-                                            </div>
+                                            </>
                                         ) : (
-                                            <div className="text-yellow-400 flex items-center gap-2">
-                                                <AlertTriangle className="w-5 h-5" /> Data unavailable
-                                            </div>
-                                        )}
-                                    </div>
+                                            <div className="text-2xl font-bold flex items-center gap-2"><AlertTriangle /> Info Unavailable</div>
+                                        )
+                                    ) : (
+                                        <div className="text-2xl font-bold">Domestic Travel / Home Country</div>
+                                    )}
                                 </div>
-                            )}
+                            </div>
 
-                            {/* Power List */}
+                            {/* Visa Free Access List */}
                             <div className="space-y-4">
-                                <h3 className="font-display font-bold text-xl px-2">Passport Power 🌍</h3>
-                                <div className="bg-secondary/20 rounded-3xl p-1 border border-border/20">
-                                    <div className="max-h-[400px] overflow-y-auto no-scrollbar rounded-[20px] bg-background/40">
-                                        <table className="w-full text-left border-collapse">
-                                            <thead className="bg-secondary/40 sticky top-0 backdrop-blur-md z-10">
-                                                <tr>
-                                                    <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider">Destination</th>
-                                                    <th className="p-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-right">Access</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-border/10">
-                                                {visaFreeAccessList.map(c => (
-                                                    <tr key={c.code} className="hover:bg-secondary/10 transition-colors">
-                                                        <td className="p-4 flex items-center gap-3">
-                                                            <span className="text-2xl">{c.flagEmoji}</span>
-                                                            <span className="font-medium text-sm text-foreground/90">{c.name}</span>
-                                                        </td>
-                                                        <td className="p-4 text-right">
-                                                            <span className="bg-green-500/20 text-green-400 text-[10px] font-bold px-2 py-1 rounded-full border border-green-500/20">
-                                                                VISA FREE
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                <h4 className="text-lg font-bold text-white px-2">Visa-Free Access from {country.name}</h4>
+                                <div className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
+                                    {visaFreeAccessList.map((c, i) => (
+                                        <div key={i} className="flex items-center justify-between p-4 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-2xl">{c.flagEmoji}</span>
+                                                <span className="text-sm font-medium text-white/90">{c.name}</span>
+                                            </div>
+                                            <span className="text-[10px] font-bold text-green-400 bg-green-500/10 px-2 py-1 rounded-full uppercase tracking-wider">Visa Free</span>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         </TabsContent>
 
                         {/* TRANSPORT TAB */}
-                        <TabsContent value="transport" className="space-y-6 mt-2 animate-slide-up">
-                            <div className="grid grid-cols-1 gap-4">
-                                {/* Airports */}
-                                <div className="bg-secondary/20 rounded-3xl p-6 border border-border/20 relative overflow-hidden">
-                                    <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2 relative z-10"><Plane className="w-5 h-5 text-muted-foreground" /> Major Airports</h3>
-                                    <div className="space-y-3 relative z-10">
-                                        {richData?.mainAirports && richData.mainAirports.length > 0 ? (
-                                            richData.mainAirports.map(airport => (
-                                                <div key={airport.code} className="flex justify-between items-center bg-secondary/20 p-4 rounded-2xl border border-border/20 hover:border-border/50 transition-colors">
-                                                    <div>
-                                                        <div className="font-bold text-base text-foreground">{airport.name}</div>
-                                                        <div className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">International</div>
-                                                    </div>
-                                                    <div className="font-mono text-xl font-bold text-muted-foreground/50 tracking-widest">{airport.code}</div>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <div className="text-center py-6">
-                                                <p className="text-muted-foreground mb-4 text-sm">Airport details are being updated.</p>
-                                                <a
-                                                    href={`https://www.google.com/travel/flights?q=Flights+to+${country.name}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-bold transition-all shadow-lg shadow-blue-500/20"
-                                                >
-                                                    <Plane className="w-4 h-4" />
-                                                    Find Flights to {country.name}
-                                                </a>
+                        <TabsContent value="transport" className="space-y-4 mt-0 animate-in slide-in-from-bottom-5 duration-500">
+                            {/* Airports */}
+                            <div className="space-y-4">
+                                {richData?.mainAirports?.map((airport) => (
+                                    <div key={airport.code} className="bg-white/5 border border-white/10 rounded-2xl p-5 flex justify-between items-center group hover:border-white/20 transition-all">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                                                <Plane className="w-6 h-6" />
                                             </div>
-                                        )}
+                                            <div>
+                                                <div className="font-bold text-lg text-white group-hover:text-blue-400 transition-colors">{airport.code}</div>
+                                                <div className="text-sm text-white/60">{airport.name}</div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    {richData?.mainAirports && richData.mainAirports.length > 0 && (
-                                        <a
-                                            href={`https://www.google.com/travel/flights?q=Flights+to+${country.name}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="mt-4 flex items-center justify-center gap-2 w-full p-3 rounded-xl bg-secondary/50 hover:bg-secondary border border-border/20 text-sm font-medium transition-colors"
-                                        >
-                                            Check Flight Prices on Google
-                                        </a>
-                                    )}
-                                </div>
+                                ))}
+                            </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-secondary/20 rounded-3xl p-6 border border-border/20 flex flex-col items-center justify-center text-center">
-                                        <Car className="w-8 h-8 text-muted-foreground mb-3" />
-                                        <div className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">Driving Side</div>
-                                        <div className="font-display text-2xl font-bold capitalize text-foreground">{extendedData?.car?.side || 'Right'}</div>
-                                    </div>
-                                    <div className="bg-secondary/20 rounded-3xl p-6 border border-border/20 flex flex-col items-center justify-center text-center">
-                                        <MapPin className="w-8 h-8 text-muted-foreground mb-3" />
-                                        <div className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">Maps</div>
-                                        <a href={extendedData?.maps?.googleMaps} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline font-bold text-lg">Open Map ↗</a>
-                                    </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-white/5 rounded-3xl p-6 border border-white/10 flex flex-col items-center justify-center text-center">
+                                    <Car className="w-8 h-8 text-white/50 mb-3" />
+                                    <div className="text-xs text-white/40 uppercase tracking-widest font-bold mb-1">Driving Side</div>
+                                    <div className="font-display text-2xl font-bold capitalize text-white">{extendedData?.car?.side || 'Right'}</div>
+                                </div>
+                                <div className="bg-white/5 rounded-3xl p-6 border border-white/10 flex flex-col items-center justify-center text-center">
+                                    <MapPin className="w-8 h-8 text-white/50 mb-3" />
+                                    <div className="text-xs text-white/40 uppercase tracking-widest font-bold mb-1">Maps</div>
+                                    <a href={extendedData?.maps?.googleMaps} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 font-bold text-lg">Open Google Maps ↗</a>
                                 </div>
                             </div>
                         </TabsContent>
 
                         {/* WEATHER TAB */}
-                        <TabsContent value="weather" className="space-y-6 mt-2 animate-slide-up">
-                            {/* Climate Info - Prominent */}
-                            <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-3xl p-8 border border-border/20 shadow-glow relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:opacity-30 transition-opacity">
-                                    <CloudSun className="w-32 h-32 text-foreground" />
-                                </div>
-
+                        <TabsContent value="weather" className="space-y-4 mt-0 animate-in slide-in-from-bottom-5 duration-500">
+                            <div className="bg-gradient-to-br from-orange-400 to-pink-500 rounded-3xl p-8 text-white relative overflow-hidden shadow-2xl">
+                                <CloudSun className="absolute -right-4 -top-4 w-40 h-40 text-white/20" />
                                 <div className="relative z-10">
-                                    <div className="bg-background/20 backdrop-blur-md w-fit px-3 py-1 rounded-full text-xs font-bold text-foreground mb-4 flex items-center gap-2 border border-border/10">
-                                        <Sparkles className="w-3 h-3 text-yellow-400" />
-                                        Climate Analysis
-                                    </div>
-
-                                    <h4 className="font-display text-2xl font-bold text-foreground mb-4 flex items-center gap-3">
-                                        <span className="text-4xl">{richData?.climate.seasonEmojis || '🌍'}</span>
-                                        Climate Overview
-                                    </h4>
-
-                                    <p className="text-lg text-foreground/80 leading-relaxed font-light">
-                                        {richData?.climate.text || "Climate data is currently being updated for this region."}
-                                    </p>
-
-                                    <div className="mt-8 flex flex-wrap gap-3">
-                                        <div className="bg-background/20 backdrop-blur-md px-4 py-3 rounded-2xl border border-border/10 flex items-center gap-3">
-                                            <div className="bg-green-500/20 p-2 rounded-full text-green-400">
-                                                <CalendarIcon className="w-5 h-5" />
-                                            </div>
-                                            <div>
-                                                <div className="text-[10px] uppercase text-muted-foreground font-bold tracking-wider">Best Time</div>
-                                                <div className="text-foreground font-bold">{richData?.climate.bestTime || "Year-round"}</div>
-                                            </div>
-                                        </div>
-
-                                        <a
-                                            href={`https://www.google.com/search?q=weather+in+${extendedData?.capital?.[0] || country.name}+forecast`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="bg-background/20 hover:bg-background/30 backdrop-blur-md px-4 py-3 rounded-2xl border border-border/10 flex items-center gap-2 transition-all group/btn"
-                                        >
-                                            <span className="text-sm font-medium text-foreground group-hover/btn:text-blue-300">View Detailed Forecast</span>
-                                            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover/btn:translate-x-1 transition-transform" />
-                                        </a>
-                                    </div>
+                                    <h4 className="text-lg font-bold mb-2">Climate Overview</h4>
+                                    <div className="text-5xl mb-4">{richData?.climate.seasonEmojis}</div>
+                                    <p className="text-white/90 font-light text-lg leading-relaxed">{richData?.climate.text}</p>
                                 </div>
+                            </div>
+
+                            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col items-center">
+                                <h5 className="text-sm font-bold uppercase tracking-wider text-white/60 mb-2">Best Time to Visit</h5>
+                                <p className="text-xl font-medium text-white text-center">{richData?.climate.bestTime}</p>
                             </div>
                         </TabsContent>
 
-                        {/* DETAILS / SAFETY TAB */}
-                        <TabsContent value="details" className="space-y-6 mt-2 animate-slide-up">
-
-                            {/* Demographics / Religion */}
+                        {/* DETAILS TAB */}
+                        <TabsContent value="details" className="space-y-6 mt-0 animate-in slide-in-from-bottom-5 duration-500">
+                            {/* Religious Breakdown */}
                             {richData?.religionDistribution && (
-                                <div className="bg-secondary/20 rounded-3xl p-6 border border-border/20">
-                                    <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2 text-foreground"><Users className="w-5 h-5 text-muted-foreground" /> Religious Diversity</h3>
-                                    <div className="space-y-4">
+                                <div className="space-y-4">
+                                    <h3 className="text-lg font-bold text-white px-2">Religious Distribution</h3>
+                                    <div className="space-y-1">
                                         {richData.religionDistribution.map((rel, i) => (
-                                            <div key={i}>
-                                                <div className="flex justify-between text-sm mb-1.5">
-                                                    <span className="text-foreground/80 font-medium">{rel.name}</span>
-                                                    <span className="text-muted-foreground font-numbers">{rel.percentage}%</span>
+                                            <div key={i} className="group">
+                                                <div className="flex justify-between text-sm mb-2 px-2">
+                                                    <span className="text-white/80">{rel.name}</span>
+                                                    <span className="text-white/50">{rel.percentage}%</span>
                                                 </div>
-                                                <div className="h-2 w-full bg-secondary/50 rounded-full overflow-hidden">
-                                                    <div
-                                                        className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full"
-                                                        style={{ width: `${rel.percentage}%` }}
-                                                    />
+                                                <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                                                    <div className="h-full bg-indigo-500 group-hover:bg-indigo-400 transition-colors" style={{ width: `${rel.percentage}%` }} />
                                                 </div>
                                             </div>
                                         ))}
@@ -796,135 +538,118 @@ export const CountryDetails = ({
                                 </div>
                             )}
 
-                            {/* Macro Stats (GDP / HDI) */}
+                            {/* Economic Stats */}
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-secondary/20 rounded-3xl p-5 border border-border/20 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 p-4 opacity-10">
-                                        <Briefcase className="w-16 h-16 text-foreground" />
-                                    </div>
-                                    <div className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5 min-h-[20px]"><Briefcase className="w-3.5 h-3.5" /> GDP</div>
-                                    <div className="font-numbers text-xl font-bold text-foreground">{richData?.gdp || 'N/A'}</div>
-                                </div>
-                                <div className="bg-secondary/20 rounded-3xl p-5 border border-border/20 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 p-4 opacity-10">
-                                        <Activity className="w-16 h-16 text-foreground" />
-                                    </div>
-                                    <div className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5 min-h-[20px]"><Activity className="w-3.5 h-3.5" /> HDI</div>
-                                    <div className="font-numbers text-xl font-bold text-foreground">{richData?.hdi || 'N/A'}</div>
-                                </div>
-                                <div className="bg-secondary/20 rounded-3xl p-5 border border-border/20 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 p-4 opacity-10">
-                                        <Globe className="w-16 h-16 text-foreground" />
-                                    </div>
-                                    <div className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5 min-h-[20px]"><Globe className="w-3.5 h-3.5" /> Area</div>
-                                    <div className="font-numbers text-xl font-bold text-foreground">{richData?.area ? `${richData.area.toLocaleString()} km²` : 'N/A'}</div>
-                                </div>
-                                <div className="bg-secondary/20 rounded-3xl p-5 border border-border/20 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 p-4 opacity-10">
-                                        <TrendingUp className="w-16 h-16 text-foreground" />
-                                    </div>
-                                    <div className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5 min-h-[20px]"><TrendingUp className="w-3.5 h-3.5" /> Gini</div>
-                                    <div className="font-numbers text-xl font-bold text-foreground">{richData?.gini || 'N/A'}</div>
-                                </div>
+                                <StatCard icon={<DollarSign />} label="GDP" value={richData?.gdp || 'N/A'} sub="Annual" />
+                                <StatCard icon={<Activity />} label="HDI" value={richData?.hdi || 'N/A'} sub="Human Dev Index" />
                             </div>
-                            {/* Emergency Grid */}
-                            <div className="grid grid-cols-1 gap-4">
-                                <div className="bg-red-500/10 border border-red-500/20 rounded-3xl p-6 relative overflow-hidden">
-                                    <div className="absolute right-0 top-0 p-4 opacity-5 pointer-events-none">
-                                        <ShieldAlert className="w-32 h-32" />
-                                    </div>
-                                    <h3 className="text-red-400 font-bold uppercase tracking-wider text-xs mb-4 flex items-center gap-2 relative z-10">
-                                        <ShieldAlert className="w-4 h-4" /> Emergency Contacts
-                                    </h3>
-                                    <div className="grid grid-cols-3 gap-3 relative z-10">
-                                        <div className="bg-secondary/20 backdrop-blur-sm rounded-2xl p-3 text-center border border-red-500/10">
-                                            <div className="font-numbers text-xl font-bold text-red-500">{richData?.emergency.police || '112'}</div>
-                                            <div className="text-[10px] text-red-500/60 uppercase font-bold mt-1">Police</div>
-                                        </div>
-                                        <div className="bg-secondary/20 backdrop-blur-sm rounded-2xl p-3 text-center border border-red-500/10">
-                                            <div className="font-numbers text-xl font-bold text-red-500">{richData?.emergency.ambulance || '112'}</div>
-                                            <div className="text-[10px] text-red-500/60 uppercase font-bold mt-1">Ambulance</div>
-                                        </div>
-                                        <div className="bg-secondary/20 backdrop-blur-sm rounded-2xl p-3 text-center border border-red-500/10">
-                                            <div className="font-numbers text-xl font-bold text-red-500">{richData?.emergency.fire || '112'}</div>
-                                            <div className="text-[10px] text-red-500/60 uppercase font-bold mt-1">Fire</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Health & Safety Grid */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-blue-500/10 border border-blue-500/20 rounded-3xl p-5 relative overflow-hidden group">
-                                    <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                        <Droplet className="w-16 h-16" />
-                                    </div>
-                                    <div className="relative z-10">
-                                        <div className="text-blue-300 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5"><Droplet className="w-3.5 h-3.5" /> Water</div>
-                                        <div className="font-display text-lg font-bold text-foreground">{richData?.waterRating || 'Check Local Advice'}</div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-3xl p-5 relative overflow-hidden group">
-                                    <div className="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                        <Syringe className="w-16 h-16" />
-                                    </div>
-                                    <div className="relative z-10">
-                                        <div className="text-yellow-600 dark:text-yellow-300 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5"><Syringe className="w-3.5 h-3.5" /> Vaccinations</div>
-                                        <div className="font-display text-lg font-bold text-foreground">{richData?.vaccinations || 'Routine'}</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Local Law & Tech */}
-                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                                <div className="bg-secondary/20 rounded-3xl p-5 border border-border/20 hover:border-border/50 transition-colors">
-                                    <div className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5"><Beer className="w-3.5 h-3.5" /> Alcohol Age</div>
-                                    <div className="flex items-baseline gap-1">
-                                        <div className="font-numbers text-2xl font-bold text-foreground">{richData?.alcohol ? richData.alcohol.drinkingAge : '18'}</div>
-                                        <div className="text-xs text-muted-foreground">Drinking</div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-secondary/20 rounded-3xl p-5 border border-border/20 hover:border-border/50 transition-colors">
-                                    <div className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" /> Dial Code</div>
-                                    <div className="font-numbers text-2xl font-bold">{richData?.dialCode && richData.dialCode !== 'N/A' ? richData.dialCode : (extendedData?.idd?.root ? `${extendedData.idd.root}${extendedData.idd.suffixes?.length === 1 ? extendedData.idd.suffixes[0] : ''}` : '--')}</div>
-                                </div>
-
-                                <div className="bg-secondary/20 rounded-3xl p-5 border border-border/20 hover:border-border/50 transition-colors col-span-2 lg:col-span-1">
-                                    <div className="text-muted-foreground text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5"><Plug className="w-3.5 h-3.5" /> Plugs</div>
-                                    <div className="font-display text-lg font-bold text-foreground">{richData?.plugs ? richData.plugs.map(p => p.type).join(' + ') : '--'}</div>
-                                </div>
-                            </div>
-
-                            {/* Currency */}
-                            <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-3xl p-6 border border-emerald-500/20 flex items-center justify-between">
-                                <div>
-                                    <div className="text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1 flex items-center gap-1.5"><DollarSign className="w-3.5 h-3.5" /> Currency</div>
-                                    <div className="font-display text-xl font-bold text-foreground flex items-center gap-2">
-                                        {currencyStr}
-                                        {exchangeRate && <span className="text-sm font-normal text-muted-foreground bg-secondary/50 px-2 py-0.5 rounded-lg border border-border/20">1 USD = {exchangeRate.toFixed(2)}</span>}
-                                    </div>
-                                </div>
-                            </div>
-
                         </TabsContent>
+
                     </Tabs>
                 </div>
             </div>
         </div>
     );
-
-    if (!isModal) return content;
-
-    return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 animate-fade-in">
-            <div className="absolute inset-0" onClick={onClose} />
-            {content}
-        </div>
-    );
 };
 
-function AlertCertificate(props: any) {
-    return <AlertTriangle {...props} />;
+// Helper Components for Cleaner Code
+const StatCard = ({ icon, label, value, sub }: { icon: any, label: string, value: string | number, sub?: string }) => (
+    <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border border-white/5 hover:bg-white/10 transition-colors">
+        <div className="text-white/30 w-5 h-5 mb-3">{icon}</div>
+        <div className="text-[10px] uppercase font-bold tracking-wider text-white/50 mb-1">{label}</div>
+        <div className="text-xl font-bold text-white truncate">{value}</div>
+        {sub && <div className="text-[10px] text-white/30 mt-1">{sub}</div>}
+    </div>
+);
+
+// Extracted City List Logic to avoid deep nesting
+const cityListRender = (
+    items: any[],
+    viewMode: string,
+    isCityVisited: any,
+    toggleCity: any,
+    handleRegionClick: any,
+    expandedRegion: any,
+    regionCities: any,
+    isLoadingRegionCities: any,
+    visitedCities: any,
+    country: any
+) => {
+    if (viewMode === 'all') {
+        return (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {items.map((city, i) => {
+                    const visited = isCityVisited(city);
+                    return (
+                        <button
+                            key={i}
+                            onClick={() => toggleCity(city)}
+                            className={`relative text-left p-4 rounded-xl border transition-all ${visited ? 'bg-emerald-500/20 border-emerald-500/40' : 'bg-white/5 border-white/5 hover:bg-white/10'}`}
+                        >
+                            <div className="flex justify-between items-start mb-2">
+                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${visited ? 'bg-emerald-500 border-emerald-500' : 'border-white/20'}`}>
+                                    {visited && <Check className="w-2.5 h-2.5 text-black" />}
+                                </div>
+                            </div>
+                            <span className={`text-sm font-medium ${visited ? 'text-white' : 'text-white/70'}`}>{city}</span>
+                        </button>
+                    )
+                })}
+            </div>
+        )
+    } else {
+        return (
+            <div className="space-y-3">
+                {items.map((region: any, i: number) => {
+                    const isExpanded = expandedRegion === region.name;
+                    const cities = regionCities[region.name] || [];
+                    const loading = isLoadingRegionCities === region.name;
+                    const citiesInRegionCount = cities.length;
+                    const visitedCount = cities.filter((c: string) => visitedCities.includes(`${c}|${country.code}`)).length;
+
+                    return (
+                        <div key={i} className="bg-white/5 rounded-2xl border border-white/5 overflow-hidden">
+                            <button onClick={() => handleRegionClick(region.name)} className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors">
+                                <div className="flex items-center gap-4">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center border ${visitedCount > 0 ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-500' : 'bg-white/5 border-white/10 text-white/30'}`}>
+                                        <MapPin className="w-5 h-5" />
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="font-bold text-white">{region.name}</div>
+                                        <div className="text-xs text-white/40">{region.state_code}</div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    {cities.length > 0 && <span className="text-xs text-white/40">{visitedCount}/{cities.length}</span>}
+                                    <ChevronRight className={`w-4 h-4 text-white/30 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                                </div>
+                            </button>
+
+                            {isExpanded && (
+                                <div className="p-4 pt-0 bg-black/20 border-t border-white/5">
+                                    {loading ? (
+                                        <div className="py-4 text-center text-xs text-white/30">Loading Regions...</div>
+                                    ) : (
+                                        <div className="grid grid-cols-2 gap-2 mt-4">
+                                            {cities.map((city: string, idx: number) => {
+                                                const visited = visitedCities.includes(`${city}|${country.code}`);
+                                                return (
+                                                    <button key={idx} onClick={() => toggleCity(city)} className={`text-left p-3 rounded-xl border transition-all flex items-center gap-3 ${visited ? 'bg-emerald-500/20 border-emerald-500/40' : 'bg-white/5 border-white/5'}`}>
+                                                        <div className={`w-3 h-3 rounded-full border flex-shrink-0 flex items-center justify-center ${visited ? 'bg-emerald-500 border-emerald-500' : 'border-white/20'}`}>
+                                                            {visited && <Check className="w-2 h-2 text-black" />}
+                                                        </div>
+                                                        <span className={`text-xs font-medium truncate ${visited ? 'text-white' : 'text-white/60'}`}>{city}</span>
+                                                    </button>
+                                                )
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )
+                })}
+            </div>
+        )
+    }
 }

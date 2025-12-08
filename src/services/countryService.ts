@@ -54,7 +54,8 @@ export const fetchCountryData = async (code: string): Promise<CountryExtendedDat
             population: data.population,
             region: data.region,
             subregion: data.subregion,
-            continents: data.continents
+            continents: data.continents,
+            area: data.area
         };
 
         cache[code] = {

@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import Header from '@/components/Header';
 import Dashboard from '@/components/Dashboard';
-import { WidgetMapGenerator } from '@/components/WidgetMapGenerator';
+// import { WidgetMapGenerator } from '@/components/WidgetMapGenerator';
 import WorldMap from '@/components/WorldMap';
 import CountryList from '@/components/CountryList';
 import PassportPower from '@/components/PassportPower';
 import { TravelCalendar } from '@/components/TravelCalendar';
-import { PhotoUpload } from '@/components/PhotoUpload';
+// import { PhotoUpload } from '@/components/PhotoUpload';
 import { ExploreDestinations } from '@/components/ExploreDestinations';
 import { VisaChecker } from '@/components/VisaChecker';
 import { LoginModal } from '@/components/LoginModal';
@@ -115,80 +115,12 @@ const Index = () => {
     // We will let the GeoPassport component handle the UI interaction for enabling this explicitly.
   }, []);
 
-  // Sync Data -> Widget
-  useEffect(() => {
-    if (!isNative) return;
+  // Sync Data -> Widget - REMOVED
 
-    const syncWidget = async () => {
-      // We moved the main sync logic to include the snapshot below.
-      // But we still want to sync stats immediately even if map is generating.
-      const levelInfo = getLevel(visitedCountries.length);
-      const percentage = Math.round((visitedCountries.length / 195) * 100);
-      const rankLevel = LEVELS.findIndex(l => l.title === levelInfo.title) + 1;
+  // handleWidgetSnapshot - REMOVED
 
-      try {
-        await TabBar.updateWidgetData({
-          visitedCount: visitedCountries.length,
-          rankTitle: levelInfo.title,
-          rankLevel: rankLevel,
-          percentage: percentage
-        });
-      } catch (e) {
-        console.error("Widget sync failed (stats)", e);
-      }
-    };
+  // handleTripsDetected - REMOVED
 
-    syncWidget();
-  }, [visitedCountries, isNative]);
-
-  const handleWidgetSnapshot = async (base64: string) => {
-    console.log("Syncing widget map image...");
-    const levelInfo = getLevel(visitedCountries.length);
-    const percentage = Math.round((visitedCountries.length / 195) * 100);
-    const rankLevel = LEVELS.findIndex(l => l.title === levelInfo.title) + 1;
-
-    try {
-      await TabBar.updateWidgetData({
-        visitedCount: visitedCountries.length,
-        rankTitle: levelInfo.title,
-        rankLevel: rankLevel,
-        percentage: percentage,
-        mapBase64: base64
-      });
-      console.log("Widget map synced!");
-    } catch (e) {
-      console.error("Widget sync failed (image)", e);
-    }
-  };
-
-  const handleTripsDetected = (newTrips: Partial<TripEntry>[]) => {
-    // Convert partial trips to full trips with IDs
-    const completeTrips: TripEntry[] = newTrips.map(t => ({
-      id: crypto.randomUUID(),
-      countryCode: t.countryCode!,
-      countryName: t.countryName!,
-      cityName: t.cityName,
-      startDate: t.startDate || new Date(),
-      endDate: t.endDate || new Date(),
-      transportMode: 'plane',
-      createdAt: new Date(),
-      ...t
-    }));
-
-    updateTrips([...trips, ...completeTrips]);
-
-    // Auto-mark as visited
-    const newCountryCodes = [...new Set(completeTrips.map(t => t.countryCode))];
-    if (updateHeldVisas && user) {
-      newCountryCodes.forEach(code => {
-        if (code && !visitedCountries.includes(code)) {
-          toggleVisited(code);
-        }
-      });
-    }
-
-    setActiveTab('calendar');
-  };
 
   const handleManualTripSave = (newTrip: TripEntry) => {
     // This is now handled by AddTripModal internal context usage,
@@ -290,36 +222,25 @@ const Index = () => {
             </TabsContent>
 
             <TabsContent value="calendar" className="pb-24 lg:pb-8 focus-visible:outline-none">
-              <Tabs defaultValue="calendar" className="w-full">
-                <div className="flex justify-between items-center mb-4">
-                  <TabsList className="grid w-64 grid-cols-2">
-                    <TabsTrigger value="calendar">Calendar</TabsTrigger>
-                    <TabsTrigger value="import">Import</TabsTrigger>
-                  </TabsList>
-                  <Button
-                    onClick={() => setShowAddTripModal(true)}
-                    className="bg-white/10 hover:bg-white/20 text-white border border-white/20 gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Trip
-                  </Button>
-                </div>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold font-display">Travel Calendar</h2>
+                <Button
+                  onClick={() => setShowAddTripModal(true)}
+                  className="bg-white/10 hover:bg-white/20 text-white border border-white/20 gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Trip
+                </Button>
+              </div>
 
-                <TabsContent value="calendar" className="mt-0">
-                  <TravelCalendar
-                    trips={trips}
-                    onClearAll={() => updateTrips([])}
-                    onDateClick={(date) => {
-                      setSelectedDate(date);
-                      setShowAddTripModal(true);
-                    }}
-                  />
-                </TabsContent>
-
-                <TabsContent value="import" className="mt-0">
-                  <PhotoUpload onTripsDetected={handleTripsDetected} />
-                </TabsContent>
-              </Tabs>
+              <TravelCalendar
+                trips={trips}
+                onClearAll={() => updateTrips([])}
+                onDateClick={(date) => {
+                  setSelectedDate(date);
+                  setShowAddTripModal(true);
+                }}
+              />
             </TabsContent>
 
             <TabsContent value="passport" className="space-y-6 pb-24 lg:pb-8 animate-fade-in focus-visible:outline-none">
@@ -362,14 +283,6 @@ const Index = () => {
           achievement={newAchievement}
           onClose={clearAchievement}
           duration={duration}
-        />
-
-        {/* Hidden Widget Generator */}
-        <WidgetMapGenerator
-          visitedCountries={visitedCountries}
-          livedCountries={livedCountries}
-          bucketList={bucketList || []}
-          onSnapshotReady={handleWidgetSnapshot}
         />
       </div >
     </div >
