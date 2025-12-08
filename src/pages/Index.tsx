@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import Header from '@/components/Header';
 import Dashboard from '@/components/Dashboard';
 // import { WidgetMapGenerator } from '@/components/WidgetMapGenerator';
-import WorldMap from '@/components/WorldMap';
+// import WorldMap from '@/components/WorldMap';
 import CountryList from '@/components/CountryList';
 import PassportPower from '@/components/PassportPower';
 import { TravelCalendar } from '@/components/TravelCalendar';

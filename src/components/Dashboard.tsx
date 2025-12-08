@@ -5,7 +5,6 @@ import ProgressRing from './ProgressRing';
 // Removed: import ContinentBreakdown from './ContinentBreakdown';
 import { TripEntry } from '@/data/trips';
 import { LevelCard } from './Achievements';
-import { GeoPassport } from './GeoPassport';
 import { SafetyWidget } from './SafetyWidget';
 import { useSmartLocation } from '@/hooks/useSmartLocation';
 import { useLocationNotifications } from '@/hooks/useLocationNotifications';
@@ -18,7 +17,6 @@ import { ContinentModal } from './ContinentModal';
 import { useState, useMemo } from 'react';
 import { useTravelData } from '@/hooks/useTravelData';
 import { useUser } from '@/contexts/UserContext';
-import WorldMap from './WorldMap';
 import { ExploreDestinations } from './ExploreDestinations';
 
 interface DashboardProps {
@@ -96,8 +94,6 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
     <div className="flex flex-col min-h-full pb-20 animate-fade-in relative z-0">
       {/* Content */}
       <div className="space-y-4 flex-1 px-1">
-        {/* Passport Visual */}
-        <GeoPassport />
 
         {/* Level Card - Compact */}
         <LevelCard visitedCountries={visitedCountries} />
