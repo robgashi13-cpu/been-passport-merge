@@ -94,7 +94,7 @@ export const ContinentModal = ({ isOpen, onClose, continentStats }: ContinentMod
                                             <span className="text-2xl">{continentEmojis[continent.name]}</span>
                                             <div>
                                                 <h3 className="font-bold text-lg">{continent.name}</h3>
-                                                <p className="text-xs text-white/40">
+                                                <p className="text-xs text-white/60">
                                                     {isUnlocked ? 'Explorer' : 'Not Visited'}
                                                 </p>
                                             </div>
@@ -112,7 +112,7 @@ export const ContinentModal = ({ isOpen, onClose, continentStats }: ContinentMod
                                         />
                                     </div>
 
-                                    <div className="flex justify-between text-xs text-white/40 font-medium">
+                                    <div className="flex justify-between text-xs text-white/60 font-medium">
                                         <span>{continent.visited} visited</span>
                                         <span>{continent.total} total</span>
                                     </div>

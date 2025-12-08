@@ -197,7 +197,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                                         {isChangingPassword ? (
                                             <form onSubmit={handleChangePassword} className="p-4 space-y-3">
                                                 <div className="relative">
-                                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
                                                     <input
                                                         type="password"
                                                         placeholder="New Password"
@@ -235,7 +235,7 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                                                 </div>
                                                 <div>
                                                     <div className="text-sm font-medium text-white">Change Password</div>
-                                                    <div className="text-xs text-white/40">Update your account password</div>
+                                                    <div className="text-xs text-white/60">Update your account password</div>
                                                 </div>
                                             </button>
                                         )}

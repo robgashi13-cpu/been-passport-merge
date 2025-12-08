@@ -367,7 +367,7 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
                             </option>
                           ))}
                       </select>
-                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60 pointer-events-none" />
                     </div>
                   </div>
                 </div>

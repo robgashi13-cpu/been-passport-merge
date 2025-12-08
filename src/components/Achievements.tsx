@@ -286,7 +286,7 @@ export const AchievementList = ({ visitedCountries }: AchievementsProps) => {
                     <div key={cat.id} className="space-y-3">
                         <h4 className="flex items-center gap-2 text-sm font-bold text-white/60 uppercase tracking-wider">
                             <cat.icon className="w-4 h-4" />
-                            {cat.label} <span className="text-white/30">({categoryUnlocked.length}/{categoryAchievements.length})</span>
+                            {cat.label} <span className="text-white/50">({categoryUnlocked.length}/{categoryAchievements.length})</span>
                         </h4>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -302,7 +302,7 @@ export const AchievementList = ({ visitedCountries }: AchievementsProps) => {
                                     >
                                         <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-transform ${isUnlocked
                                             ? 'bg-green-500/20 text-green-400 group-hover:scale-110'
-                                            : 'bg-white/5 text-white/40'
+                                            : 'bg-white/5 text-white/60'
                                             }`}>
                                             <ach.icon className="w-5 h-5" />
                                         </div>
@@ -372,7 +372,7 @@ export const LevelCard = ({ visitedCountries }: AchievementsProps) => {
                 </div>
 
                 <div className="mt-auto">
-                    <div className="flex justify-between text-xs mb-1.5 text-white/40">
+                    <div className="flex justify-between text-xs mb-1.5 text-white/60">
                         <span className="font-medium text-white/60">{count} Countries</span>
                         {nextLevel && <span>Next: {nextLevel.title} ({nextLevel.min})</span>}
                     </div>
@@ -428,7 +428,7 @@ export const LevelCard = ({ visitedCountries }: AchievementsProps) => {
                                     />
                                 </div>
                                 {nextLevel && (
-                                    <p className="text-xs text-white/40 mt-2">
+                                    <p className="text-xs text-white/60 mt-2">
                                         {nextLevel.min - count} more countries to become {nextLevel.title}
                                     </p>
                                 )}

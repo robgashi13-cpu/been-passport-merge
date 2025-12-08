@@ -51,10 +51,10 @@ export const VisitedCountriesModal = ({ isOpen, onClose, visitedCountries }: Vis
 
                 <div className="p-4 border-b border-white/5">
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60" />
                         <Input
                             placeholder="Search your travels..."
-                            className="bg-white/5 border-white/10 pl-9 text-white placeholder:text-white/30"
+                            className="bg-white/5 border-white/10 pl-9 text-white placeholder:text-white/40"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
@@ -63,7 +63,7 @@ export const VisitedCountriesModal = ({ isOpen, onClose, visitedCountries }: Vis
 
                 <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
                     {filteredCountries.length === 0 ? (
-                        <div className="text-center py-10 text-white/40">
+                        <div className="text-center py-10 text-white/60">
                             <p>No countries found.</p>
                         </div>
                     ) : (
@@ -74,7 +74,7 @@ export const VisitedCountriesModal = ({ isOpen, onClose, visitedCountries }: Vis
                                         <span className="text-2xl">{country?.flagEmoji}</span>
                                         <div>
                                             <div className="font-bold text-white">{country?.name}</div>
-                                            <div className="text-xs text-white/40">{country?.continent}</div>
+                                            <div className="text-xs text-white/60">{country?.continent}</div>
                                         </div>
                                     </div>
                                     <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
@@ -86,7 +86,7 @@ export const VisitedCountriesModal = ({ isOpen, onClose, visitedCountries }: Vis
                     )}
                 </div>
 
-                <div className="p-4 bg-white/5 border-t border-white/10 text-center text-xs text-white/40">
+                <div className="p-4 bg-white/5 border-t border-white/10 text-center text-xs text-white/60">
                     {visitedCountries.length} countries visited total
                 </div>
             </div>

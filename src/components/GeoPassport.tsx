@@ -100,7 +100,7 @@ export const GeoPassport = () => {
                     <div className="flex gap-2">
                         <button
                             onClick={dismissPrompt}
-                            className="p-2 hover:bg-white/10 rounded-full text-white/40 hover:text-white transition-colors"
+                            className="p-2 hover:bg-white/10 rounded-full text-white/60 hover:text-white transition-colors"
                         >
                             <X className="w-4 h-4" />
                         </button>
@@ -137,7 +137,7 @@ export const GeoPassport = () => {
                     <div className="flex gap-2">
                         <button
                             onClick={() => setShowPrompt(false)}
-                            className="p-2 hover:bg-white/10 rounded-full text-white/40 hover:text-white transition-colors"
+                            className="p-2 hover:bg-white/10 rounded-full text-white/60 hover:text-white transition-colors"
                         >
                             <X className="w-4 h-4" />
                         </button>

@@ -75,7 +75,7 @@ function generateLiveSchedule(type: 'departures' | 'arrivals'): FlightInfo[] {
         if (type === 'departures') {
             if (diff < -30) {
                 status = 'Departed';
-                statusColor = 'text-white/40';
+                statusColor = 'text-white/60';
             } else if (diff < 0) {
                 status = 'Departed';
                 statusColor = 'text-green-400';
@@ -102,7 +102,7 @@ function generateLiveSchedule(type: 'departures' | 'arrivals'): FlightInfo[] {
             // Arrivals Logic
             if (diff < -30) {
                 status = 'Landed';
-                statusColor = 'text-white/40';
+                statusColor = 'text-white/60';
             } else if (diff < 0) {
                 status = 'Landed';
                 statusColor = 'text-green-400';
@@ -204,13 +204,13 @@ export const FlightBoardModal = ({ isOpen, onClose, airportCode, airportName }: 
                     <div className="flex p-1 bg-black/40 rounded-xl">
                         <button
                             onClick={() => setActiveTab('departures')}
-                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'departures' ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/60'}`}
+                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'departures' ? 'bg-white/10 text-white shadow-sm' : 'text-white/60 hover:text-white/60'}`}
                         >
                             Departures
                         </button>
                         <button
                             onClick={() => setActiveTab('arrivals')}
-                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'arrivals' ? 'bg-white/10 text-white shadow-sm' : 'text-white/40 hover:text-white/60'}`}
+                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'arrivals' ? 'bg-white/10 text-white shadow-sm' : 'text-white/60 hover:text-white/60'}`}
                         >
                             Arrivals
                         </button>
@@ -229,7 +229,7 @@ export const FlightBoardModal = ({ isOpen, onClose, airportCode, airportName }: 
                     ) : (
                         <div className="divide-y divide-white/5">
                             {flights.length === 0 ? (
-                                <div className="p-10 text-center text-white/40">No flights scheduled</div>
+                                <div className="p-10 text-center text-white/60">No flights scheduled</div>
                             ) : flights.map((flight, idx) => (
                                 <div key={idx} className="p-4 hover:bg-white/5 transition-colors">
                                     <div className="flex items-center justify-between">
@@ -239,7 +239,7 @@ export const FlightBoardModal = ({ isOpen, onClose, airportCode, airportName }: 
                                             </div>
                                             <div>
                                                 <div className="font-bold text-white">{flight.route}</div>
-                                                <div className="text-sm text-white/40">{flight.airline} • {flight.flight}</div>
+                                                <div className="text-sm text-white/60">{flight.airline} • {flight.flight}</div>
                                             </div>
                                         </div>
                                         <div className={`font-semibold text-sm ${flight.statusColor}`}>
@@ -254,7 +254,7 @@ export const FlightBoardModal = ({ isOpen, onClose, airportCode, airportName }: 
 
                 {/* Footer */}
                 <div className="p-4 bg-white/5 border-t border-white/10 flex items-center justify-between flex-shrink-0">
-                    <div className="text-xs text-white/40 flex items-center gap-1">
+                    <div className="text-xs text-white/60 flex items-center gap-1">
                         <button onClick={loadFlights} disabled={loading} className="hover:text-white flex items-center gap-1">
                             <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} />
                             {lastUpdate ? `Updated ${lastUpdate.toLocaleTimeString()}` : 'Refresh'}

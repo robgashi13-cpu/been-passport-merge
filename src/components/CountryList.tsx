@@ -107,7 +107,7 @@ const CountryList = ({
                   onClick={(e) => { e.stopPropagation(); toggleBucketList(country.code); }}
                   className={`p-2 rounded-full transition-colors ${isBucket
                     ? 'bg-red-500/20 text-red-400'
-                    : 'bg-white/5 text-white/40 hover:bg-white/20 hover:text-red-400'
+                    : 'bg-white/5 text-white/60 hover:bg-white/20 hover:text-red-400'
                     }`}
                 >
                   <Heart className={`w-4 h-4 ${isBucket ? 'fill-current' : ''}`} />
@@ -119,7 +119,7 @@ const CountryList = ({
                   }}
                   className={`p-2 rounded-full transition-colors ${isVisited
                     ? 'bg-green-500 text-black shadow-[0_0_10px_rgba(34,197,94,0.4)]'
-                    : 'bg-white/5 text-white/40 hover:bg-white/20'
+                    : 'bg-white/5 text-white/60 hover:bg-white/20'
                     }`}
                 >
                   <Check className="w-4 h-4" />

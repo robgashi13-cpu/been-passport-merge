@@ -79,7 +79,7 @@ export const CountryBrowserModal = ({
                         <Search className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" />
                         <Input
                             placeholder="Search countries..."
-                            className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/50 focus-visible:ring-white/20"
+                            className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-white/20"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -131,10 +131,10 @@ export const CountryBrowserModal = ({
                                     <div className="flex-1 min-w-0">
                                         <div className="font-medium text-white truncate">{country.name}</div>
                                         <div className="flex items-center gap-2 mt-0.5">
-                                            <div className="text-xs text-white/40">{country.continent}</div>
+                                            <div className="text-xs text-white/60">{country.continent}</div>
                                             {visitors && (
                                                 <div className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded-full border border-white/10">
-                                                    <Users className="w-2.5 h-2.5 text-white/40" />
+                                                    <Users className="w-2.5 h-2.5 text-white/60" />
                                                     <span className="text-[10px] font-bold text-white/60 font-numbers">{visitors}</span>
                                                 </div>
                                             )}
@@ -143,7 +143,7 @@ export const CountryBrowserModal = ({
                                     {isVisited ? (
                                         <Check className="w-5 h-5 text-green-400 flex-shrink-0" />
                                     ) : (
-                                        <Plus className="w-5 h-5 text-white/30 flex-shrink-0" />
+                                        <Plus className="w-5 h-5 text-white/50 flex-shrink-0" />
                                     )}
                                 </button>
                             );
@@ -151,7 +151,7 @@ export const CountryBrowserModal = ({
                     </div>
 
                     {filteredCountries.length === 0 && (
-                        <div className="text-center py-12 text-white/40">
+                        <div className="text-center py-12 text-white/60">
                             <MapPin className="w-12 h-12 mx-auto mb-3 opacity-30" />
                             <p>No countries found</p>
                         </div>

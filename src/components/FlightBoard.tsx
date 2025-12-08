@@ -17,7 +17,7 @@ export const FlightBoard = ({ city = "Prishtina" }: { city?: string }) => {
                     <Plane className="text-luxury-gold w-6 h-6 rotate-45" />
                     <div>
                         <h3 className="text-luxury-gold font-bold uppercase tracking-widest text-lg">Departures</h3>
-                        <p className="text-white/40 text-xs uppercase">{city} International</p>
+                        <p className="text-white/60 text-xs uppercase">{city} International</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 text-white/60 text-sm">
@@ -27,7 +27,7 @@ export const FlightBoard = ({ city = "Prishtina" }: { city?: string }) => {
             </div>
 
             <div className="divide-y divide-white/5">
-                <div className="grid grid-cols-12 gap-2 p-3 text-xs text-white/30 uppercase tracking-wider">
+                <div className="grid grid-cols-12 gap-2 p-3 text-xs text-white/50 uppercase tracking-wider">
                     <div className="col-span-2">Flight</div>
                     <div className="col-span-4">Destination</div>
                     <div className="col-span-2 text-right">Time</div>

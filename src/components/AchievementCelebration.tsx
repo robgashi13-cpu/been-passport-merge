@@ -86,7 +86,7 @@ export const AchievementCelebration = ({ achievement, onClose, duration = 3000 }
                     <p className="text-white/60 text-sm leading-relaxed mb-4">{achievement.description}</p>
 
                     {/* Celebration message */}
-                    <div className="inline-block px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-white/40 font-medium">
+                    <div className="inline-block px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] text-white/60 font-medium">
                         Keep exploring to unlock more!
                     </div>
                 </div>

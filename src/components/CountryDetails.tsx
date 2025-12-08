@@ -488,7 +488,7 @@ export const CountryDetails = ({
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div className="mt-4 text-[10px] text-white/30 text-center uppercase tracking-widest flex justify-between px-2">
+                                                <div className="mt-4 text-[10px] text-white/50 text-center uppercase tracking-widest flex justify-between px-2">
                                                     <span>Showing {Math.min(visibleCitiesCount, filteredCities.length)} of {filteredCities.length}</span>
                                                     <span>{Math.round((Math.min(visibleCitiesCount, filteredCities.length) / filteredCities.length) * 100)}% Loaded</span>
                                                 </div>
@@ -530,7 +530,7 @@ export const CountryDetails = ({
                                                             {cities.length > 0 && (
                                                                 <span className="text-xs text-muted-foreground font-numbers">{visitedCount}/{cities.length}</span>
                                                             )}
-                                                            <ArrowRight className={`w-4 h-4 text-white/30 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
+                                                            <ArrowRight className={`w-4 h-4 text-white/50 transition-transform duration-300 ${isExpanded ? 'rotate-90' : ''}`} />
                                                         </div>
                                                     </button>
 
@@ -568,7 +568,7 @@ export const CountryDetails = ({
                                                                     })}
                                                                 </div>
                                                             ) : (
-                                                                <div className="text-center py-4 text-xs text-white/30">
+                                                                <div className="text-center py-4 text-xs text-white/50">
                                                                     No cities found in this region.
                                                                 </div>
                                                             )}

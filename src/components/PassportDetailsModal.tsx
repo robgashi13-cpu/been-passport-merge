@@ -100,7 +100,7 @@ export const PassportDetailsModal = ({ isOpen, onClose, userPassportCode, passpo
                         </TabsList>
 
                         <TabsContent value="access" className="mt-0 space-y-4 animate-fade-in">
-                            <div className="flex items-center justify-between text-sm text-white/40 mb-2">
+                            <div className="flex items-center justify-between text-sm text-white/60 mb-2">
                                 <span>Destination ({accessList.length})</span>
                                 <span>Status</span>
                             </div>
@@ -132,7 +132,7 @@ export const PassportDetailsModal = ({ isOpen, onClose, userPassportCode, passpo
                                             }`}
                                     >
                                         <div className="flex items-center gap-4">
-                                            <div className={`w-8 h-8 flex items-center justify-center font-bold rounded-lg ${idx < 3 ? 'text-luxury-gold bg-luxury-gold/10' : 'text-white/40 bg-white/5'
+                                            <div className={`w-8 h-8 flex items-center justify-center font-bold rounded-lg ${idx < 3 ? 'text-luxury-gold bg-luxury-gold/10' : 'text-white/60 bg-white/5'
                                                 }`}>
                                                 #{p.passportRank}
                                             </div>
@@ -144,7 +144,7 @@ export const PassportDetailsModal = ({ isOpen, onClose, userPassportCode, passpo
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <Globe className="w-4 h-4 text-white/40" />
+                                            <Globe className="w-4 h-4 text-white/60" />
                                             <span className="font-bold text-white">{p.visaFreeDestinations}</span>
                                         </div>
                                     </div>

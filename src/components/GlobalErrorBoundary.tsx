@@ -43,7 +43,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
                         <code className="text-xs text-red-400 font-mono block mb-2">
                             {this.state.error?.toString()}
                         </code>
-                        <pre className="text-[10px] text-white/40 font-mono whitespace-pre-wrap">
+                        <pre className="text-[10px] text-white/60 font-mono whitespace-pre-wrap">
                             {this.state.errorInfo?.componentStack}
                         </pre>
                     </div>

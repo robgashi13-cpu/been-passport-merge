@@ -79,7 +79,7 @@ const ProgressRing = ({ percentage, visited, total, size }: ProgressRingProps) =
           {animatedPercentage}%
         </span>
         {!isCompact && !isMedium && (
-          <span className="text-[10px] uppercase font-bold tracking-widest text-white/40 mt-1">World Explored</span>
+          <span className="text-[10px] uppercase font-bold tracking-widest text-white/60 mt-1">World Explored</span>
         )}
       </div>
     </div>
