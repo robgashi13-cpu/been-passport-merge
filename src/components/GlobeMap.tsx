@@ -200,16 +200,30 @@ const GlobeMap = ({ visitedCountries, toggleVisited, userPassportCode, heldVisas
             // @ts-ignore - setFog(null) removes fog entirely
             mapInstance.setFog(null);
 
-            // Remove any sky/atmosphere layers that might exist
+            // Remove any unwanted layers (sky, atmosphere, circles, labels, symbols)
             const style = mapInstance.getStyle();
             if (style && style.layers) {
+                const layersToRemove: string[] = [];
                 style.layers.forEach((layer: any) => {
+                    // Remove sky/space/star layers
                     if (layer.type === 'sky' || layer.id.includes('sky') || layer.id.includes('space') || layer.id.includes('star')) {
-                        try {
-                            mapInstance.removeLayer(layer.id);
-                        } catch (e) {
-                            // Layer might not exist, ignore
-                        }
+                        layersToRemove.push(layer.id);
+                    }
+                    // Remove all circle layers (except our Kosovo)
+                    if (layer.type === 'circle' && layer.id !== 'kosovo-fill') {
+                        layersToRemove.push(layer.id);
+                    }
+                    // Remove all symbol/label layers
+                    if (layer.type === 'symbol') {
+                        layersToRemove.push(layer.id);
+                    }
+                });
+
+                layersToRemove.forEach(id => {
+                    try {
+                        mapInstance.removeLayer(id);
+                    } catch (e) {
+                        // Layer might not exist, ignore
                     }
                 });
             }
