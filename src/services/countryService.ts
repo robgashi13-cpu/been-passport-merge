@@ -124,3 +124,21 @@ export const getRichCountryData = (code: string): RichCountryInfo => {
     // Fallback? We could try to map some logic, but for now return default
     return DEFAULT_RICH_DATA;
 };
+
+// ------------------------------------------------------------------
+// 4. Cities Data (CountriesNow API)
+// ------------------------------------------------------------------
+export const fetchCountryCities = async (countryName: string): Promise<string[]> => {
+    try {
+        const response = await axios.post('https://countriesnow.space/api/v0.1/countries/cities', {
+            country: countryName
+        });
+        if (response.data && !response.data.error) {
+            return response.data.data;
+        }
+        return [];
+    } catch (error) {
+        console.warn(`Failed to fetch cities for ${countryName}`, error);
+        return [];
+    }
+};

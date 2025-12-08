@@ -1,9 +1,9 @@
-import { fetchCountryData, CountryExtendedData, getStaticTravelInfo, getRichCountryData, RichCountryInfo, fetchCapitalWeather, getWeatherDescription } from '@/services/countryService';
+import { fetchCountryData, CountryExtendedData, getStaticTravelInfo, getRichCountryData, RichCountryInfo, fetchCapitalWeather, getWeatherDescription, fetchCountryCities } from '@/services/countryService';
 import { fetchCountrySummary, WikiSummary } from '@/services/wikiService';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Country, getCountryByCode, countries } from '@/data/countries';
 import { getVisaRequirementFromMatrix, getVisaRequirementColor, getVisaRequirementLabel } from '@/data/visaMatrix';
-import { X, Globe, Users, MapPin, Plane, CreditCard, Check, AlertCircle, Phone, Plug, AlertTriangle, Calendar as CalendarIcon, Tag, Heart, DollarSign, CloudSun, Sparkles, Car, Droplet, Syringe, Beer, TrendingUp, Briefcase, Activity } from 'lucide-react';
+import { X, Globe, Users, MapPin, Plane, CreditCard, Check, AlertCircle, Phone, Plug, AlertTriangle, Calendar as CalendarIcon, Tag, Heart, DollarSign, CloudSun, Sparkles, Car, Droplet, Syringe, Beer, TrendingUp, Briefcase, Activity, Building, Search } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface CountryDetailsProps {
@@ -36,6 +36,11 @@ export const CountryDetails = ({
     const [allHolidaysOpen, setAllHolidaysOpen] = useState(false);
     const [isDescExpanded, setDescExpanded] = useState(false);
 
+    // Cities State
+    const [cities, setCities] = useState<string[]>([]);
+    const [citySearch, setCitySearch] = useState('');
+    const [isLoadingCities, setIsLoadingCities] = useState(false);
+
     // Initial data fetch
     useEffect(() => {
         if (country?.code) {
@@ -54,9 +59,17 @@ export const CountryDetails = ({
 
             setRichData(getRichCountryData(country.code));
 
+
             // AI/Wiki Data
             fetchCountrySummary(country.name).then(summary => {
                 if (summary) setWikiSummary(summary);
+            });
+
+            // Fetch Cities
+            setIsLoadingCities(true);
+            fetchCountryCities(country.name).then(cityList => {
+                setCities(cityList);
+                setIsLoadingCities(false);
             });
         }
     }, [country?.code, country.name]);
@@ -105,11 +118,15 @@ export const CountryDetails = ({
 
     const currencyCode = extendedData?.currencies ? Object.keys(extendedData.currencies)[0] : null;
 
-    // Passport Power List (Where they can go)
     const visaFreeAccessList = countries.filter(c => {
         const req = getVisaRequirementFromMatrix(country.code, c.code);
         return req?.requirement === 'visa-free' || req?.requirement === 'visa-on-arrival';
     }).slice(0, 50);
+
+    const filteredCities = useMemo(() => {
+        if (!citySearch) return cities;
+        return cities.filter(c => c.toLowerCase().includes(citySearch.toLowerCase()));
+    }, [cities, citySearch]);
 
     const content = (
         <div className={`bg-black/95 backdrop-blur-2xl border border-white/10 w-full animate-scale-in flex flex-col relative overflow-hidden ${isModal ? 'rounded-2xl max-w-2xl max-h-[90vh]' : 'h-full bg-transparent border-none animate-none'}`}>
@@ -158,6 +175,7 @@ export const CountryDetails = ({
                         <div className="sticky top-0 z-40 bg-transparent pt-2 pb-2 -mx-4 px-4 backdrop-blur-xl transition-all">
                             <TabsList className="flex w-full overflow-x-auto no-scrollbar gap-2 bg-transparent p-0 border-none h-auto">
                                 <TabsTrigger value="overview" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:backdrop-blur-md data-[state=active]:border-white/10 text-white/40 hover:text-white/80 border border-transparent">Overview</TabsTrigger>
+                                <TabsTrigger value="cities" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:backdrop-blur-md data-[state=active]:border-white/10 text-white/40 hover:text-white/80 border border-transparent">Cities</TabsTrigger>
                                 <TabsTrigger value="visa" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:backdrop-blur-md data-[state=active]:border-white/10 text-white/40 hover:text-white/80 border border-transparent">Visa</TabsTrigger>
                                 <TabsTrigger value="transport" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:backdrop-blur-md data-[state=active]:border-white/10 text-white/40 hover:text-white/80 border border-transparent">Transport</TabsTrigger>
                                 <TabsTrigger value="weather" className="flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all data-[state=active]:bg-white/10 data-[state=active]:text-white data-[state=active]:backdrop-blur-md data-[state=active]:border-white/10 text-white/40 hover:text-white/80 border border-transparent">Weather</TabsTrigger>
@@ -254,6 +272,48 @@ export const CountryDetails = ({
                                             <span className="font-numbers text-xs text-white/50 bg-white/5 px-2 py-1 rounded-md">{h.date}</span>
                                         </div>
                                     ))}
+                                </div>
+                            </div>
+                        </TabsContent>
+
+                        {/* CITIES TAB */}
+                        <TabsContent value="cities" className="space-y-4 mt-2 animate-slide-up">
+                            <div className="bg-white/5 rounded-3xl p-5 border border-white/5 min-h-[300px]">
+                                <h3 className="font-display font-bold text-lg mb-4 flex items-center gap-2"><Building className="w-5 h-5 text-white/60" /> Major Cities</h3>
+
+                                {/* Search */}
+                                <div className="relative mb-4">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search cities..."
+                                        value={citySearch}
+                                        onChange={(e) => setCitySearch(e.target.value)}
+                                        className="w-full bg-black/20 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white placeholder-white/30 focus:outline-none focus:border-white/30 transition-colors"
+                                    />
+                                </div>
+
+                                {isLoadingCities ? (
+                                    <div className="flex flex-col items-center justify-center py-10 opacity-50">
+                                        <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin mb-2" />
+                                        <span className="text-xs text-white/50">Loading cities...</span>
+                                    </div>
+                                ) : cities.length > 0 ? (
+                                    <div className="grid grid-cols-2 gap-2 max-h-[400px] overflow-y-auto custom-scrollbar pr-1">
+                                        {filteredCities.map((city, i) => (
+                                            <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-black/20 hover:bg-white/5 transition-colors border border-transparent hover:border-white/5">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-white/20 flex-shrink-0" />
+                                                <span className="text-sm text-white/80 truncate">{city}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-10 text-white/40 text-sm">
+                                        No cities found.
+                                    </div>
+                                )}
+                                <div className="mt-4 text-[10px] text-white/30 text-center uppercase tracking-widest">
+                                    Total: {filteredCities.length}
                                 </div>
                             </div>
                         </TabsContent>
