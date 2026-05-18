@@ -33,8 +33,12 @@ export const ExploreDestinations = ({ onCountryClick }: ExploreDestinationsProps
 
     return (
         <div className="space-y-8 animate-fade-in pb-10">
-            {/* Hero Section - NOT CLICKABLE */}
-            <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-8 md:p-12 min-h-[400px] flex flex-col justify-end group transition-all">
+            {/* Hero Section */}
+            <button
+                type="button"
+                onClick={() => handleCityClick(featured)}
+                className="relative overflow-hidden rounded-[2rem] border border-border/50 p-8 md:p-12 min-h-[400px] flex flex-col justify-end group transition-all text-left w-full"
+            >
 
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
@@ -76,7 +80,7 @@ export const ExploreDestinations = ({ onCountryClick }: ExploreDestinationsProps
                         ))}
                     </div>
                 </div>
-            </div>
+            </button>
 
             {/* Quick Stats Grid - Removed per user request */}
 
@@ -111,8 +115,10 @@ const DestinationCard = ({ destination, rank, onClick }: DestinationCardProps) =
     const country = getCountryByCode(destination.countryCode);
 
     return (
-        <div
-            className="group relative h-[320px] rounded-3xl overflow-hidden border border-border/50 transition-all duration-500 shadow-2xl"
+        <button
+            type="button"
+            onClick={onClick}
+            className="group relative h-[320px] rounded-3xl overflow-hidden border border-border/50 transition-all duration-500 shadow-2xl text-left w-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
         >
             {/* Background Image */}
             <div className="absolute inset-0 z-0">
@@ -168,6 +174,6 @@ const DestinationCard = ({ destination, rank, onClick }: DestinationCardProps) =
                     </div>
                 </div>
             </div>
-        </div>
+        </button>
     );
 };

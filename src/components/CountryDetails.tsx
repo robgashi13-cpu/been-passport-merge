@@ -1,5 +1,5 @@
 import { fetchCountryData, CountryExtendedData, getStaticTravelInfo, getRichCountryData, RichCountryInfo, fetchCountryCities, fetchCountryStates, fetchStateCities } from '@/services/countryService';
-import { fetchCountrySummary, WikiSummary } from '@/services/wikiService';
+import { cacheCountrySummary, fetchCountrySummary, getCachedCountrySummary, WikiSummary } from '@/services/wikiService';
 import { useUser } from '@/contexts/UserContext';
 import { useEffect, useState, useMemo } from 'react';
 import { Country, getCountryByCode, countries } from '@/data/countries';
@@ -98,10 +98,18 @@ export const CountryDetails = ({
             setRichData(rich);
 
 
-            // AI/Wiki Data
-            fetchCountrySummary(country.name).then(summary => {
-                if (summary) setWikiSummary(summary);
-            });
+            // AI/Wiki insight data is cached permanently by country code so repeat opens do not spend API/network calls.
+            const cachedSummary = getCachedCountrySummary(country.code);
+            if (cachedSummary) {
+                setWikiSummary(cachedSummary);
+            } else {
+                fetchCountrySummary(country.name).then(summary => {
+                    if (summary) {
+                        cacheCountrySummary(country.code, summary);
+                        setWikiSummary(summary);
+                    }
+                });
+            }
 
             // Fetch Cities
             setIsLoadingCities(true);

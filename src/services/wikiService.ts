@@ -15,6 +15,40 @@ export interface WikiSummary {
     };
 }
 
+const SUMMARY_CACHE_KEY = 'wanderpass_country_insight_cache_v1';
+
+const readSummaryCache = (): Record<string, WikiSummary> => {
+    if (typeof window === 'undefined') return {};
+
+    try {
+        const cached = window.localStorage.getItem(SUMMARY_CACHE_KEY);
+        return cached ? JSON.parse(cached) : {};
+    } catch (error) {
+        console.warn('Failed to read country insight cache', error);
+        return {};
+    }
+};
+
+const writeSummaryCache = (cache: Record<string, WikiSummary>) => {
+    if (typeof window === 'undefined') return;
+
+    try {
+        window.localStorage.setItem(SUMMARY_CACHE_KEY, JSON.stringify(cache));
+    } catch (error) {
+        console.warn('Failed to persist country insight cache', error);
+    }
+};
+
+export const getCachedCountrySummary = (countryCode: string): WikiSummary | null => {
+    return readSummaryCache()[countryCode] || null;
+};
+
+export const cacheCountrySummary = (countryCode: string, summary: WikiSummary) => {
+    const cache = readSummaryCache();
+    cache[countryCode] = summary;
+    writeSummaryCache(cache);
+};
+
 export const fetchCountrySummary = async (countryName: string): Promise<WikiSummary | null> => {
     try {
         // Handle common name mismatches 

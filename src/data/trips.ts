@@ -26,53 +26,85 @@ export interface TripStatistics {
     daysByTransport: Record<string, number>;
 }
 
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+export const normalizeTripDate = (value: Date | string): Date => {
+    const date = value instanceof Date ? new Date(value) : new Date(value);
+    date.setHours(0, 0, 0, 0);
+    return date;
+};
+
+const dateKey = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const getTripDateKeys = (trip: TripEntry): string[] => {
+    const start = normalizeTripDate(trip.startDate);
+    const end = normalizeTripDate(trip.endDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return [];
+
+    const rangeStart = start <= end ? start : end;
+    const rangeEnd = start <= end ? end : start;
+    const keys: string[] = [];
+
+    for (let cursor = new Date(rangeStart); cursor <= rangeEnd; cursor.setDate(cursor.getDate() + 1)) {
+        keys.push(dateKey(cursor));
+    }
+
+    return keys;
+};
+
 // Calculate days between two dates or from a trip entry
 export const calculateDays = (startOrTrip: Date | TripEntry, end?: Date): number => {
     let s: Date, e: Date;
 
     if (typeof startOrTrip === 'object' && 'startDate' in startOrTrip) {
-        s = new Date(startOrTrip.startDate);
-        e = new Date(startOrTrip.endDate);
+        s = normalizeTripDate(startOrTrip.startDate);
+        e = normalizeTripDate(startOrTrip.endDate);
     } else {
-        s = new Date(startOrTrip as Date);
-        e = new Date(end as Date);
+        s = normalizeTripDate(startOrTrip as Date);
+        e = normalizeTripDate(end as Date);
     }
 
-    // Normalize to midnight to ignore time differences
-    s.setHours(0, 0, 0, 0);
-    e.setHours(0, 0, 0, 0);
+    if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return 0;
 
     // Calculate difference in milliseconds
-    const diffTime = e.getTime() - s.getTime();
+    const diffTime = Math.abs(e.getTime() - s.getTime());
 
     // If same day, return 1
     if (diffTime === 0) return 1;
 
     // Otherwise, calculate days and add 1 to include both start and end
-    const diffDays = Math.abs(diffTime) / (1000 * 60 * 60 * 24);
+    const diffDays = diffTime / MS_PER_DAY;
     return Math.floor(diffDays) + 1;
 };
 
 // Calculate total days from multiple trips
 export const calculateTotalDays = (trips: TripEntry[]): number => {
-    return trips.reduce((total, trip) => {
-        return total + calculateDays(trip);
-    }, 0);
+    const uniqueTravelDays = new Set<string>();
+    trips.forEach(trip => {
+        getTripDateKeys(trip).forEach(key => uniqueTravelDays.add(`${trip.countryCode}:${key}`));
+    });
+    return uniqueTravelDays.size;
 };
 
 // Calculate days per country (returns by countryCode for flag lookup)
 export const calculateDaysByCountry = (trips: TripEntry[]): Record<string, number> => {
     const daysByCountry: Record<string, number> = {};
 
-    trips.forEach(trip => {
-        const days = calculateDays(trip);
-        const code = trip.countryCode;
+    const daysByCountrySet: Record<string, Set<string>> = {};
 
-        if (daysByCountry[code]) {
-            daysByCountry[code] += days;
-        } else {
-            daysByCountry[code] = days;
-        }
+    trips.forEach(trip => {
+        const code = trip.countryCode;
+        if (!daysByCountrySet[code]) daysByCountrySet[code] = new Set<string>();
+        getTripDateKeys(trip).forEach(key => daysByCountrySet[code].add(key));
+    });
+
+    Object.entries(daysByCountrySet).forEach(([code, days]) => {
+        daysByCountry[code] = days.size;
     });
 
     return daysByCountry;
@@ -130,10 +162,12 @@ export const calculateTripStatistics = (trips: TripEntry[]): TripStatistics => {
 
 // Find current active trips
 export const getCurrentTrips = (trips: TripEntry[]): TripEntry[] => {
-    const now = new Date();
-    return trips.filter(trip =>
-        trip.startDate <= now && trip.endDate >= now
-    );
+    const now = normalizeTripDate(new Date());
+    return trips.filter(trip => {
+        const start = normalizeTripDate(trip.startDate);
+        const end = normalizeTripDate(trip.endDate);
+        return start <= now && end >= now;
+    });
 };
 
 // Get trips for a specific month

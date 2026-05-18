@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Shield, Moon, User, Heart, X, ChevronRight, Globe, Trophy } from 'lucide-react';
 import { createPortal } from 'react-dom';
-import { countries } from '@/data/countries';
+import { getGallupSafetyCountries } from '@/data/countries';
 
 interface SafetyWidgetProps {
     countryName: string;
@@ -43,9 +43,7 @@ export const SafetyWidget = ({
     }, [showModal]);
 
     // Compute rankings on the fly
-    const sortedCountries = [...countries]
-        .filter(c => c.safetyScore !== undefined)
-        .sort((a, b) => (b.safetyScore || 0) - (a.safetyScore || 0));
+    const sortedCountries = getGallupSafetyCountries();
 
     const getScoreColor = (score: number) => {
         if (!score) return "text-white/40";

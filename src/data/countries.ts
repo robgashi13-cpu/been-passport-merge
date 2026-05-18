@@ -228,6 +228,72 @@ export const countries: Country[] = [
     { code: "VU", name: "Vanuatu", continent: "Oceania", passportRank: 35, visaFreeDestinations: 143, flagEmoji: "🇻🇺", capital: "Port Vila", population: 321409, coordinates: [-16, 167], region: "Melanesia", currency: "VUV", safetyScore: 75, safetyLevel: "High" },
 ];
 
+// Gallup Global Safety Report 2025, Law and Order Index Scores for 2024.
+// Countries not included in Gallup's 144-country table keep their existing fallback score.
+export const gallupLawOrderScores2024: Record<string, number> = {
+  TJ: 97, SG: 95, XK: 94, CN: 93, IS: 93, VN: 93, NO: 92,
+  AT: 91, BH: 91, OM: 91, SA: 91, CH: 91, UZ: 91,
+  DK: 90, SV: 90, FI: 90, ME: 90,
+  HK: 89, ID: 89, TW: 89,
+  DZ: 88, EE: 88, GE: 88, DE: 88, KW: 88, PT: 88, SE: 88, AE: 88,
+  AZ: 87, CZ: 87, EG: 87, IQ: 87, IE: 87, NL: 87, SI: 87,
+  BE: 86, JP: 86, LT: 86, KR: 86, ES: 86,
+  AL: 85, HR: 85, FR: 85, JO: 85, KG: 85,
+  AM: 84, IN: 84, IR: 84, PH: 84, RS: 84, SK: 84, GB: 84, US: 84,
+  KH: 83, HU: 83, MY: 83, MT: 83, PL: 83,
+  CA: 82, IL: 82, IT: 82, KZ: 82, LV: 82,
+  BG: 81, BF: 81, LA: 81, MU: 81, MK: 81, RO: 81, LK: 81, TZ: 81, TH: 81,
+  AU: 80, LY: 80, MD: 80, NP: 80, NZ: 80,
+  RU: 79, RW: 79, TR: 79,
+  BD: 78, BA: 78, MA: 78, PA: 78,
+  CI: 77, CY: 77, ET: 77,
+  BZ: 76, CR: 76, NI: 76, PK: 76, SN: 76,
+  LB: 75, ML: 75, UY: 75,
+  BJ: 74, BR: 74, GT: 74, TN: 74, UA: 74,
+  GR: 73, NE: 73, PY: 73, PS: 73,
+  GH: 72, MN: 72, NA: 72,
+  KM: 71, GN: 71, HN: 71, VE: 71,
+  CO: 70,
+  AR: 69, DO: 69, MZ: 69, TG: 69,
+  CL: 68, MG: 68, MR: 68, MX: 68, ZW: 68,
+  LS: 67,
+  SZ: 66, MM: 66, TT: 66,
+  GM: 65, MW: 65,
+  ZM: 64,
+  BO: 63, GA: 63,
+  BW: 62, CM: 62, EC: 62, KE: 62, NG: 62,
+  CD: 61, PE: 61, ZA: 61,
+  CG: 60, UG: 60,
+  TD: 58, SL: 55, LR: 49,
+};
+
+const safetyLevelForScore = (score: number): Country['safetyLevel'] => {
+  if (score >= 85) return 'Very High';
+  if (score >= 75) return 'High';
+  if (score >= 65) return 'Moderate';
+  return 'Low';
+};
+
+countries.forEach(country => {
+  const safetyScore = gallupLawOrderScores2024[country.code];
+  if (safetyScore !== undefined) {
+    country.safetyScore = safetyScore;
+    country.safetyLevel = safetyLevelForScore(safetyScore);
+  }
+});
+
+export const getGallupSafetyCountries = (): Country[] => {
+  return countries
+    .filter(country => gallupLawOrderScores2024[country.code] !== undefined)
+    .sort((a, b) => (b.safetyScore || 0) - (a.safetyScore || 0));
+};
+
+export const getSafetyRankByCode = (code: string): number | undefined => {
+  const rankedCountries = getGallupSafetyCountries();
+  const rank = rankedCountries.findIndex(country => country.code === code) + 1;
+  return rank > 0 ? rank : undefined;
+};
+
 export const continents = ["All", "Europe", "Asia", "North America", "South America", "Africa", "Oceania"];
 
 export const getCountryByCode = (code: string): Country | undefined => {

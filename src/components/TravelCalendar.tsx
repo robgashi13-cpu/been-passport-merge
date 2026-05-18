@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { TripEntry, calculateDays, calculateDaysByCountry, getCurrentTrips } from '@/data/trips';
+import { TripEntry, calculateDaysByCountry, calculateTotalDays, getCurrentTrips, normalizeTripDate } from '@/data/trips';
 import { countries, getCountryByCode } from '@/data/countries';
 import { ChevronLeft, ChevronRight, MapPin, Plane, Calendar, Clock } from 'lucide-react';
 
@@ -41,9 +41,8 @@ export const TravelCalendar = ({ trips, onDateClick, onClearAll }: TravelCalenda
 
             // Find trips that include this date
             const dayTrips = trips.filter(trip => {
-                const start = new Date(trip.startDate);
-                const end = new Date(trip.endDate);
-                start.setHours(0, 0, 0, 0);
+                const start = normalizeTripDate(trip.startDate);
+                const end = normalizeTripDate(trip.endDate);
                 end.setHours(23, 59, 59, 999);
                 date.setHours(12, 0, 0, 0);
                 return date >= start && date <= end;
@@ -67,7 +66,7 @@ export const TravelCalendar = ({ trips, onDateClick, onClearAll }: TravelCalenda
     // Current trips
     const activeTrips = getCurrentTrips(trips);
     const daysByCountry = calculateDaysByCountry(trips);
-    const totalDays = trips.reduce((sum, trip) => sum + calculateDays(trip), 0);
+    const totalDays = calculateTotalDays(trips);
 
     return (
         <div className="space-y-4 animate-fade-in">

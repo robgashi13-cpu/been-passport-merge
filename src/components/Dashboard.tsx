@@ -8,7 +8,7 @@ import { LevelCard } from './Achievements';
 import { SafetyWidget } from './SafetyWidget';
 import { useSmartLocation } from '@/hooks/useSmartLocation';
 import { useLocationNotifications } from '@/hooks/useLocationNotifications';
-import { getCountryByCode, countries } from '@/data/countries';
+import { getCountryByCode, getSafetyRankByCode } from '@/data/countries';
 import { VisitedCountriesModal } from './VisitedCountriesModal';
 import { PassportDetailsModal } from './PassportDetailsModal';
 import { FlightBoardModal } from './FlightBoardModal';
@@ -70,14 +70,7 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
   // Calculate global safety ranking based on Gallup scores
   const safetyRank = useMemo(() => {
     if (!currentCountry?.safetyScore) return undefined;
-
-    // Sort countries by safety score descending and find rank
-    const countriesWithScores = countries
-      .filter(c => c.safetyScore !== undefined)
-      .sort((a, b) => (b.safetyScore || 0) - (a.safetyScore || 0));
-
-    const rank = countriesWithScores.findIndex(c => c.code === currentCountry.code) + 1;
-    return rank > 0 ? rank : undefined;
+    return getSafetyRankByCode(currentCountry.code);
   }, [currentCountry]);
 
   // Granular scores based on main score with realistic variance

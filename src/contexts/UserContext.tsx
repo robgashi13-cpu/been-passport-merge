@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Preferences } from '@capacitor/preferences';
 import { User, Session } from '@supabase/supabase-js';
 import { countries } from '@/data/countries';
+import { deriveTripsFromFlightLogs, parseStoredFlightLogs } from '@/data/flightLogs';
 
 export interface UserData {
     id: string;
@@ -93,11 +94,24 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }, [guestVisited, guestPassport, guestBucket, guestLived, guestHeld, guestCities, user]);
 
     useEffect(() => {
+        const mergeFlightLogTrips = (baseTrips: any[]) => {
+            const flightTrips = deriveTripsFromFlightLogs(parseStoredFlightLogs());
+            if (flightTrips.length === 0) return baseTrips;
+
+            const existingIds = new Set(baseTrips.map(trip => trip.id));
+            return [
+                ...baseTrips,
+                ...flightTrips.filter(trip => !existingIds.has(trip.id)),
+            ];
+        };
+
         const savedTrips = localStorage.getItem('wanderlust_trips');
         if (savedTrips) {
             try {
-                setTrips(JSON.parse(savedTrips));
+                setTrips(mergeFlightLogTrips(JSON.parse(savedTrips)));
             } catch (e) { console.error(e); }
+        } else {
+            setTrips(mergeFlightLogTrips([]));
         }
     }, []);
 
@@ -153,7 +167,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                 // @ts-ignore
                 const dbTrips = travelData?.trips || [];
                 if (Array.isArray(dbTrips) && dbTrips.length > 0) {
-                    setTrips(dbTrips);
+                    const flightTrips = deriveTripsFromFlightLogs(parseStoredFlightLogs());
+                    const existingIds = new Set(dbTrips.map((trip: any) => trip.id));
+                    setTrips([
+                        ...dbTrips,
+                        ...flightTrips.filter(trip => !existingIds.has(trip.id)),
+                    ]);
                 }
 
                 setUser(userData);
