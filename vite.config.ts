@@ -1,20 +1,19 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig({
   server: {
     host: "::",
     port: 8080,
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  plugins: [],
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-      "idb-keyval": path.resolve(__dirname, "./src/lib/idb-keyval.ts"),
-      "@lovable.dev/cloud-auth-js": path.resolve(__dirname, "./src/lib/lovable-cloud-auth.ts"),
-    },
+    alias: [
+      { find: "@", replacement: path.resolve(__dirname, "./src") },
+      { find: /^lucide-react$/, replacement: path.resolve(__dirname, "./src/lib/lucide-react.ts") },
+      { find: "idb-keyval", replacement: path.resolve(__dirname, "./src/lib/idb-keyval.ts") },
+      { find: "@lovable.dev/cloud-auth-js", replacement: path.resolve(__dirname, "./src/lib/lovable-cloud-auth.ts") },
+    ],
   },
-}));
+});
