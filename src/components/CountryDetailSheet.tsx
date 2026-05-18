@@ -1,7 +1,8 @@
-import { Drawer } from 'vaul';
-import { CountryDetails } from './CountryDetails'; // Reuse existing component if possible
-import { Country, getCountryByCode } from '@/data/countries';
-import { useState, useEffect } from 'react';
+import { CountryDetails } from './CountryDetails';
+import { getCountryByCode } from '@/data/countries';
+import { createPortal } from 'react-dom';
+import { useEffect } from 'react';
+import { X } from 'lucide-react';
 
 interface CountryDetailSheetProps {
     countryCode: string | null;
@@ -12,6 +13,10 @@ interface CountryDetailSheetProps {
     onToggleVisited: () => void;
 }
 
+/**
+ * Centered, fixed liquid-glass modal that overlays everything on the screen
+ * when a country is tapped on the globe. Replaces the previous bottom drawer.
+ */
 export const CountryDetailSheet = ({
     countryCode,
     isOpen,
@@ -22,42 +27,76 @@ export const CountryDetailSheet = ({
 }: CountryDetailSheetProps) => {
     const country = countryCode ? getCountryByCode(countryCode) : null;
 
-    if (!country) return null;
+    // ESC to close + lock body scroll while open
+    useEffect(() => {
+        if (!isOpen) return;
+        const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onOpenChange(false); };
+        window.addEventListener('keydown', onKey);
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => {
+            window.removeEventListener('keydown', onKey);
+            document.body.style.overflow = prev;
+        };
+    }, [isOpen, onOpenChange]);
 
-    const [snap, setSnap] = useState<number | string | null>(0.25);
+    if (!isOpen || !country) return null;
 
-    return (
-        <Drawer.Root
-            open={isOpen}
-            onOpenChange={onOpenChange}
-            snapPoints={[0.25, 0.45, 0.9]}
-            activeSnapPoint={snap}
-            setActiveSnapPoint={setSnap}
-            shouldScaleBackground={false}
-            modal={false}
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[100000] flex items-center justify-center p-3 sm:p-6 animate-fade-in"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${country.name} details`}
         >
-            <Drawer.Portal>
-                <Drawer.Overlay className="fixed inset-0 bg-transparent pointer-events-none z-[10001]" />
-                <Drawer.Content className="bg-[#1a1a1a] flex flex-col rounded-t-[20px] h-[96%] fixed left-0 right-0 z-[10002] border-t border-white/10 outline-none shadow-2xl" style={{ bottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
-                    <div className="p-0 bg-[#1a1a1a] rounded-t-[20px] flex-1 h-full flex flex-col">
-                        <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-zinc-600 my-4" />
-                        <div className="max-w-md mx-auto h-full w-full overflow-y-auto custom-scrollbar px-4 pb-20">
-                            <Drawer.Title className="font-medium mb-4 text-white sr-only">
-                                {country.name} Details
-                            </Drawer.Title>
-                            {/* Content */}
-                            <CountryDetails
-                                country={country}
-                                userPassportCode={userPassportCode}
-                                isVisited={isVisited}
-                                onClose={() => onOpenChange(false)}
-                                onToggleVisited={onToggleVisited}
-                                isModal={false}
-                            />
-                        </div>
-                    </div>
-                </Drawer.Content>
-            </Drawer.Portal>
-        </Drawer.Root>
+            {/* Backdrop */}
+            <button
+                aria-label="Close"
+                onClick={() => onOpenChange(false)}
+                className="absolute inset-0 bg-black/65 backdrop-blur-md"
+            />
+
+            {/* Card */}
+            <div
+                className="relative w-full max-w-2xl max-h-[88vh] flex flex-col overflow-hidden
+                           rounded-[28px] border border-white/12 bg-[#06080f]/85 backdrop-blur-2xl
+                           shadow-[0_30px_120px_-20px_rgba(0,0,0,0.9),0_0_0_1px_rgba(255,255,255,0.04)_inset]
+                           animate-scale-in"
+            >
+                {/* Liquid glow ring */}
+                <div
+                    aria-hidden
+                    className="pointer-events-none absolute -inset-px rounded-[28px] opacity-60"
+                    style={{
+                        background:
+                            'radial-gradient(120% 60% at 50% 0%, rgba(124,198,255,0.18), transparent 60%)',
+                    }}
+                />
+
+                {/* Close button */}
+                <button
+                    type="button"
+                    onClick={() => onOpenChange(false)}
+                    aria-label="Close details"
+                    className="absolute right-3 top-3 z-10 grid h-9 w-9 place-items-center rounded-full
+                               border border-white/12 bg-white/5 text-white/80 backdrop-blur-xl
+                               transition hover:bg-white/12 hover:text-white"
+                >
+                    <X className="h-4 w-4" />
+                </button>
+
+                <div className="flex-1 overflow-y-auto overscroll-contain">
+                    <CountryDetails
+                        country={country}
+                        userPassportCode={userPassportCode}
+                        isVisited={isVisited}
+                        onClose={() => onOpenChange(false)}
+                        onToggleVisited={onToggleVisited}
+                        isModal={false}
+                    />
+                </div>
+            </div>
+        </div>,
+        document.body
     );
 };

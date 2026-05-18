@@ -28,6 +28,8 @@ export const useTravelData = () => {
     bucketList,
     heldVisas,
     passportCode,
+    flightHistory,
+    logFlight,
     updateVisitedCountries,
     updateHeldVisas,
     updateBucketList,
@@ -37,10 +39,18 @@ export const useTravelData = () => {
 
   // Unified Setters (Context handles user vs guest logic now)
   const toggleVisited = (code: string) => {
-    const newList = visitedCountries.includes(code)
+    const isRemoving = visitedCountries.includes(code);
+    const newList = isRemoving
       ? visitedCountries.filter(c => c !== code)
       : [...visitedCountries, code];
     updateVisitedCountries(newList);
+
+    // Log a flight when ADDING a country: previous trip's destination, or passport country as origin.
+    if (!isRemoving) {
+      const last = flightHistory[flightHistory.length - 1];
+      const from = last?.to || passportCode;
+      if (from && from !== code) logFlight(from, code);
+    }
   };
 
   const toggleCityVisited = (cityKey: string) => {
@@ -167,5 +177,6 @@ export const useTravelData = () => {
     heldVisas,
     toggleHeldVisa,
     getStats,
+    flightHistory,
   };
 };

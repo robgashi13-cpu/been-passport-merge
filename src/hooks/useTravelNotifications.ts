@@ -86,28 +86,10 @@ export const useTravelNotifications = () => {
         }
     };
 
-    const sendWelcomeNotification = async (countryName: string, flag: string) => {
-        try {
-            await LocalNotifications.schedule({
-                notifications: [
-                    {
-                        title: "Welcome to " + countryName + "! " + flag,
-                        body: "Don't forget to update your travel log!",
-                        id: new Date().getTime(),
-                        schedule: { at: new Date(Date.now() + 1000) }, // 1 sec from now
-                        sound: undefined,
-                        attachments: undefined,
-                        actionTypeId: "",
-                        extra: null
-                    }
-                ]
-            });
-            toast.success(`Welcome to ${countryName}! ${flag}`);
-        } catch (e) {
-            console.error("Notification Error", e);
-            // Fallback to toast if notifications fail (e.g. web)
-            toast.success(`Welcome to ${countryName}! ${flag}`);
-        }
+    // Welcome notifications disabled per user preference — keep no-op so
+    // any code path still calling it is harmless.
+    const sendWelcomeNotification = async (_countryName: string, _flag: string) => {
+        /* intentionally no-op */
     };
 
     return {

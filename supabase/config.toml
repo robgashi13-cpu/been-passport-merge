@@ -1,1 +1,16 @@
 project_id = "jtwtpqofzttbsvzewddm"
+
+[functions.travel-ai]
+verify_jwt = false
+
+[functions.country-tab-ai]
+verify_jwt = false
+
+[functions.flight-facts-ai]
+verify_jwt = false
+
+[functions.verify-travel-data]
+verify_jwt = false
+
+[functions.airport-schedule-ai]
+verify_jwt = false

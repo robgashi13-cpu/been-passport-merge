@@ -2,6 +2,7 @@ import axios from 'axios';
 import { CountryExtendedData, RichCountryInfo } from '@/types/country';
 import { countries } from '@/data/countries';
 import { RICH_COUNTRIES_DB } from '@/data/rich-country-data';
+import { cachedFetch } from '@/services/offlineCache';
 export type { CountryExtendedData, RichCountryInfo }; // Re-export for consumers
 
 // Backwards compatibility wrapper
@@ -16,56 +17,37 @@ export const getStaticTravelInfo = (code: string) => {
     };
 };
 
-const CACHE_KEY = 'country_data_cache';
-const CACHE_DURATION = 1000 * 60 * 60 * 24; // 24 hours
-
-interface CacheEntry {
-    data: CountryExtendedData;
-    timestamp: number;
-}
+const COUNTRY_TTL = 1000 * 60 * 60 * 24 * 7; // 7d
 
 // ------------------------------------------------------------------
-// 1. Basic API Data (RestCountries)
+// 1. Basic API Data (RestCountries) — IndexedDB-cached, offline-first.
 // ------------------------------------------------------------------
+const fetchCountryDataNetwork = async (code: string): Promise<CountryExtendedData | null> => {
+    const response = await axios.get(`https://restcountries.com/v3.1/alpha/${code}`);
+    const data = response.data[0];
+    return {
+        currencies: data.currencies,
+        languages: data.languages,
+        car: data.car,
+        maps: data.maps,
+        timezones: data.timezones,
+        demonyms: data.demonyms,
+        flags: data.flags,
+        coatOfArms: data.coatOfArms,
+        capital: data.capital,
+        capitalInfo: data.capitalInfo,
+        idd: data.idd,
+        population: data.population,
+        region: data.region,
+        subregion: data.subregion,
+        continents: data.continents,
+        area: data.area,
+    };
+};
+
 export const fetchCountryData = async (code: string): Promise<CountryExtendedData | null> => {
     try {
-        const cacheRaw = localStorage.getItem(CACHE_KEY);
-        const cache: Record<string, CacheEntry> = cacheRaw ? JSON.parse(cacheRaw) : {};
-
-        if (cache[code] && Date.now() - cache[code].timestamp < CACHE_DURATION) {
-            return cache[code].data;
-        }
-
-        const response = await axios.get(`https://restcountries.com/v3.1/alpha/${code}`);
-        const data = response.data[0];
-
-        const extendedData: CountryExtendedData = {
-            currencies: data.currencies,
-            languages: data.languages,
-            car: data.car,
-            maps: data.maps,
-            timezones: data.timezones,
-            demonyms: data.demonyms,
-            flags: data.flags,
-            coatOfArms: data.coatOfArms,
-            capital: data.capital,
-            capitalInfo: data.capitalInfo,
-            idd: data.idd,
-            population: data.population,
-            region: data.region,
-            subregion: data.subregion,
-            continents: data.continents,
-            area: data.area
-        };
-
-        cache[code] = {
-            data: extendedData,
-            timestamp: Date.now()
-        };
-        localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
-
-        return extendedData;
-
+        return await cachedFetch(`country:${code}`, () => fetchCountryDataNetwork(code), { ttlMs: COUNTRY_TTL });
     } catch (error) {
         console.warn("Failed to fetch rich country data", error);
         return null;
@@ -183,19 +165,43 @@ const CITY_OVERRIDES: Record<string, string[]> = {
 };
 
 const BASE_URL = 'https://countriesnow.space/api/v0.1/countries';
+const CITY_TTL = 1000 * 60 * 60 * 24 * 7; // 7d
 
-export const fetchCountryStates = async (countryName: string): Promise<{ name: string; state_code: string }[]> => {
+const fetchStatesNetwork = async (countryName: string) => {
+    const response = await fetch(`${BASE_URL}/states`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ country: countryName }),
+    });
+    const data = await response.json();
+    return (!data.error ? (data.data.states || []) : []) as { name: string; state_code: string }[];
+};
+
+const fetchStateCitiesNetwork = async (countryName: string, stateName: string): Promise<string[]> => {
+    const response = await fetch(`${BASE_URL}/state/cities`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ country: countryName, state: stateName }),
+    });
+    const data = await response.json();
+    return (!data.error ? (data.data || []) : []) as string[];
+};
+
+const fetchCitiesNetwork = async (countryName: string): Promise<string[]> => {
+    const response = await fetch(`${BASE_URL}/cities`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ country: countryName }),
+    });
+    const data = await response.json();
+    if (!data.error) return data.data as string[];
+    const localCountry = countries.find(c => c.name.toLowerCase() === countryName.toLowerCase());
+    return localCountry?.capital ? [localCountry.capital] : [];
+};
+
+export const fetchCountryStates = async (countryName: string) => {
     try {
-        const response = await fetch(`${BASE_URL}/states`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ country: countryName })
-        });
-        const data = await response.json();
-        if (!data.error) {
-            return data.data.states || [];
-        }
-        return [];
+        return await cachedFetch(`states:${countryName}`, () => fetchStatesNetwork(countryName), { ttlMs: CITY_TTL });
     } catch (error) {
         console.error('Error fetching states:', error);
         return [];
@@ -204,16 +210,7 @@ export const fetchCountryStates = async (countryName: string): Promise<{ name: s
 
 export const fetchStateCities = async (countryName: string, stateName: string): Promise<string[]> => {
     try {
-        const response = await fetch(`${BASE_URL}/state/cities`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ country: countryName, state: stateName })
-        });
-        const data = await response.json();
-        if (!data.error) {
-            return data.data || [];
-        }
-        return [];
+        return await cachedFetch(`stateCities:${countryName}|${stateName}`, () => fetchStateCitiesNetwork(countryName, stateName), { ttlMs: CITY_TTL });
     } catch (error) {
         console.error('Error fetching state cities:', error);
         return [];
@@ -221,43 +218,15 @@ export const fetchStateCities = async (countryName: string, stateName: string): 
 };
 
 export const fetchCountryCities = async (countryName: string): Promise<string[]> => {
-    // Check overrides first
     const normalizedName = countryName.toLowerCase();
     for (const [key, cities] of Object.entries(CITY_OVERRIDES)) {
-        if (key.toLowerCase() === normalizedName) {
-            return cities;
-        }
+        if (key.toLowerCase() === normalizedName) return cities;
     }
-
     try {
-        const response = await fetch(`${BASE_URL}/cities`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ country: countryName }),
-        });
-
-        const data = await response.json();
-
-        if (!data.error) {
-            return data.data;
-        }
-
-        // Fallback to local capital if API fails or country not found
-        const localCountry = countries.find(c => c.name.toLowerCase() === countryName.toLowerCase());
-        if (localCountry?.capital) {
-            return [localCountry.capital];
-        }
-
-        return [];
+        return await cachedFetch(`cities:${countryName}`, () => fetchCitiesNetwork(countryName), { ttlMs: CITY_TTL });
     } catch (error) {
         console.error('Error fetching cities:', error);
-        // Fallback
         const localCountry = countries.find(c => c.name.toLowerCase() === countryName.toLowerCase());
-        if (localCountry?.capital) {
-            return [localCountry.capital];
-        }
-        return [];
+        return localCountry?.capital ? [localCountry.capital] : [];
     }
 };

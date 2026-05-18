@@ -533,20 +533,6 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
 
         {/* WORLD PASSPORT TAB */}
         <TabsContent value="world-passport" className="mt-6 space-y-4">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-300 border border-blue-400/20">
-                <CreditCard className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="font-display font-bold text-white">World passport rankings</h3>
-                <p className="mt-1 text-sm text-white/55">
-                  This list is view-only. Change your passport from the profile dashboard instead.
-                </p>
-              </div>
-            </div>
-          </div>
-
           <div className="bg-gradient-card rounded-xl border border-border/50 p-4">
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -560,12 +546,13 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
 
             <div className="space-y-2 max-h-[500px] overflow-y-auto">
               {filteredCountries.map((country) => (
-                <div
+                <button
                   key={country.code}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${effectivePassport === country.code
+                  onClick={() => setUserPassport(country.code)}
+                  className={`w - full flex items - center gap - 3 p - 3 rounded - xl transition - all ${effectivePassport === country.code
                     ? 'bg-white/20 ring-2 ring-white/30'
-                    : 'bg-white/5'
-                    }`}
+                    : 'bg-white/5 hover:bg-white/10'
+                    } `}
                 >
                   <div className="w-10 text-center font-display font-bold">
                     {getRankBadge(country.currentRank)}
@@ -576,12 +563,12 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
                     <div className="text-xs text-muted-foreground">{country.continent}</div>
                   </div>
                   <div className="text-right">
-                    <div className={`font-display font-bold ${country.code === effectivePassport ? "text-blue-400" : "text-green-400"}`}>
+                    <div className={`font - display font - bold ${country.code === effectivePassport ? "text-blue-400" : "text-green-400"} `}>
                       {country.dynamicScore}
                     </div>
                     <div className="text-xs text-muted-foreground">visa-free</div>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </div>

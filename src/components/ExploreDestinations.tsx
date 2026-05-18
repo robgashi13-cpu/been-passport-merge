@@ -33,12 +33,8 @@ export const ExploreDestinations = ({ onCountryClick }: ExploreDestinationsProps
 
     return (
         <div className="space-y-8 animate-fade-in pb-10">
-            {/* Hero Section */}
-            <button
-                type="button"
-                onClick={() => handleCityClick(featured)}
-                className="relative overflow-hidden rounded-[2rem] border border-border/50 p-8 md:p-12 min-h-[400px] flex flex-col justify-end group transition-all text-left w-full"
-            >
+            {/* Hero Section - NOT CLICKABLE */}
+            <div className="relative overflow-hidden rounded-[2rem] border border-border/50 p-8 md:p-12 min-h-[400px] flex flex-col justify-end group transition-all">
 
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
@@ -54,7 +50,7 @@ export const ExploreDestinations = ({ onCountryClick }: ExploreDestinationsProps
                     <div className="flex items-center gap-2 mb-4">
                         <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-white border border-white/20 flex items-center gap-1.5 shadow-lg">
                             <Sparkles className="w-3 h-3 text-yellow-400 fill-yellow-400" />
-                            #1 Trending Destination 2025
+                            #1 Trending Destination 2026
                         </span>
                     </div>
 
@@ -80,7 +76,7 @@ export const ExploreDestinations = ({ onCountryClick }: ExploreDestinationsProps
                         ))}
                     </div>
                 </div>
-            </button>
+            </div>
 
             {/* Quick Stats Grid - Removed per user request */}
 
@@ -115,10 +111,8 @@ const DestinationCard = ({ destination, rank, onClick }: DestinationCardProps) =
     const country = getCountryByCode(destination.countryCode);
 
     return (
-        <button
-            type="button"
-            onClick={onClick}
-            className="group relative h-[320px] rounded-3xl overflow-hidden border border-border/50 transition-all duration-500 shadow-2xl text-left w-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+        <div
+            className="group relative h-[320px] rounded-3xl overflow-hidden border border-border/50 transition-all duration-500 shadow-2xl"
         >
             {/* Background Image */}
             <div className="absolute inset-0 z-0">
@@ -174,6 +168,6 @@ const DestinationCard = ({ destination, rank, onClick }: DestinationCardProps) =
                     </div>
                 </div>
             </div>
-        </button>
+        </div>
     );
 };

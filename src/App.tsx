@@ -9,8 +9,18 @@ import Calendar from "./pages/Calendar";
 import NotFound from "./pages/NotFound";
 
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import SyncSplash from "@/components/SyncSplash";
+import { useColdSync } from "@/hooks/useColdSync";
+import { useDailyAIVerify } from "@/hooks/useDailyAIVerify";
 
 const queryClient = new QueryClient();
+
+// Sits inside <UserProvider> so it can read the user's countries.
+const ColdSyncOverlay = () => {
+  const { visible, progress, label, online, skip } = useColdSync();
+  useDailyAIVerify();
+  return <SyncSplash visible={visible} progress={progress} label={label} online={online} onSkip={skip} />;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -19,6 +29,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <ColdSyncOverlay />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
@@ -34,4 +45,3 @@ const App = () => (
 );
 
 export default App;
-

@@ -137,7 +137,8 @@ export const useSmartLocation = () => {
                 // Update global trips
                 const others = trips.filter(t => t.id !== lastTrip.id);
                 updateTrips([...others, updatedTrip]);
-                toast.success(`Extended your trip in ${name}! 📍`);
+                // Welcome / trip-started notifications disabled per user preference
+                return;
                 return;
             }
         }
@@ -161,7 +162,7 @@ export const useSmartLocation = () => {
             createdAt: new Date()
         };
         addTrip(newTrip);
-        toast.success(`Welcome to ${name}! Trip started. 🌍`);
+        // Welcome / trip-started notifications disabled per user preference
     };
 
     return { location, checkLocation };

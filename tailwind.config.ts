@@ -2,13 +2,7 @@ import type { Config } from "tailwindcss";
 
 export default {
   darkMode: ["class"],
-  content: [
-    "./index.html",
-    "./src/App.tsx",
-    "./src/main.tsx",
-    "./src/components/**/*.{tsx}",
-    "./src/pages/**/*.{tsx}",
-  ],
+  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
     container: {
@@ -61,9 +55,9 @@ export default {
         "luxury-black": "#050505",
         "luxury-charcoal": "#0F0F0F",
         "luxury-gold": {
-          DEFAULT: "#D4AF37",
-          light: "#F4D03F",
-          dark: "#AA8C2C"
+          DEFAULT: "#ffffff",
+          light: "#ffffff",
+          dark: "#e5e5e5"
         },
         gold: {
           DEFAULT: "hsl(var(--gold))",

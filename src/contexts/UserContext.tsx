@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Preferences } from '@capacitor/preferences';
 import { User, Session } from '@supabase/supabase-js';
 import { countries } from '@/data/countries';
-import { deriveTripsFromFlightLogs, parseStoredFlightLogs } from '@/data/flightLogs';
 
 export interface UserData {
     id: string;
@@ -37,6 +36,11 @@ interface UserContextType {
     trips: any[];
     addTrip: (trip: any) => void;
     updateTrips: (trips: any[]) => void;
+    // Flight history (chronological trips between countries)
+    flightHistory: FlightLog[];
+    logFlight: (from: string, to: string) => void;
+    clearFlightHistory: () => void;
+    importFlights: (logs: FlightLog[]) => number;
     // Unified Data Access (Guest + User)
     visitedCountries: string[];
     visitedCities: string[];
@@ -44,6 +48,27 @@ interface UserContextType {
     heldVisas: string[];
     passportCode: string;
     livedCountries: string[]; // Added
+}
+
+export interface FlightLog {
+    from: string;
+    to: string;
+    at: number;
+    fromIata?: string;
+    toIata?: string;
+    airline?: string;
+    flightNo?: string;
+    // Rich optional fields (populated from Flighty import when available)
+    depTime?: string;       // ISO or human time string
+    arrTime?: string;       // ISO or human time string
+    durationMin?: number;   // scheduled duration in minutes
+    distanceKm?: number;    // reported distance in km
+    aircraft?: string;      // aircraft type / model
+    tailNumber?: string;    // registration
+    seat?: string;
+    cabin?: string;         // Economy / Business / First etc.
+    confirmation?: string;
+    notes?: string;
 }
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -60,6 +85,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const [guestLived, setGuestLived] = useState<string[]>([]); // Added
     const [guestHeld, setGuestHeld] = useState<string[]>([]);
     const [guestCities, setGuestCities] = useState<string[]>([]);
+    const [flightHistory, setFlightHistory] = useState<FlightLog[]>([]);
 
     // Load Guest Data
     useEffect(() => {
@@ -94,30 +120,68 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }, [guestVisited, guestPassport, guestBucket, guestLived, guestHeld, guestCities, user]);
 
     useEffect(() => {
-        const mergeFlightLogTrips = (baseTrips: any[]) => {
-            const flightTrips = deriveTripsFromFlightLogs(parseStoredFlightLogs());
-            if (flightTrips.length === 0) return baseTrips;
-
-            const existingIds = new Set(baseTrips.map(trip => trip.id));
-            return [
-                ...baseTrips,
-                ...flightTrips.filter(trip => !existingIds.has(trip.id)),
-            ];
-        };
-
         const savedTrips = localStorage.getItem('wanderlust_trips');
         if (savedTrips) {
             try {
-                setTrips(mergeFlightLogTrips(JSON.parse(savedTrips)));
+                setTrips(JSON.parse(savedTrips));
             } catch (e) { console.error(e); }
-        } else {
-            setTrips(mergeFlightLogTrips([]));
         }
     }, []);
 
     useEffect(() => {
         localStorage.setItem('wanderlust_trips', JSON.stringify(trips));
     }, [trips]);
+
+    // Flight history persistence
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem('flight_history');
+            if (saved) setFlightHistory(JSON.parse(saved));
+        } catch (e) { console.error(e); }
+    }, []);
+    useEffect(() => {
+        try { localStorage.setItem('flight_history', JSON.stringify(flightHistory)); } catch { /* storage unavailable */ }
+    }, [flightHistory]);
+
+    const logFlight = (from: string, to: string) => {
+        if (!from || !to) return;
+        setFlightHistory(prev => {
+            const last = prev[prev.length - 1];
+            if (last && last.from === from && last.to === to && Date.now() - last.at < 5000) return prev;
+            return [...prev, { from, to, at: Date.now() }];
+        });
+    };
+    const clearFlightHistory = () => setFlightHistory([]);
+    const importFlights = (logs: FlightLog[]): number => {
+        let added = 0;
+        const newCountries = new Set<string>();
+        setFlightHistory(prev => {
+            // Loose dedupe: same date (day) + same route + same flight no, or exact timestamp match
+            const key = (l: FlightLog) => {
+                const day = Math.floor(l.at / 86_400_000);
+                return `${l.from}>${l.to}@${day}#${(l.flightNo || "").toUpperCase()}`;
+            };
+            const existing = new Set(prev.map(key));
+            const merged = [...prev];
+            for (const l of logs) {
+                if (!l.from || !l.to) continue;
+                if (existing.has(key(l))) continue;
+                existing.add(key(l));
+                merged.push(l);
+                if (l.from !== "XX") newCountries.add(l.from);
+                if (l.to !== "XX") newCountries.add(l.to);
+                added++;
+            }
+            merged.sort((a, b) => a.at - b.at);
+            return merged;
+        });
+        if (newCountries.size) {
+            const current = user ? user.visitedCountries : guestVisited;
+            const merged = Array.from(new Set([...current, ...newCountries]));
+            if (merged.length !== current.length) updateVisitedCountries(merged);
+        }
+        return added;
+    };
 
     const addTrip = (trip: any) => {
         setTrips(prev => [...prev, trip]);
@@ -145,11 +209,29 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             const profile = profileResult.data;
             const travelData = travelResult.data;
 
+            // Extract display name from any provider (Apple, Google, email signup)
+            const resolvedName: string =
+                profile?.display_name ||
+                metadata?.name ||
+                metadata?.full_name ||
+                metadata?.display_name ||
+                [metadata?.given_name, metadata?.family_name].filter(Boolean).join(' ').trim() ||
+                [metadata?.first_name, metadata?.last_name].filter(Boolean).join(' ').trim() ||
+                (metadata?.user_name as string | undefined) ||
+                (email ? email.split('@')[0] : '') ||
+                'Traveler';
+
+            // If profile exists but is missing a display_name (common for Apple OAuth),
+            // backfill it so the dashboard greeting is correct on next session too.
+            if (profile && !profile.display_name && resolvedName && resolvedName !== 'Traveler') {
+                supabase.from('profiles').update({ display_name: resolvedName }).eq('user_id', userId).then(() => {});
+            }
+
             // If data exists, set user
             if (profile || travelData) {
                 const userData: UserData = {
                     id: userId,
-                    name: profile?.display_name || metadata?.name || 'Traveler',
+                    name: resolvedName,
                     email: email || '',
                     passportCode: travelData?.passport_code || metadata?.passport_code || 'US',
                     avatarUrl: profile?.avatar_url || metadata?.avatar_url, // Populate
@@ -167,12 +249,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                 // @ts-ignore
                 const dbTrips = travelData?.trips || [];
                 if (Array.isArray(dbTrips) && dbTrips.length > 0) {
-                    const flightTrips = deriveTripsFromFlightLogs(parseStoredFlightLogs());
-                    const existingIds = new Set(dbTrips.map((trip: any) => trip.id));
-                    setTrips([
-                        ...dbTrips,
-                        ...flightTrips.filter(trip => !existingIds.has(trip.id)),
-                    ]);
+                    setTrips(dbTrips);
                 }
 
                 setUser(userData);
@@ -448,6 +525,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             trips,
             addTrip,
             updateTrips,
+            flightHistory,
+            logFlight,
+            clearFlightHistory,
+            importFlights,
             // Exposed Unified Data
             visitedCountries,
             visitedCities,

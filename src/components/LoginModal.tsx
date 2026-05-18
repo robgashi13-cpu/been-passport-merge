@@ -6,6 +6,7 @@ import { countries, getCountryByCode } from '@/data/countries';
 import { availablePassports } from '@/data/visaMatrix';
 import { User, Mail, Lock, Globe, LogIn, UserPlus, LogOut, X } from 'lucide-react';
 import { AchievementList } from './Achievements';
+import { lovable } from '@/integrations/lovable';
 
 interface LoginModalProps {
     isOpen: boolean;
@@ -112,10 +113,18 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                 <div className="relative bg-[#0a0a0a] w-full h-full sm:h-auto sm:max-w-md sm:max-h-[90vh] rounded-none sm:rounded-3xl border-0 sm:border sm:border-white/10 shadow-2xl overflow-hidden flex flex-col animate-zoom-in">
 
                     {/* Header */}
-                    <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 flex-shrink-0 bg-white/5">
+                    <div
+                        className="flex items-center justify-between px-6 py-4 border-b border-white/10 flex-shrink-0 bg-white/5 relative z-[60]"
+                        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 16px)' }}
+                    >
                         <h2 className="font-display text-xl font-bold text-white">Profile</h2>
-                        <button onClick={onClose} className="absolute top-16 right-6 z-50 p-3 bg-black/60 rounded-full hover:bg-white/20 transition-colors backdrop-blur-sm" aria-label="Close profile">
-                            <X className="w-6 h-6 text-white" />
+                        <button
+                            onClick={onClose}
+                            type="button"
+                            className="relative z-[70] flex items-center justify-center w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 transition-all pointer-events-auto"
+                            aria-label="Close profile"
+                        >
+                            <X className="w-5 h-5 text-white" />
                         </button>
                     </div>
 
@@ -419,6 +428,46 @@ export const LoginModal = ({ isOpen, onClose }: LoginModalProps) => {
                             )}
                         </button>
                     </form>
+
+                    <div className="relative my-5">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-white/10" />
+                        </div>
+                        <div className="relative flex justify-center text-xs">
+                            <span className="bg-[#0a0a0a] px-3 text-white/40 uppercase tracking-wider">Or continue with</span>
+                        </div>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            setError('');
+                            setIsLoading(true);
+                            try {
+                                const result = await lovable.auth.signInWithOAuth('apple', {
+                                    redirect_uri: window.location.origin,
+                                });
+                                if (result.error) {
+                                    setError(result.error.message || 'Apple sign-in failed.');
+                                    setIsLoading(false);
+                                    return;
+                                }
+                                if (result.redirected) return;
+                                onClose();
+                            } catch (err) {
+                                setError('Apple sign-in failed. Please try again.');
+                                setIsLoading(false);
+                            }
+                        }}
+                        disabled={isLoading}
+                        className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-black text-white font-medium hover:bg-black/80 transition-colors border border-white/20 disabled:opacity-50"
+                    >
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M16.365 1.43c0 1.14-.42 2.21-1.25 3.01-.83.82-2.16 1.45-3.32 1.36-.13-1.11.42-2.27 1.21-3.02.86-.83 2.27-1.43 3.36-1.35zM20.5 17.27c-.55 1.27-.82 1.84-1.53 2.97-1 1.6-2.41 3.59-4.16 3.6-1.56.02-1.96-1.01-4.08-1-2.12.01-2.56 1.02-4.12 1-1.75-.01-3.09-1.81-4.09-3.41C-.31 16.7-.61 11.05 2.05 8.04c1.07-1.22 2.6-1.99 4.21-2.02 1.62-.03 3.15 1.09 4.08 1.09.94 0 2.81-1.34 4.73-1.15.81.03 3.08.33 4.54 2.47-3.84 2.11-3.22 7.59.89 8.84z" />
+                        </svg>
+                        Continue with Apple
+                    </button>
+
 
                     <p className="text-center text-xs text-muted-foreground mt-4">
                         {mode === 'login'

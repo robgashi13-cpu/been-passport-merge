@@ -1,23 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* iOS Safe Area Fixes & Native Feel */
 body {
-  padding-bottom: env(safe-area-inset-bottom);
   background-color: hsl(var(--background));
-  /* Prevent white bar at bottom */
   -webkit-tap-highlight-color: transparent;
-  /* Remove tap highlight */
   -webkit-touch-callout: none;
-  /* Disable long-press menu */
   user-select: none;
-  /* Disable text selection */
   -webkit-user-select: none;
-  /* 120fps Optimization */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  will-change: opacity, transform;
-  /* Hardware Acceleration hint */
+  /* NOTE: do NOT set transform / will-change / perspective on body, html,
+     main, nav, or header — those create a new containing block for
+     `position: fixed` children, which breaks the bottom nav, modals,
+     and other fixed overlays. GPU hints go on specific opt-in classes. */
 }
 
 /* Allow selection in inputs */
@@ -26,23 +25,8 @@ textarea {
   user-select: text;
   -webkit-user-select: text;
   font-size: 16px;
-  /* Prevent zoom on focus */
 }
 
-/* GPU Acceleration for main elements */
-header,
-nav,
-main,
-.bottom-nav,
-.modal-overlay,
-.modal-container {
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  perspective: 1000px;
-}
-
-/* Performance optimizations for smooth animations */
 * {
   -webkit-tap-highlight-color: transparent;
 }
@@ -51,14 +35,6 @@ main,
 html {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
-}
-
-/* Optimized transitions */
-.transition-transform,
-.hover-lift,
-button,
-a {
-  will-change: transform;
 }
 
 /* Reduce animation work on low-power devices */
@@ -98,7 +74,7 @@ a {
     --radius: 1rem;
 
     /* Custom Tokens - Light */
-    --gold: 45 90% 45%;
+    --gold: 0 0% 20%;
     --glass-border: rgba(0, 0, 0, 0.1);
     --glass-bg: rgba(255, 255, 255, 0.8);
     --glass-bg-hover: rgba(240, 240, 240, 0.8);
@@ -109,7 +85,7 @@ a {
     --gradient-glow: radial-gradient(circle at center, rgba(56, 189, 248, 0.2), transparent 70%);
     --gradient-white: linear-gradient(180deg, #334155 0%, #0f172a 100%);
     /* Dark text gradient for light mode */
-    --gradient-gold: linear-gradient(135deg, #D4AF37 0%, #F4D03F 50%, #AA8C2C 100%);
+    --gradient-gold: linear-gradient(135deg, #ffffff 0%, #f5f5f7 50%, #d4d4d8 100%);
 
     --shadow-white: 0 4px 20px -2px rgba(0, 0, 0, 0.1);
     --shadow-glow: 0 0 20px rgba(0, 0, 0, 0.05);
@@ -135,15 +111,15 @@ a {
     --secondary-foreground: 0 0% 98%;
     --muted: 240 10% 15%;
     --muted-foreground: 240 5% 65%;
-    --accent: 45 85% 55%;
+    --accent: 0 0% 98%;
     --accent-foreground: 240 10% 4%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
     --border: 0 0% 100%;
     --input: 240 10% 15%;
-    --ring: 45 85% 55%;
+    --ring: 0 0% 98%;
 
-    --gold: 45 85% 55%;
+    --gold: 0 0% 98%;
     --glass-border: rgba(255, 255, 255, 0.08);
     --glass-bg: rgba(20, 20, 25, 0.7);
     --glass-bg-hover: rgba(40, 40, 50, 0.7);
@@ -152,7 +128,7 @@ a {
     --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
     --gradient-glow: radial-gradient(circle at center, rgba(56, 189, 248, 0.15), transparent 70%);
     --gradient-white: linear-gradient(180deg, #FFFFFF 0%, #E2E8F0 100%);
-    --gradient-gold: linear-gradient(135deg, #D4AF37 0%, #F4D03F 50%, #AA8C2C 100%);
+    --gradient-gold: linear-gradient(135deg, #ffffff 0%, #f5f5f7 50%, #d4d4d8 100%);
 
     --shadow-white: 0 4px 20px -2px rgba(255, 255, 255, 0.1);
     --shadow-glow: 0 0 20px rgba(255, 255, 255, 0.15);
@@ -621,4 +597,282 @@ body.modal-open {
   position: fixed;
   width: 100%;
   height: 100%;
+}
+/* ============================================================
+   LIQUID DESIGN UPGRADE
+   Modern high-tech glass + microanimations applied app-wide.
+   ============================================================ */
+
+/* Animated mesh-gradient base layer */
+.dark body {
+  background-image:
+    radial-gradient(at 18% 12%, hsl(45 70% 22% / 0.35) 0px, transparent 55%),
+    radial-gradient(at 82% 18%, hsl(220 80% 25% / 0.32) 0px, transparent 55%),
+    radial-gradient(at 50% 92%, hsl(280 60% 20% / 0.30) 0px, transparent 55%),
+    radial-gradient(circle at 50% -20%, #111122 0%, #000000 60%);
+  background-attachment: fixed;
+  background-size: 200% 200%, 200% 200%, 200% 200%, 100% 100%;
+  animation: liquidShift 28s ease-in-out infinite;
+}
+
+@keyframes liquidShift {
+  0%, 100% { background-position: 0% 0%, 100% 0%, 50% 100%, 0 0; }
+  50%      { background-position: 30% 20%, 60% 40%, 40% 70%, 0 0; }
+}
+
+/* Liquid Glass: premium frosted card with sheen + spring hover */
+.liquid-glass,
+.glass-card,
+.bg-gradient-card {
+  position: relative;
+  background: linear-gradient(135deg,
+    hsl(var(--card) / 0.65) 0%,
+    hsl(var(--card) / 0.35) 100%);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid hsl(var(--foreground) / 0.08);
+  box-shadow:
+    inset 0 1px 0 0 hsl(var(--foreground) / 0.08),
+    0 8px 32px -8px hsl(0 0% 0% / 0.45);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 0.3s ease;
+}
+.liquid-glass::before,
+.glass-card::before,
+.bg-gradient-card::before {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(115deg,
+    transparent 30%,
+    hsl(var(--foreground) / 0.06) 50%,
+    transparent 70%);
+  background-size: 220% 220%;
+  background-position: 100% 100%;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.6s ease, background-position 1.2s cubic-bezier(0.22,1,0.36,1);
+}
+.liquid-glass:hover::before,
+.glass-card:hover::before,
+.bg-gradient-card:hover::before {
+  opacity: 1;
+  background-position: 0% 0%;
+}
+.liquid-glass:hover,
+.glass-card:hover,
+.bg-gradient-card:hover {
+  transform: translateY(-2px);
+  border-color: hsl(var(--gold) / 0.35);
+  box-shadow:
+    inset 0 1px 0 0 hsl(var(--foreground) / 0.10),
+    0 16px 48px -10px hsl(0 0% 0% / 0.55),
+    0 0 0 1px hsl(var(--gold) / 0.12);
+}
+
+/* Soft floating blobs for ambient backgrounds */
+.liquid-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(64px);
+  opacity: 0.35;
+  pointer-events: none;
+  animation: blobFloat 14s ease-in-out infinite;
+}
+@keyframes blobFloat {
+  0%, 100% { transform: translate(0,0) scale(1); }
+  33%      { transform: translate(20px,-30px) scale(1.08); }
+  66%      { transform: translate(-25px,15px) scale(0.95); }
+}
+
+/* Spring tap microanimation — applies to every button & link */
+button, a, [role="button"] {
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+              opacity 0.2s ease, color 0.2s ease, background-color 0.25s ease;
+}
+button:active, a:active, [role="button"]:active {
+  transform: scale(0.96);
+}
+
+/* Shimmer text accent */
+.shimmer-text {
+  background: linear-gradient(90deg,
+    hsl(var(--foreground)) 0%,
+    hsl(var(--gold)) 50%,
+    hsl(var(--foreground)) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 4s linear infinite;
+}
+
+/* Soft float for hero icons / orbs */
+.float-soft { animation: floatSoft 8s ease-in-out infinite; }
+@keyframes floatSoft {
+  0%,100% { transform: translateY(0) rotate(0); }
+  50%     { transform: translateY(-8px) rotate(0.5deg); }
+}
+
+/* Gradient outline — for primary CTAs */
+.ring-liquid {
+  position: relative;
+  isolation: isolate;
+}
+.ring-liquid::after {
+  content: "";
+  position: absolute; inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg,
+    hsl(var(--gold) / 0.7),
+    hsl(var(--gold) / 0.15) 40%,
+    hsl(var(--gold) / 0.6));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Smooth route enter for main view */
+main, [data-page] {
+  animation: pageEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px) scale(0.995); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Stagger helpers (extra steps) */
+.stagger-6 { animation-delay: 0.6s; }
+.stagger-7 { animation-delay: 0.7s; }
+.stagger-8 { animation-delay: 0.8s; }
+
+/* Inputs get a subtle glow on focus — high-tech */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px hsl(var(--background)),
+    0 0 0 4px hsl(var(--gold) / 0.45),
+    0 8px 24px -8px hsl(var(--gold) / 0.35);
+  transition: box-shadow 0.25s ease;
+}
+
+/* Scrollbar — minimal, themed */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--foreground) / 0.12);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--gold) / 0.35);
+}
+
+/* ============================================================
+   LIQUID MODAL SYSTEM (app-wide, no component edits needed)
+   Matches the common pattern: .fixed.inset-0 > .absolute.inset-0(.bg-black) + child
+   ============================================================ */
+
+/* Liquid overlay — animated frosted backdrop */
+.fixed.inset-0 > .absolute.inset-0 {
+  background:
+    radial-gradient(at 20% 15%, hsl(45 60% 18% / 0.35) 0, transparent 55%),
+    radial-gradient(at 80% 85%, hsl(220 70% 18% / 0.35) 0, transparent 55%),
+    rgba(0, 0, 0, 0.55) !important;
+  backdrop-filter: blur(28px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(140%) !important;
+  animation: overlayIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes overlayIn {
+  from { opacity: 0; backdrop-filter: blur(0) saturate(100%); }
+  to   { opacity: 1; }
+}
+
+/* Liquid container — spring rise + sheen */
+.fixed.inset-0 > .relative,
+.fixed.inset-0 > .modal-container,
+.modal-container {
+  animation: liquidRise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes liquidRise {
+  from { opacity: 0; transform: translateY(24px) scale(0.96); filter: blur(8px); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    filter: blur(0); }
+}
+
+/* Smoother card interiors inside modals — liquid glass tiles */
+.fixed.inset-0 .bg-white\/5 {
+  background: linear-gradient(140deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25)) !important;
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border-color: hsl(var(--foreground) / 0.10) !important;
+}
+
+/* ============================================================
+   GLOBE MAP — Liquid chrome upgrade
+   ============================================================ */
+.globe-chrome {
+  background: hsl(var(--card) / 0.56);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  border: 1px solid hsl(var(--foreground) / 0.10);
+  box-shadow:
+    inset 0 1px 0 0 hsl(var(--foreground) / 0.08),
+    0 12px 32px -10px hsl(0 0% 0% / 0.6);
+  transition: transform 0.35s cubic-bezier(0.22,1,0.36,1),
+              border-color 0.3s ease, background 0.3s ease;
+}
+.globe-chrome:hover { border-color: hsl(var(--foreground) / 0.28); }
+
+.globe-toggle-pill {
+  position: relative;
+  transition: color 0.25s ease, transform 0.18s cubic-bezier(0.34,1.56,0.64,1);
+}
+.globe-toggle-pill[data-active="true"] {
+  background: hsl(var(--foreground) / 0.95);
+  color: hsl(var(--background));
+  box-shadow: 0 8px 24px -8px hsl(var(--foreground) / 0.28), inset 0 1px 0 0 hsl(var(--foreground) / 0.62);
+}
+
+.globe-fab {
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  border-radius: 999px;
+  color: hsl(var(--foreground));
+}
+.globe-fab:hover { color: hsl(var(--foreground)); transform: translateY(-1px); }
+
+/* Atmospheric edge glow over the canvas (vignette-like) */
+.globe-stage::before {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 50%, transparent 58%, hsl(var(--foreground) / 0.06) 78%, hsl(220 60% 8% / 0.46) 100%);
+  z-index: 1;
+}
+.globe-stage::after {
+  content: "";
+  position: absolute; inset: -1px;
+  pointer-events: none;
+  box-shadow: inset 0 0 120px 30px rgba(0,0,0,0.55);
+  z-index: 2;
+}
+
+/* Disabled heavy blurred orbs behind the globe */
+.globe-orb {
+  display: none;
+}
+.globe-orb-gold { background: radial-gradient(circle, hsl(var(--foreground) / 0.6), transparent 70%); top: -80px; left: -80px; }
+.globe-orb-blue { background: radial-gradient(circle, hsl(220 80% 55% / 0.5), transparent 70%); bottom: -80px; right: -80px; animation-delay: -6s; }
+
+/* Smooth color fade for map paint changes */
+.mapboxgl-canvas { transition: filter 0.4s ease; }
+
+/* Legend chip */
+.legend-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
 }

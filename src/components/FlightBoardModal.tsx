@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Plane, Clock, RefreshCw, ExternalLink } from 'lucide-react';
+import { X, Plane, RefreshCw, ExternalLink } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface FlightBoardModalProps {
     isOpen: boolean;
@@ -56,81 +57,57 @@ interface FlightInfo {
     statusColor: string;
 }
 
-function generateLiveSchedule(type: 'departures' | 'arrivals'): FlightInfo[] {
+type RawDep = { airline: string; flight: string; destination: string; destinationCode: string; scheduledTime: string };
+type RawArr = { airline: string; flight: string; origin: string; originCode: string; scheduledTime: string };
+
+function decorate(rows: Array<RawDep | RawArr>, type: 'departures' | 'arrivals'): FlightInfo[] {
     const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-
-    const data = type === 'departures' ? REAL_PRN_DEPARTURES : REAL_PRN_ARRIVALS;
-
-    return data.map(flight => {
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    return rows.map((flight) => {
         const [hours, minutes] = flight.scheduledTime.split(':').map(Number);
-        const flightMinutes = hours * 60 + minutes;
-        const currentMinutes = currentHour * 60 + currentMinute;
-        const diff = flightMinutes - currentMinutes;
+        const diff = (hours * 60 + minutes) - currentMinutes;
 
         let status: string;
         let statusColor: string;
-
         if (type === 'departures') {
-            if (diff < -30) {
-                status = 'Departed';
-                statusColor = 'text-white/60';
-            } else if (diff < 0) {
-                status = 'Departed';
-                statusColor = 'text-green-400';
-            } else if (diff < 15) {
-                status = 'Final Call';
-                statusColor = 'text-red-400 animate-pulse';
-            } else if (diff < 30) {
-                status = 'Boarding';
-                statusColor = 'text-yellow-400';
-            } else if (diff < 60) {
-                status = 'Go to Gate';
-                statusColor = 'text-blue-400';
-            } else {
-                if (Math.random() < 0.1) {
-                    const delayMins = Math.floor(Math.random() * 30) + 10;
-                    status = `Delayed ${delayMins}m`;
-                    statusColor = 'text-orange-400';
-                } else {
-                    status = 'On Time';
-                    statusColor = 'text-green-400';
-                }
-            }
+            if (diff < -30) { status = 'Departed'; statusColor = 'text-white/60'; }
+            else if (diff < 0) { status = 'Departed'; statusColor = 'text-green-400'; }
+            else if (diff < 15) { status = 'Final Call'; statusColor = 'text-red-400 animate-pulse'; }
+            else if (diff < 30) { status = 'Boarding'; statusColor = 'text-yellow-400'; }
+            else if (diff < 60) { status = 'Go to Gate'; statusColor = 'text-blue-400'; }
+            else if (Math.random() < 0.1) { status = `Delayed ${Math.floor(Math.random() * 30) + 10}m`; statusColor = 'text-orange-400'; }
+            else { status = 'On Time'; statusColor = 'text-green-400'; }
         } else {
-            // Arrivals Logic
-            if (diff < -30) {
-                status = 'Landed';
-                statusColor = 'text-white/60';
-            } else if (diff < 0) {
-                status = 'Landed';
-                statusColor = 'text-green-400';
-            } else if (diff < 30) {
-                status = 'Landing';
-                statusColor = 'text-yellow-400';
-            } else {
-                if (Math.random() < 0.1) {
-                    const delayMins = Math.floor(Math.random() * 30) + 10;
-                    status = `Delayed ${delayMins}m`;
-                    statusColor = 'text-orange-400';
-                } else {
-                    status = 'On Time';
-                    statusColor = 'text-green-400';
-                }
-            }
+            if (diff < -30) { status = 'Landed'; statusColor = 'text-white/60'; }
+            else if (diff < 0) { status = 'Landed'; statusColor = 'text-green-400'; }
+            else if (diff < 30) { status = 'Landing'; statusColor = 'text-yellow-400'; }
+            else if (Math.random() < 0.1) { status = `Delayed ${Math.floor(Math.random() * 30) + 10}m`; statusColor = 'text-orange-400'; }
+            else { status = 'On Time'; statusColor = 'text-green-400'; }
         }
+        const route = 'destination' in flight ? flight.destination : flight.origin;
+        const code = 'destinationCode' in flight ? flight.destinationCode : flight.originCode;
+        return { airline: flight.airline, flight: flight.flight, route, code, scheduledTime: flight.scheduledTime, status, statusColor };
+    }).sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime));
+}
 
-        return {
-            airline: flight.airline,
-            flight: flight.flight,
-            route: 'destination' in flight ? (flight as any).destination : (flight as any).origin,
-            code: 'destinationCode' in flight ? (flight as any).destinationCode : (flight as any).originCode,
-            scheduledTime: flight.scheduledTime,
-            status,
-            statusColor
-        };
-    });
+function generatePRNSchedule(type: 'departures' | 'arrivals'): FlightInfo[] {
+    return decorate(type === 'departures' ? REAL_PRN_DEPARTURES : REAL_PRN_ARRIVALS, type);
+}
+
+const SCHEDULE_CACHE_TTL = 1000 * 60 * 60 * 12; // 12h
+async function fetchAirportSchedule(iata: string): Promise<{ departures: RawDep[]; arrivals: RawArr[]; airportName?: string } | null> {
+    const key = `wp.airport-sched.${iata}`;
+    try {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+            const { at, data } = JSON.parse(raw);
+            if (Date.now() - at < SCHEDULE_CACHE_TTL) return data;
+        }
+    } catch { /* ignore */ }
+    const { data: res, error } = await supabase.functions.invoke('airport-schedule-ai', { body: { iata } });
+    if (error || !res?.ok) return null;
+    try { localStorage.setItem(key, JSON.stringify({ at: Date.now(), data: res.data })); } catch { /* ignore */ }
+    return res.data;
 }
 
 export const FlightBoardModal = ({ isOpen, onClose, airportCode, airportName }: FlightBoardModalProps) => {
@@ -139,23 +116,33 @@ export const FlightBoardModal = ({ isOpen, onClose, airportCode, airportName }: 
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
     const [activeTab, setActiveTab] = useState<'departures' | 'arrivals'>('departures');
 
-    const loadFlights = () => {
+    const loadFlights = async () => {
         setLoading(true);
-        // Simulate loading
-        setTimeout(() => {
-            setFlights(generateLiveSchedule(activeTab));
+        const upper = airportCode.toUpperCase();
+        if (upper === 'PRN') {
+            setFlights(generatePRNSchedule(activeTab));
             setLastUpdate(new Date());
             setLoading(false);
-        }, 500);
+            return;
+        }
+        const sched = await fetchAirportSchedule(upper);
+        if (sched) {
+            const rows = activeTab === 'departures' ? sched.departures : sched.arrivals;
+            setFlights(decorate(rows as Array<RawDep | RawArr>, activeTab));
+        } else {
+            setFlights([]);
+        }
+        setLastUpdate(new Date());
+        setLoading(false);
     };
 
     useEffect(() => {
         if (isOpen) {
             loadFlights();
-            const interval = setInterval(loadFlights, 60000); // Update every minute
+            const interval = setInterval(loadFlights, 60000);
             return () => clearInterval(interval);
         }
-    }, [isOpen, activeTab]);
+    }, [isOpen, activeTab, airportCode]);
 
     // Body scroll lock
     useEffect(() => {
