@@ -14,6 +14,7 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "idb-keyval": path.resolve(__dirname, "./src/lib/idb-keyval.ts"),
+      "@lovable.dev/cloud-auth-js": path.resolve(__dirname, "./src/lib/lovable-cloud-auth.ts"),
     },
   },
 }));
