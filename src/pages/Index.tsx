@@ -3,19 +3,16 @@ import Header from '@/components/Header';
 import Dashboard from '@/components/Dashboard';
 // import { WidgetMapGenerator } from '@/components/WidgetMapGenerator';
 // import WorldMap from '@/components/WorldMap';
-import CountryList from '@/components/CountryList';
 import PassportPower from '@/components/PassportPower';
 import { TravelCalendar } from '@/components/TravelCalendar';
 // import { PhotoUpload } from '@/components/PhotoUpload';
 import { ExploreDestinations } from '@/components/ExploreDestinations';
-import { VisaChecker } from '@/components/VisaChecker';
 import { LoginModal } from '@/components/LoginModal';
-import { TripEntry } from '@/data/trips';
 import { useTravelData } from '@/hooks/useTravelData';
 import { useUser } from '@/contexts/UserContext';
 import { Helmet } from 'react-helmet';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Plus } from 'lucide-react';
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { Plus } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { Capacitor } from '@capacitor/core';
 import { Button } from "@/components/ui/button";
@@ -24,8 +21,6 @@ import { CountryDetailsModal } from '@/components/CountryDetailsModal';
 import { useSwipeable } from 'react-swipeable';
 import TabBar from '@/plugins/TabBar';
 import { AchievementCelebration, useAchievementTracker } from '@/components/AchievementCelebration';
-import { getLevel, LEVELS } from '@/components/Achievements';
-import { useTravelNotifications } from '@/hooks/useTravelNotifications';
 import GlobeMap from '@/components/GlobeMap';
 import { CountryDetailSheet } from '@/components/CountryDetailSheet';
 const Index = () => {
@@ -39,7 +34,7 @@ const Index = () => {
   const [isSheetOpen, setSheetOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
-  const { user, isLoggedIn, updateHeldVisas, trips, updateTrips, livedCountries } = useUser();
+  const { trips, updateTrips } = useUser();
 
   const {
     visitedCountries,
@@ -47,7 +42,6 @@ const Index = () => {
     userPassport,
     setUserPassport,
     toggleVisited,
-    toggleBucketList,
     getStats,
     heldVisas,
     toggleHeldVisa,
@@ -105,34 +99,11 @@ const Index = () => {
   }, [activeTab]);
 
 
-  // Travel Notifications logic
-  const { requestPermissions: requestTravelPermissions } = useTravelNotifications();
-
-  // Trigger permission request once on mount (user preference check usually better, but for this request:)
-  useEffect(() => {
-    // We try to request permissions or check status silently first?
-    // Actually, we shouldn't prompt immediately on load without context usually, but the user asked for "request... so user clicks allow".
-    // We will let the GeoPassport component handle the UI interaction for enabling this explicitly.
-  }, []);
-
   // Sync Data -> Widget - REMOVED
 
   // handleWidgetSnapshot - REMOVED
 
   // handleTripsDetected - REMOVED
-
-
-  const handleManualTripSave = (newTrip: TripEntry) => {
-    // This is now handled by AddTripModal internal context usage,
-    // but if we need a callback we can keep it. 
-    // Actually AddTripModal now adds to context directly.
-    // So we just close the modal.
-    setShowAddTripModal(false);
-  };
-
-  // Use user's passport and visas if logged in
-  const effectivePassport = isLoggedIn && user ? user.passportCode : userPassport;
-  const effectiveHeldVisas = isLoggedIn && user ? (user.heldVisas || []) : heldVisas;
 
   const handlers = useSwipeable({
     onSwipedLeft: () => {
@@ -172,7 +143,16 @@ const Index = () => {
           />
         )}
 
-        <main className={activeTab === 'map' ? '' : "container mx-auto px-4 pb-32"} style={{ paddingTop: activeTab === 'map' ? '0' : 'calc(env(safe-area-inset-top) + 80px)' }}>
+        <main
+          className={activeTab === 'map' ? '' : "container mx-auto px-4 pb-32"}
+          style={{
+            paddingTop: activeTab === 'map'
+              ? '0'
+              : isNative
+                ? 'calc(env(safe-area-inset-top) + 104px)'
+                : 'calc(env(safe-area-inset-top) + 144px)'
+          }}
+        >
           <Tabs value={activeTab} onValueChange={setActiveTab} className={activeTab === 'map' ? '' : "space-y-6"}>
             <TabsContent value="dashboard" className="space-y-6 animate-fade-in focus-visible:outline-none">
               <Dashboard
@@ -245,9 +225,9 @@ const Index = () => {
 
             <TabsContent value="passport" className="space-y-6 pb-24 lg:pb-8 animate-fade-in focus-visible:outline-none">
               <PassportPower
-                userPassport={effectivePassport}
+                userPassport={userPassport}
                 setUserPassport={setUserPassport}
-                heldVisas={effectiveHeldVisas}
+                heldVisas={heldVisas}
                 onToggleHeldVisa={toggleHeldVisa}
                 userPassportScore={stats.passportScore || 0}
               />

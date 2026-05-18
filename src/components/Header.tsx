@@ -1,5 +1,5 @@
 import React from 'react';
-import { Globe2, Map, LayoutDashboard, Flag, CreditCard, CalendarDays, User, LogIn } from 'lucide-react';
+import { Globe2, LayoutDashboard, CreditCard, CalendarDays, User, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/contexts/UserContext';
 import { Capacitor } from '@capacitor/core';
@@ -24,9 +24,8 @@ const Header = ({ activeTab, setActiveTab, onLoginClick, showDesktopNav = true }
   const navItems = [
     { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
     { id: 'map', label: 'World Map', icon: Globe2 },
-    // Merged Countries into Map
     { id: 'calendar', label: 'Calendar', icon: CalendarDays },
-    { id: 'passport', label: 'Your Passport', icon: CreditCard },
+    { id: 'passport', label: 'Passport', icon: CreditCard },
   ];
 
   return (
