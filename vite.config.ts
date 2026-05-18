@@ -13,6 +13,7 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "idb-keyval": path.resolve(__dirname, "./src/lib/idb-keyval.ts"),
     },
   },
 }));
