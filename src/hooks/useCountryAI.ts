@@ -3,7 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type AISection = "overview" | "cities" | "visa" | "transport" | "climate" | "insights";
 
-const TTL_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
+// Permanent cache — once an AI insight is generated for a country/section,
+// keep it forever to avoid burning credits on repeat views. Use the refresh
+// button to force a re-fetch.
+const TTL_MS = Number.MAX_SAFE_INTEGER;
 
 interface CacheEntry { at: number; data: any }
 

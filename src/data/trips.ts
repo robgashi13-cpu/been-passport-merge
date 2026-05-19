@@ -148,3 +148,74 @@ export const getTripsForMonth = (trips: TripEntry[], year: number, month: number
         return startDate <= monthEnd && endDate >= monthStart;
     });
 };
+
+/**
+ * Derive trip entries from a chronological flight history.
+ * Each "stay" in a destination country runs from the arrival flight (`to`)
+ * until the NEXT flight whose `from` is the same country. If there is no
+ * outbound flight, the stay runs until today (still travelling).
+ * Domestic flights (from === to) are skipped for stay calculation.
+ */
+export interface FlightLogLike {
+    from: string;
+    to: string;
+    at: number;
+    flightNo?: string;
+    airline?: string;
+}
+
+export const deriveTripsFromFlights = (
+    flights: FlightLogLike[],
+    homeCountry?: string,
+): TripEntry[] => {
+    if (!flights?.length) return [];
+    const sorted = [...flights]
+        .filter(f => f.to && f.to !== 'XX')
+        .sort((a, b) => a.at - b.at);
+
+    const derived: TripEntry[] = [];
+    const now = Date.now();
+
+    for (let i = 0; i < sorted.length; i++) {
+        const arrival = sorted[i];
+        // Skip if this arrival is back to home country (treat as end of previous trip only)
+        if (homeCountry && arrival.to === homeCountry) continue;
+
+        // Find next flight departing FROM this country
+        let departureAt: number | null = null;
+        for (let j = i + 1; j < sorted.length; j++) {
+            if (sorted[j].from === arrival.to) {
+                departureAt = sorted[j].at;
+                break;
+            }
+        }
+        const endAt = departureAt ?? Math.min(now, arrival.at + 30 * 86400_000);
+        const start = new Date(arrival.at);
+        const end = new Date(endAt);
+        if (end.getTime() < start.getTime()) continue;
+
+        derived.push({
+            id: `flight-derived-${arrival.at}-${arrival.to}`,
+            countryCode: arrival.to,
+            countryName: arrival.to,
+            startDate: start,
+            endDate: end,
+            transportMode: 'plane',
+            createdAt: new Date(arrival.at),
+        });
+    }
+    return derived;
+};
+
+/** Merge manual trips with flight-derived trips, removing dupes by overlap. */
+export const mergeTrips = (manual: TripEntry[], derived: TripEntry[]): TripEntry[] => {
+    const out = [...manual];
+    for (const d of derived) {
+        const dup = manual.some(m =>
+            m.countryCode === d.countryCode &&
+            Math.abs(new Date(m.startDate).getTime() - d.startDate.getTime()) < 2 * 86400_000,
+        );
+        if (!dup) out.push(d);
+    }
+    return out;
+};

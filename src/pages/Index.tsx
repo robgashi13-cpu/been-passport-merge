@@ -11,7 +11,7 @@ import { FlightyImport } from '@/components/FlightyImport';
 import { ExploreDestinations } from '@/components/ExploreDestinations';
 import { VisaChecker } from '@/components/VisaChecker';
 import { LoginModal } from '@/components/LoginModal';
-import { TripEntry } from '@/data/trips';
+import { TripEntry, deriveTripsFromFlights, mergeTrips } from '@/data/trips';
 import { useTravelData } from '@/hooks/useTravelData';
 import { useUser } from '@/contexts/UserContext';
 import { Helmet } from 'react-helmet';
@@ -281,10 +281,10 @@ const Index = () => {
 
               <FlightHistoryList />
 
-              {/* Collapsible Travel Calendar */}
+              {/* Collapsible Travel Calendar - merges manual trips with derived stays from flight history */}
               <CollapsibleCalendar>
                 <TravelCalendar
-                  trips={trips}
+                  trips={mergeTrips(trips, deriveTripsFromFlights(flightHistory, effectivePassport || undefined))}
                   onClearAll={() => updateTrips([])}
                   onDateClick={(date) => {
                     setSelectedDate(date);

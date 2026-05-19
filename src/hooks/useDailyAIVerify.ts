@@ -4,6 +4,8 @@ import { countries } from "@/data/countries";
 
 const LAST_RUN_KEY = "wp.ai-verify.lastRun";
 const OVERRIDES_KEY = "wp.ai-verify.overrides";
+const VERSION_KEY = "wp.ai-verify.version";
+const CURRENT_VERSION = "2026-v2"; // bump to force a one-time refresh
 const VERIFY_HOUR = 3;
 const REFRESH_INTERVAL_MS = 48 * 60 * 60 * 1000; // 48 hours
 
@@ -38,10 +40,9 @@ async function runVerification() {
     .slice(0, 25)
     .map((c) => ({ code: c.code, name: c.name, passportRank: c.passportRank }));
 
-  // 2026 safety refresh — broaden the sample so corrections reach more countries.
+  // 2026 safety refresh — cover ALL countries with stored safety scores.
   const countrySample = countries
     .filter((c) => typeof c.safetyScore === "number")
-    .slice(0, 140)
     .map((c) => ({ code: c.code, name: c.name, safetyScore: c.safetyScore }));
 
   const { data, error } = await supabase.functions.invoke("verify-travel-data", {
@@ -72,11 +73,16 @@ export function useDailyAIVerify() {
     let timer: ReturnType<typeof setTimeout> | null = null;
 
     const lastRun = Number(localStorage.getItem(LAST_RUN_KEY) || 0);
-    const overdue = Date.now() - lastRun > REFRESH_INTERVAL_MS || lastRun < lastVerifyWindow();
+    const storedVersion = localStorage.getItem(VERSION_KEY);
+    const versionChanged = storedVersion !== CURRENT_VERSION;
+    const overdue = versionChanged || Date.now() - lastRun > REFRESH_INTERVAL_MS || lastRun < lastVerifyWindow();
 
     const maybeRun = async () => {
       if (overdue) {
-        try { await runVerification(); } catch (e) { console.warn("[ai-verify] failed", e); }
+        try {
+          await runVerification();
+          localStorage.setItem(VERSION_KEY, CURRENT_VERSION);
+        } catch (e) { console.warn("[ai-verify] failed", e); }
       }
     };
     void maybeRun();
