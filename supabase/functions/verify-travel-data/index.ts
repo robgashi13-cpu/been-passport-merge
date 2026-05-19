@@ -23,8 +23,8 @@ Deno.serve(async (req) => {
     if (!apiKey) throw new Error("Missing LOVABLE_API_KEY");
 
     const body = (await req.json().catch(() => ({}))) as Payload;
-    const passports = (body.passports ?? []).slice(0, 25);
-    const countries = (body.countries ?? []).slice(0, 60);
+    const passports = (body.passports ?? []).slice(0, 50);
+    const countries = (body.countries ?? []).slice(0, 250);
 
     const system = `You are a 2026 travel-data fact checker. The current year is 2026. You are given a small sample of passport rankings (Henley Passport Index — latest 2026 publication) and country safety scores (Gallup Law & Order Index 0-100, latest 2026 publication, taking into account recent geopolitical and crime trend changes). Return ONLY corrections where the stored value is clearly wrong by a meaningful margin (>= 5 points for safety, >= 3 ranks for passports). Be conservative — if uncertain, do not correct.`;
 
