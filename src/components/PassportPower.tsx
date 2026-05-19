@@ -281,16 +281,16 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
     <div className="space-y-4 md:space-y-6 animate-fade-in">
       <div className="text-center py-4 md:py-6">
         <h2 className="font-display text-2xl md:text-4xl font-bold mb-2">
-          Your <span className="text-gradient-white">Passport</span>
+          Visa <span className="text-gradient-white">Access</span>
         </h2>
         <p className="text-sm md:text-base text-muted-foreground">
-          Discover your passport power and visa access
+          Manage your visas and explore your travel access. Your passport card lives on your Profile.
         </p>
       </div>
 
       <Tabs defaultValue="your-passport" className="w-full">
         <TabsList className="grid w-full grid-cols-2 max-w-sm mx-auto">
-          <TabsTrigger value="your-passport" className="text-sm">Your Passport</TabsTrigger>
+          <TabsTrigger value="your-passport" className="text-sm">Your Access</TabsTrigger>
           <TabsTrigger value="world-passport" className="text-sm">World Rankings</TabsTrigger>
         </TabsList>
 
@@ -298,51 +298,6 @@ const PassportPower = ({ userPassport, setUserPassport, heldVisas = [], onToggle
         <TabsContent value="your-passport" className="mt-6 space-y-6">
           {selectedPassport ? (
             <>
-              {/* Main Passport Card - Compact */}
-              <div className="bg-gradient-to-br from-white/10 to-white/5 rounded-2xl border border-white/20 p-5 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl" />
-                <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-white/5 rounded-full blur-2xl" />
-
-                <div className="relative z-10">
-                  <div className="flex items-center gap-2 text-xs text-white/70 mb-3">
-                    <Crown className="w-3.5 h-3.5" />
-                    <span className="uppercase tracking-wider font-medium">Your Passport</span>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-                    {/* Flag & Name */}
-                    <div className="flex-1 text-center sm:text-left">
-                      <div className="text-5xl sm:text-6xl mb-1">{selectedPassport.flagEmoji}</div>
-                      <h3 className="font-display text-xl sm:text-2xl font-bold">{selectedPassport.name}</h3>
-                      <p className="text-xs text-muted-foreground mb-1">{selectedPassport.continent}</p>
-                      <div className={`inline-block text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/5 ${getRatingText(dynamicRank).color} border border-white/10`}>
-                        {getRatingText(dynamicRank).text} Power
-                      </div>
-                    </div>
-
-                    {/* Unified Stats Board - Compact */}
-                    <div className="flex w-full sm:w-auto gap-4 items-center justify-center bg-black/20 p-3 rounded-xl backdrop-blur-sm border border-white/10">
-                      {/* Rank */}
-                      <div className="text-center min-w-[60px]">
-                        <div className="font-display text-2xl sm:text-3xl font-bold text-gradient-white">
-                          {getRankBadge(dynamicRank)}
-                        </div>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest leading-none mt-1">Global<br />Rank</p>
-                      </div>
-
-                      <div className="w-px h-8 bg-white/20"></div>
-
-                      {/* Progress */}
-                      <div className="text-center min-w-[60px]">
-                        <div className="font-display text-2xl sm:text-3xl font-bold text-blue-400">
-                          {Math.round(((dynamicStats?.totalScore || 0) / 199) * 100)}%
-                        </div>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest leading-none mt-1">World<br />Access</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               {/* Change Passport Section */}
               <div className="bg-gradient-card rounded-2xl border border-border/50 p-4">
