@@ -21,7 +21,7 @@ export const AISectionPanel = ({ countryCode, countryName, section, passportName
     useEffect(() => {
         if (!countryCode || !countryName) return;
         const others = ALL_SECTIONS.filter(s => s !== section);
-        const TTL_MS = 1000 * 60 * 60 * 24 * 7;
+        const TTL_MS = Number.MAX_SAFE_INTEGER; // permanent cache
         others.forEach((s, i) => {
             const key = `ai:country:${countryCode}:${s}${s === 'visa' && passportName ? `:${passportName}` : ''}`;
             try {
