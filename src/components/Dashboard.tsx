@@ -12,7 +12,7 @@ import { getCountryByCode, countries } from '@/data/countries';
 import { VisitedCountriesModal } from './VisitedCountriesModal';
 import { PassportDetailsModal } from './PassportDetailsModal';
 import { FlightBoardModal } from './FlightBoardModal';
-import { RouteExplorerModal } from './RouteExplorerModal';
+import { openRouteExplorer } from './RouteExplorerModal';
 import { CountryBrowserModal } from './CountryBrowserModal';
 import { ContinentModal } from './ContinentModal';
 import { useState, useMemo, useEffect } from 'react';
@@ -243,7 +243,7 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
 
         {/* Route Explorer Globe */}
         <button
-          onClick={() => setShowRouteExplorer(true)}
+          onClick={openRouteExplorer}
           className="w-full group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-blue-500/15 via-white/[0.04] to-purple-500/15 backdrop-blur-xl p-4 text-left active:scale-[0.99] transition-all hover:border-white/20"
         >
           <div className="pointer-events-none absolute -top-10 -right-10 w-40 h-40 rounded-full bg-blue-500/20 blur-3xl group-hover:bg-blue-500/30 transition-all" />
@@ -291,10 +291,6 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
         isOpen={showContinentModal}
         onClose={() => setShowContinentModal(false)}
         continentStats={stats.continentStats}
-      />
-      <RouteExplorerModal
-        isOpen={showRouteExplorer}
-        onClose={() => setShowRouteExplorer(false)}
       />
     </div>
   );

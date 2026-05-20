@@ -1,51 +1,34 @@
-import { X } from 'lucide-react';
-import { useEffect } from 'react';
+import { ExternalLink, Globe2 } from 'lucide-react';
 
-interface RouteExplorerModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+interface RouteExplorerButtonProps {
+  className?: string;
 }
 
-export const RouteExplorerModal = ({ isOpen, onClose }: RouteExplorerModalProps) => {
-  useEffect(() => {
-    if (!isOpen) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = '';
-    };
-  }, [isOpen, onClose]);
+const ROUTE_EXPLORER_URL = 'https://route-explorer.com/';
 
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-[100] bg-background animate-fade-in">
-      {/* Full-bleed iframe — matches route-explorer.com layout natively */}
-      <iframe
-        src="https://route-explorer.com/"
-        title="Route Explorer Globe"
-        className="absolute inset-0 w-full h-full border-0 bg-white"
-        allow="geolocation; fullscreen"
-        referrerPolicy="no-referrer-when-downgrade"
-        style={{
-          paddingTop: 'env(safe-area-inset-top)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
-        }}
-      />
-
-      {/* Floating close button — sits over the site's own header area */}
-      <button
-        onClick={onClose}
-        className="fixed top-3 right-3 w-10 h-10 rounded-full bg-black/80 hover:bg-black text-white flex items-center justify-center shadow-lg backdrop-blur-md border border-white/10 transition-all active:scale-95 z-[101]"
-        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
-        aria-label="Close"
-      >
-        <X className="w-5 h-5" />
-      </button>
-    </div>
-  );
+export const openRouteExplorer = () => {
+  window.open(ROUTE_EXPLORER_URL, '_blank', 'noopener,noreferrer');
 };
 
-export default RouteExplorerModal;
+export const RouteExplorerButton = ({ className = '' }: RouteExplorerButtonProps) => (
+  <button
+    onClick={openRouteExplorer}
+    className={`w-full group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-blue-500/15 via-white/[0.04] to-purple-500/15 backdrop-blur-xl p-4 text-left active:scale-[0.99] transition-all hover:border-white/20 ${className}`}
+  >
+    <div className="pointer-events-none absolute -top-10 -right-10 w-40 h-40 rounded-full bg-blue-500/20 blur-3xl group-hover:bg-blue-500/30 transition-all" />
+    <div className="relative flex items-center gap-4">
+      <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500/30 to-purple-500/30 border border-white/15 flex items-center justify-center shrink-0">
+        <Globe2 className="w-5 h-5 text-foreground" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <h3 className="font-bold text-foreground text-sm truncate">Route Explorer Globe</h3>
+        <p className="text-xs text-muted-foreground truncate">3,900+ airports · live route arcs</p>
+      </div>
+      <span className="flex items-center gap-1 text-[10px] uppercase tracking-widest text-muted-foreground border border-white/15 rounded-full px-2.5 py-1 shrink-0">
+        Open <ExternalLink className="w-3 h-3" />
+      </span>
+    </div>
+  </button>
+);
+
+export default RouteExplorerButton;
