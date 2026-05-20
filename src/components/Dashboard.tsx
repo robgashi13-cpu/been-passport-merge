@@ -260,7 +260,6 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
         </button>
       </div>
 
-      </div>
 
       {/* Modals */}
       <VisitedCountriesModal
