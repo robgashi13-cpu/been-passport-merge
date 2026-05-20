@@ -292,10 +292,6 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
         onClose={() => setShowContinentModal(false)}
         continentStats={stats.continentStats}
       />
-      <RouteExplorerModal
-        isOpen={showRouteExplorer}
-        onClose={() => setShowRouteExplorer(false)}
-      />
     </div>
   );
 };
