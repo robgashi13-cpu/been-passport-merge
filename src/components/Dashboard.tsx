@@ -12,6 +12,7 @@ import { getCountryByCode, countries } from '@/data/countries';
 import { VisitedCountriesModal } from './VisitedCountriesModal';
 import { PassportDetailsModal } from './PassportDetailsModal';
 import { FlightBoardModal } from './FlightBoardModal';
+import { RouteExplorerModal } from './RouteExplorerModal';
 import { CountryBrowserModal } from './CountryBrowserModal';
 import { ContinentModal } from './ContinentModal';
 import { useState, useMemo, useEffect } from 'react';
