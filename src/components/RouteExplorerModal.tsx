@@ -21,32 +21,29 @@ export const RouteExplorerModal = ({ isOpen, onClose }: RouteExplorerModalProps)
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm animate-fade-in flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/60">
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-xl">🌍</span>
-          <div className="min-w-0">
-            <h2 className="font-display font-bold text-foreground text-sm sm:text-base truncate">Route Explorer Globe</h2>
-            <p className="text-[10px] sm:text-xs text-muted-foreground truncate">Interactive flight route map · route-explorer.com</p>
-          </div>
-        </div>
-        <button
-          onClick={onClose}
-          className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-foreground transition-all active:scale-95 shrink-0"
-          aria-label="Close"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-      <div className="flex-1 relative bg-white">
-        <iframe
-          src="https://route-explorer.com/"
-          title="Route Explorer Globe"
-          className="absolute inset-0 w-full h-full border-0"
-          allow="geolocation; fullscreen"
-          referrerPolicy="no-referrer-when-downgrade"
-        />
-      </div>
+    <div className="fixed inset-0 z-[100] bg-background animate-fade-in">
+      {/* Full-bleed iframe — matches route-explorer.com layout natively */}
+      <iframe
+        src="https://route-explorer.com/"
+        title="Route Explorer Globe"
+        className="absolute inset-0 w-full h-full border-0 bg-white"
+        allow="geolocation; fullscreen"
+        referrerPolicy="no-referrer-when-downgrade"
+        style={{
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+      />
+
+      {/* Floating close button — sits over the site's own header area */}
+      <button
+        onClick={onClose}
+        className="fixed top-3 right-3 w-10 h-10 rounded-full bg-black/80 hover:bg-black text-white flex items-center justify-center shadow-lg backdrop-blur-md border border-white/10 transition-all active:scale-95 z-[101]"
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
+        aria-label="Close"
+      >
+        <X className="w-5 h-5" />
+      </button>
     </div>
   );
 };
