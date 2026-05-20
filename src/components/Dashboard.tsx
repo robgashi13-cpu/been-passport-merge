@@ -12,6 +12,7 @@ import { getCountryByCode, countries } from '@/data/countries';
 import { VisitedCountriesModal } from './VisitedCountriesModal';
 import { PassportDetailsModal } from './PassportDetailsModal';
 import { FlightBoardModal } from './FlightBoardModal';
+import { RouteExplorerModal } from './RouteExplorerModal';
 import { CountryBrowserModal } from './CountryBrowserModal';
 import { ContinentModal } from './ContinentModal';
 import { useState, useMemo, useEffect } from 'react';
@@ -69,6 +70,7 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
   const [showFlightModal, setShowFlightModal] = useState(false);
   const [showCountryBrowser, setShowCountryBrowser] = useState(false);
   const [showContinentModal, setShowContinentModal] = useState(false);
+  const [showRouteExplorer, setShowRouteExplorer] = useState(false);
 
   // Local-airport picker (persisted). Falls back to PRN when nothing chosen.
   const [airportCode, setAirportCode] = useState<string>(() => {
@@ -238,7 +240,26 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
             </form>
           )}
         </div>
+
+        {/* Route Explorer Globe */}
+        <button
+          onClick={() => setShowRouteExplorer(true)}
+          className="w-full group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-blue-500/15 via-white/[0.04] to-purple-500/15 backdrop-blur-xl p-4 text-left active:scale-[0.99] transition-all hover:border-white/20"
+        >
+          <div className="pointer-events-none absolute -top-10 -right-10 w-40 h-40 rounded-full bg-blue-500/20 blur-3xl group-hover:bg-blue-500/30 transition-all" />
+          <div className="relative flex items-center gap-4">
+            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500/30 to-purple-500/30 border border-white/15 flex items-center justify-center shrink-0">
+              <Earth className="w-5 h-5 text-foreground" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-bold text-foreground text-sm truncate">Route Explorer Globe</h3>
+              <p className="text-xs text-muted-foreground truncate">3,900+ airports · live route arcs</p>
+            </div>
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground border border-white/15 rounded-full px-2.5 py-1 shrink-0">Open</span>
+          </div>
+        </button>
       </div>
+
 
       {/* Modals */}
       <VisitedCountriesModal
@@ -270,6 +291,10 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
         isOpen={showContinentModal}
         onClose={() => setShowContinentModal(false)}
         continentStats={stats.continentStats}
+      />
+      <RouteExplorerModal
+        isOpen={showRouteExplorer}
+        onClose={() => setShowRouteExplorer(false)}
       />
     </div>
   );
