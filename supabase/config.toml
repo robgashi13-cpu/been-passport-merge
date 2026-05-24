@@ -14,3 +14,7 @@ verify_jwt = false
 
 [functions.airport-schedule-ai]
 verify_jwt = false
+
+[functions.travel-search-ai]
+verify_jwt = false
+
