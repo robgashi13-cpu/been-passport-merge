@@ -73,6 +73,7 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
   const [showCountryBrowser, setShowCountryBrowser] = useState(false);
   const [showContinentModal, setShowContinentModal] = useState(false);
   const [showRouteExplorer, setShowRouteExplorer] = useState(false);
+  const [travelSearchMode, setTravelSearchMode] = useState<null | 'flight' | 'hotel'>(null);
 
   // Local-airport picker (persisted). Falls back to PRN when nothing chosen.
   const [airportCode, setAirportCode] = useState<string>(() => {
