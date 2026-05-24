@@ -14,7 +14,7 @@ import { PassportDetailsModal } from './PassportDetailsModal';
 import { FlightBoardModal } from './FlightBoardModal';
 import { openRouteExplorer } from './RouteExplorerModal';
 import { TravelSearchModal } from './TravelSearchModal';
-import { Plane, Hotel, Sparkles } from 'lucide-react';
+import { Plane, Hotel, Car, Sparkles } from 'lucide-react';
 import { CountryBrowserModal } from './CountryBrowserModal';
 import { ContinentModal } from './ContinentModal';
 import { useState, useMemo, useEffect } from 'react';
@@ -73,7 +73,7 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
   const [showCountryBrowser, setShowCountryBrowser] = useState(false);
   const [showContinentModal, setShowContinentModal] = useState(false);
   const [showRouteExplorer, setShowRouteExplorer] = useState(false);
-  const [travelSearchMode, setTravelSearchMode] = useState<null | 'flight' | 'hotel'>(null);
+  const [travelSearchMode, setTravelSearchMode] = useState<null | 'flight' | 'hotel' | 'car'>(null);
 
   // Local-airport picker (persisted). Falls back to PRN when nothing chosen.
   const [airportCode, setAirportCode] = useState<string>(() => {
@@ -254,18 +254,24 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
               <span className="text-[9px] uppercase tracking-widest text-[hsl(var(--gold))] border border-[hsl(var(--gold)/0.4)] rounded-full px-2 py-0.5">New</span>
             </div>
             <p className="text-xs text-muted-foreground mb-3">Curated across all major platforms — cheapest, fastest, best value & AI's top pick.</p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => setTravelSearchMode('flight')}
-                className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/8 hover:bg-white/12 border border-white/10 text-sm font-semibold text-foreground active:scale-[0.98] transition-all"
+                className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl bg-white/8 hover:bg-white/12 border border-white/10 text-xs font-semibold text-foreground active:scale-[0.98] transition-all"
               >
                 <Plane className="w-4 h-4 text-sky-300" /> Flights
               </button>
               <button
                 onClick={() => setTravelSearchMode('hotel')}
-                className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/8 hover:bg-white/12 border border-white/10 text-sm font-semibold text-foreground active:scale-[0.98] transition-all"
+                className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl bg-white/8 hover:bg-white/12 border border-white/10 text-xs font-semibold text-foreground active:scale-[0.98] transition-all"
               >
                 <Hotel className="w-4 h-4 text-fuchsia-300" /> Hotels
+              </button>
+              <button
+                onClick={() => setTravelSearchMode('car')}
+                className="flex flex-col items-center justify-center gap-1 py-3 rounded-xl bg-white/8 hover:bg-white/12 border border-white/10 text-xs font-semibold text-foreground active:scale-[0.98] transition-all"
+              >
+                <Car className="w-4 h-4 text-emerald-300" /> Cars
               </button>
             </div>
           </div>
