@@ -13,6 +13,8 @@ import { VisitedCountriesModal } from './VisitedCountriesModal';
 import { PassportDetailsModal } from './PassportDetailsModal';
 import { FlightBoardModal } from './FlightBoardModal';
 import { openRouteExplorer } from './RouteExplorerModal';
+import { TravelSearchModal } from './TravelSearchModal';
+import { Plane, Hotel, Sparkles } from 'lucide-react';
 import { CountryBrowserModal } from './CountryBrowserModal';
 import { ContinentModal } from './ContinentModal';
 import { useState, useMemo, useEffect } from 'react';
