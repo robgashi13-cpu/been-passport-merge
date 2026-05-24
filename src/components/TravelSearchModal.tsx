@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
     X, Plane, Hotel, Car, Loader2, Sparkles, Star, DollarSign, Zap, Award,
@@ -101,6 +102,8 @@ export const TravelSearchModal = ({ isOpen, onClose, initialMode = "flight" }: P
     const [cType, setCType] = useState<"any" | "economy" | "compact" | "suv" | "luxury" | "van">("any");
     const [cDrivers, setCDrivers] = useState(1);
 
+    useEffect(() => { if (isOpen) setMode(initialMode); }, [isOpen, initialMode]);
+
     if (!isOpen) return null;
 
     const reset = () => { setResults(null); setError(null); };
@@ -143,8 +146,9 @@ export const TravelSearchModal = ({ isOpen, onClose, initialMode = "flight" }: P
         setLoading(false);
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
+
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
             <div className="relative w-full sm:max-w-2xl h-[94dvh] sm:h-[90dvh] sm:rounded-3xl rounded-t-3xl border border-white/10 bg-[hsl(var(--card)/0.97)] backdrop-blur-2xl shadow-[0_30px_80px_-20px_rgba(0,0,0,0.85)] flex flex-col overflow-hidden">
 
@@ -317,7 +321,8 @@ export const TravelSearchModal = ({ isOpen, onClose, initialMode = "flight" }: P
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
