@@ -333,8 +333,3 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
 };
 
 export default Dashboard;
-    </div>
-  );
-};
-
-export default Dashboard;
