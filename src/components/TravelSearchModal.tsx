@@ -102,6 +102,8 @@ export const TravelSearchModal = ({ isOpen, onClose, initialMode = "flight" }: P
     const [cType, setCType] = useState<"any" | "economy" | "compact" | "suv" | "luxury" | "van">("any");
     const [cDrivers, setCDrivers] = useState(1);
 
+    useEffect(() => { if (isOpen) setMode(initialMode); }, [isOpen, initialMode]);
+
     if (!isOpen) return null;
 
     const reset = () => { setResults(null); setError(null); };
