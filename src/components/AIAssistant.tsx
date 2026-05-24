@@ -137,8 +137,18 @@ export const AIAssistant = ({ initialDestination }: AIAssistantProps = {}) => {
                                 return (
                                     <div key={m.id} className="flex">
                                         <div className="max-w-[92%] text-white/90 text-[14px] leading-relaxed
-                                                        prose prose-invert prose-sm prose-p:my-1.5 prose-ul:my-1.5
-                                                        prose-headings:text-white prose-strong:text-[hsl(var(--gold))]">
+                                                        prose prose-invert prose-sm !max-w-none
+                                                        prose-p:my-2 prose-p:leading-relaxed
+                                                        prose-ul:my-2 prose-ul:pl-5 prose-li:my-1 prose-li:marker:text-[hsl(var(--gold)/0.7)]
+                                                        prose-ol:my-2 prose-ol:pl-5
+                                                        prose-headings:text-white prose-headings:font-semibold prose-headings:tracking-tight
+                                                        prose-h2:text-[15px] prose-h2:mt-4 prose-h2:mb-2 prose-h2:pb-1 prose-h2:border-b prose-h2:border-[hsl(var(--gold)/0.2)]
+                                                        prose-h3:text-[14px] prose-h3:mt-3 prose-h3:mb-1.5 prose-h3:text-[hsl(var(--gold))]
+                                                        prose-strong:text-[hsl(var(--gold))] prose-strong:font-semibold
+                                                        prose-hr:my-3 prose-hr:border-white/10
+                                                        prose-blockquote:border-l-2 prose-blockquote:border-[hsl(var(--gold)/0.5)] prose-blockquote:pl-3 prose-blockquote:italic prose-blockquote:text-white/75
+                                                        prose-code:text-[hsl(var(--gold))] prose-code:bg-white/5 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none
+                                                        prose-a:text-[hsl(var(--gold))] prose-a:no-underline hover:prose-a:underline">
                                             <ReactMarkdown>{text || "…"}</ReactMarkdown>
                                         </div>
                                     </div>
