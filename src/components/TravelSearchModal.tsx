@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
     X, Plane, Hotel, Car, Loader2, Sparkles, Star, DollarSign, Zap, Award,
