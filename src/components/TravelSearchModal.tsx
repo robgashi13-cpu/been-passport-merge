@@ -319,7 +319,8 @@ export const TravelSearchModal = ({ isOpen, onClose, initialMode = "flight" }: P
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
