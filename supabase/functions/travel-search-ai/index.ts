@@ -30,7 +30,16 @@ interface HotelSearch {
     vibe?: string;         // free text e.g. "near beach, walkable"
 }
 
-type Body = FlightSearch | HotelSearch;
+interface CarSearch {
+    type: "car";
+    city: string;
+    pickupDate: string;
+    dropoffDate: string;
+    carType?: "any" | "economy" | "compact" | "suv" | "luxury" | "van";
+    drivers?: number;
+}
+
+type Body = FlightSearch | HotelSearch | CarSearch;
 
 const flightTool = {
     type: "function",
