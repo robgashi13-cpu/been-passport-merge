@@ -43,8 +43,8 @@ export const AIAssistant = ({ initialDestination }: AIAssistantProps = {}) => {
         if (open && messages.length === 0) {
             const greet =
                 initialDestination
-                    ? `Hi! Ask me anything about **${initialDestination.name}** — itineraries, food, visas, best time to go.`
-                    : `Hi, I'm your **Wanderlust AI**.\n\nAsk me to plan a trip, suggest where to go next based on your passport, or compare destinations.`;
+                    ? `✨ **Welcome to Wanderlust AI**\n\nI'm your private travel concierge. Ask me anything about **${initialDestination.name}** — itineraries, where to stay, hidden food spots, visa requirements, the best season to go.\n\n💡 *Insider tip:* the more specific your question, the sharper my picks.`
+                    : `✨ **Welcome to Wanderlust AI**\n\nI'm your private travel concierge — here to plan, recommend, and answer anything travel.\n\n- ✈️ Plan a trip day-by-day\n- 🗺️ Where should I go next (passport-aware)\n- 🏨 Best stays for your style & budget\n- 🛂 Visa rules in plain language\n\n💡 *Insider tip:* tell me your dates and budget for sharper results.`;
             setMessages([
                 {
                     id: "greet",
