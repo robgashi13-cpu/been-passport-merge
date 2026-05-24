@@ -13,6 +13,8 @@ import { VisitedCountriesModal } from './VisitedCountriesModal';
 import { PassportDetailsModal } from './PassportDetailsModal';
 import { FlightBoardModal } from './FlightBoardModal';
 import { openRouteExplorer } from './RouteExplorerModal';
+import { TravelSearchModal } from './TravelSearchModal';
+import { Plane, Hotel, Sparkles } from 'lucide-react';
 import { CountryBrowserModal } from './CountryBrowserModal';
 import { ContinentModal } from './ContinentModal';
 import { useState, useMemo, useEffect } from 'react';
@@ -71,6 +73,7 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
   const [showCountryBrowser, setShowCountryBrowser] = useState(false);
   const [showContinentModal, setShowContinentModal] = useState(false);
   const [showRouteExplorer, setShowRouteExplorer] = useState(false);
+  const [travelSearchMode, setTravelSearchMode] = useState<null | 'flight' | 'hotel'>(null);
 
   // Local-airport picker (persisted). Falls back to PRN when nothing chosen.
   const [airportCode, setAirportCode] = useState<string>(() => {
@@ -241,6 +244,33 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
           )}
         </div>
 
+        {/* AI Travel Search — Flights & Hotels */}
+        <div className="relative overflow-hidden rounded-2xl border border-[hsl(var(--gold)/0.3)] bg-gradient-to-br from-[hsl(var(--gold)/0.12)] via-white/[0.03] to-amber-500/10 backdrop-blur-xl p-4">
+          <div className="pointer-events-none absolute -top-10 -right-10 w-40 h-40 rounded-full bg-[hsl(var(--gold)/0.25)] blur-3xl" />
+          <div className="relative">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-4 h-4 text-[hsl(var(--gold))]" />
+              <h3 className="font-display font-bold text-foreground text-sm">AI Travel Search</h3>
+              <span className="text-[9px] uppercase tracking-widest text-[hsl(var(--gold))] border border-[hsl(var(--gold)/0.4)] rounded-full px-2 py-0.5">New</span>
+            </div>
+            <p className="text-xs text-muted-foreground mb-3">Curated across all major platforms — cheapest, fastest, best value & AI's top pick.</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setTravelSearchMode('flight')}
+                className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/8 hover:bg-white/12 border border-white/10 text-sm font-semibold text-foreground active:scale-[0.98] transition-all"
+              >
+                <Plane className="w-4 h-4 text-sky-300" /> Flights
+              </button>
+              <button
+                onClick={() => setTravelSearchMode('hotel')}
+                className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/8 hover:bg-white/12 border border-white/10 text-sm font-semibold text-foreground active:scale-[0.98] transition-all"
+              >
+                <Hotel className="w-4 h-4 text-fuchsia-300" /> Hotels
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Route Explorer Globe */}
         <button
           onClick={openRouteExplorer}
@@ -258,6 +288,7 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
             <span className="text-[10px] uppercase tracking-widest text-muted-foreground border border-white/15 rounded-full px-2.5 py-1 shrink-0">Open</span>
           </div>
         </button>
+
       </div>
 
 
@@ -291,6 +322,11 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
         isOpen={showContinentModal}
         onClose={() => setShowContinentModal(false)}
         continentStats={stats.continentStats}
+      />
+      <TravelSearchModal
+        isOpen={travelSearchMode !== null}
+        onClose={() => setTravelSearchMode(null)}
+        initialMode={travelSearchMode ?? 'flight'}
       />
     </div>
   );
