@@ -323,6 +323,16 @@ const Dashboard = ({ stats, visitedCountries, toggleVisited, bucketList, heldVis
         onClose={() => setShowContinentModal(false)}
         continentStats={stats.continentStats}
       />
+      <TravelSearchModal
+        isOpen={travelSearchMode !== null}
+        onClose={() => setTravelSearchMode(null)}
+        initialMode={travelSearchMode ?? 'flight'}
+      />
+    </div>
+  );
+};
+
+export default Dashboard;
     </div>
   );
 };
