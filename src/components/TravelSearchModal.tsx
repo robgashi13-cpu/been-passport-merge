@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
-    X, Plane, Hotel, Loader2, Sparkles, Star, DollarSign, Zap, Award,
-    ArrowRight, Clock, MapPin, ExternalLink, Search, Users, Building2
+    X, Plane, Hotel, Car, Loader2, Sparkles, Star, DollarSign, Zap, Award,
+    ArrowRight, Clock, MapPin, ExternalLink, Search, Users, Building2, AlertCircle
 } from "lucide-react";
 
-type Mode = "flight" | "hotel";
+type Mode = "flight" | "hotel" | "car";
 
 interface Props {
     isOpen: boolean;
@@ -15,35 +15,31 @@ interface Props {
 
 interface FlightOption {
     category: "cheapest" | "fastest" | "best_value" | "ai_pick";
-    airline: string;
-    flightNumber?: string;
-    from: string;
-    to: string;
-    stops: number;
-    stopCities?: string[];
-    departTime: string;
-    arriveTime: string;
+    airline: string; flightNumber?: string;
+    from: string; to: string;
+    stops: number; stopCities?: string[];
+    departTime: string; arriveTime: string;
     durationMinutes: number;
-    priceUSD: number;
-    cabin?: string;
-    aircraft?: string;
-    rating: number;
-    whyPick: string;
-    bookingPlatforms: string[];
+    priceUSD: number; cabin?: string; aircraft?: string;
+    rating: number; whyPick: string; bookingPlatforms: string[];
 }
 
 interface HotelOption {
     category: "cheapest" | "best_value" | "luxury" | "ai_pick";
-    name: string;
-    neighborhood: string;
-    starClass: number;
-    rating: number;
-    priceUSDPerNight: number;
-    totalUSD: number;
-    amenities: string[];
-    distanceToCenter?: string;
-    whyPick: string;
-    bookingPlatforms: string[];
+    name: string; neighborhood: string; starClass: number; rating: number;
+    priceUSDPerNight: number; totalUSD: number;
+    amenities: string[]; distanceToCenter?: string;
+    whyPick: string; bookingPlatforms: string[];
+}
+
+interface CarOption {
+    category: "cheapest" | "best_value" | "luxury" | "ai_pick";
+    company: string; carModel: string; carType: string;
+    seats?: number; transmission: "automatic" | "manual";
+    pricePerDayUSD: number; totalUSD: number;
+    pickupLocation: string; mileagePolicy?: string;
+    rating: number; features?: string[];
+    whyPick: string; bookingPlatforms: string[];
 }
 
 const CATEGORY_META: Record<string, { label: string; icon: any; tone: string }> = {
@@ -53,6 +49,9 @@ const CATEGORY_META: Record<string, { label: string; icon: any; tone: string }> 
     luxury: { label: "Luxury", icon: Award, tone: "from-fuchsia-500/30 to-fuchsia-500/5 border-fuchsia-400/30 text-fuchsia-200" },
     ai_pick: { label: "AI Pick", icon: Sparkles, tone: "from-[hsl(var(--gold)/0.45)] to-[hsl(var(--gold)/0.05)] border-[hsl(var(--gold)/0.45)] text-[hsl(var(--gold))]" },
 };
+
+const POPULAR_CITIES = ["Lisbon", "Barcelona", "Paris", "Rome", "Tokyo", "Bangkok", "Dubai", "New York", "London", "Istanbul"];
+const POPULAR_AIRPORTS = ["VIE", "LHR", "CDG", "JFK", "NRT", "DXB", "IST", "BCN", "FCO", "BKK"];
 
 const fmtDur = (m: number) => `${Math.floor(m / 60)}h ${m % 60}m`;
 const stars = (n: number) => {
@@ -77,9 +76,9 @@ export const TravelSearchModal = ({ isOpen, onClose, initialMode = "flight" }: P
     const [mode, setMode] = useState<Mode>(initialMode);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [results, setResults] = useState<{ summary: string; disclaimer: string; options: (FlightOption | HotelOption)[] } | null>(null);
+    const [results, setResults] = useState<{ summary: string; disclaimer: string; options: any[] } | null>(null);
 
-    // Flight form
+    // Flight
     const [fFrom, setFFrom] = useState("");
     const [fTo, setFTo] = useState("");
     const [fDepart, setFDepart] = useState(todayPlus(14));
@@ -87,7 +86,7 @@ export const TravelSearchModal = ({ isOpen, onClose, initialMode = "flight" }: P
     const [fPax, setFPax] = useState(1);
     const [fCabin, setFCabin] = useState<"economy" | "premium" | "business" | "first">("economy");
 
-    // Hotel form
+    // Hotel
     const [hCity, setHCity] = useState("");
     const [hIn, setHIn] = useState(todayPlus(14));
     const [hOut, setHOut] = useState(todayPlus(17));
@@ -95,41 +94,69 @@ export const TravelSearchModal = ({ isOpen, onClose, initialMode = "flight" }: P
     const [hBudget, setHBudget] = useState<"any" | "budget" | "mid" | "luxury">("any");
     const [hVibe, setHVibe] = useState("");
 
+    // Car
+    const [cCity, setCCity] = useState("");
+    const [cIn, setCIn] = useState(todayPlus(14));
+    const [cOut, setCOut] = useState(todayPlus(17));
+    const [cType, setCType] = useState<"any" | "economy" | "compact" | "suv" | "luxury" | "van">("any");
+    const [cDrivers, setCDrivers] = useState(1);
+
     if (!isOpen) return null;
 
-    const run = async () => {
-        setLoading(true); setError(null); setResults(null);
-        const body = mode === "flight"
-            ? { type: "flight", from: fFrom, to: fTo, departDate: fDepart, returnDate: fReturn || undefined, passengers: fPax, cabin: fCabin }
-            : { type: "hotel", city: hCity, checkIn: hIn, checkOut: hOut, guests: hGuests, budget: hBudget, vibe: hVibe || undefined };
+    const reset = () => { setResults(null); setError(null); };
+    const switchMode = (m: Mode) => { setMode(m); reset(); };
 
-        const { data, error } = await supabase.functions.invoke("travel-search-ai", { body });
-        if (error || !data?.ok) {
-            setError(error?.message || data?.error || "Search failed");
+    const validation = (() => {
+        if (mode === "flight") {
+            if (!fFrom.trim()) return "Enter a departure city or airport code";
+            if (!fTo.trim()) return "Enter a destination city or airport code";
+            if (!fDepart) return "Pick a departure date";
+            return null;
+        }
+        if (mode === "hotel") {
+            if (!hCity.trim()) return "Enter a city";
+            if (!hIn || !hOut) return "Pick check-in and check-out dates";
+            if (new Date(hOut) <= new Date(hIn)) return "Check-out must be after check-in";
+            return null;
+        }
+        if (!cCity.trim()) return "Enter a pickup city";
+        if (!cIn || !cOut) return "Pick rental dates";
+        if (new Date(cOut) <= new Date(cIn)) return "Drop-off must be after pickup";
+        return null;
+    })();
+
+    const run = async () => {
+        if (validation) { setError(validation); return; }
+        setLoading(true); setError(null); setResults(null);
+        const body: any = mode === "flight"
+            ? { type: "flight", from: fFrom.trim(), to: fTo.trim(), departDate: fDepart, returnDate: fReturn || undefined, passengers: fPax, cabin: fCabin }
+            : mode === "hotel"
+                ? { type: "hotel", city: hCity.trim(), checkIn: hIn, checkOut: hOut, guests: hGuests, budget: hBudget, vibe: hVibe.trim() || undefined }
+                : { type: "car", city: cCity.trim(), pickupDate: cIn, dropoffDate: cOut, carType: cType, drivers: cDrivers };
+
+        const { data, error: err } = await supabase.functions.invoke("travel-search-ai", { body });
+        if (err || !data?.ok) {
+            setError(err?.message || data?.error || "Search failed — please try again.");
         } else {
             setResults(data.data);
         }
         setLoading(false);
     };
 
-    const canSubmit = mode === "flight"
-        ? fFrom.trim().length >= 2 && fTo.trim().length >= 2 && fDepart
-        : hCity.trim().length >= 2 && hIn && hOut;
-
     return (
         <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
             <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-            <div className="relative w-full sm:max-w-2xl h-[92dvh] sm:h-[88dvh] sm:rounded-3xl rounded-t-3xl border border-white/10 bg-[hsl(var(--card)/0.97)] backdrop-blur-2xl shadow-[0_30px_80px_-20px_rgba(0,0,0,0.85)] flex flex-col overflow-hidden">
+            <div className="relative w-full sm:max-w-2xl h-[94dvh] sm:h-[90dvh] sm:rounded-3xl rounded-t-3xl border border-white/10 bg-[hsl(var(--card)/0.97)] backdrop-blur-2xl shadow-[0_30px_80px_-20px_rgba(0,0,0,0.85)] flex flex-col overflow-hidden">
 
                 {/* Header */}
                 <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[hsl(var(--gold))] to-amber-600 flex items-center justify-center">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[hsl(var(--gold))] to-amber-600 flex items-center justify-center shrink-0">
                             <Sparkles className="w-4 h-4 text-black" />
                         </div>
-                        <div>
-                            <div className="font-display text-lg font-semibold text-white">AI Travel Search</div>
-                            <div className="text-[11px] text-white/50">Flights & stays, curated for you</div>
+                        <div className="min-w-0">
+                            <div className="font-display text-lg font-semibold text-white truncate">AI Travel Search</div>
+                            <div className="text-[11px] text-white/50 truncate">Flights · Hotels · Cars — curated for you</div>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 text-white/70" aria-label="Close">
@@ -139,15 +166,19 @@ export const TravelSearchModal = ({ isOpen, onClose, initialMode = "flight" }: P
 
                 {/* Mode switch */}
                 <div className="px-4 pt-3">
-                    <div className="grid grid-cols-2 gap-1 p-1 rounded-2xl bg-white/5 border border-white/10">
-                        {(["flight", "hotel"] as Mode[]).map(m => (
+                    <div className="grid grid-cols-3 gap-1 p-1 rounded-2xl bg-white/5 border border-white/10">
+                        {([
+                            { id: "flight", icon: Plane, label: "Flights" },
+                            { id: "hotel", icon: Hotel, label: "Hotels" },
+                            { id: "car", icon: Car, label: "Cars" },
+                        ] as { id: Mode; icon: any; label: string }[]).map(({ id, icon: Icon, label }) => (
                             <button
-                                key={m}
-                                onClick={() => { setMode(m); setResults(null); setError(null); }}
-                                className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all ${mode === m ? "bg-gradient-to-br from-[hsl(var(--gold))] to-amber-600 text-black shadow" : "text-white/70 hover:text-white"}`}
+                                key={id}
+                                onClick={() => switchMode(id)}
+                                className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${mode === id ? "bg-gradient-to-br from-[hsl(var(--gold))] to-amber-600 text-black shadow" : "text-white/70 hover:text-white"}`}
                             >
-                                {m === "flight" ? <Plane className="w-4 h-4" /> : <Hotel className="w-4 h-4" />}
-                                {m === "flight" ? "Flights" : "Hotels"}
+                                <Icon className="w-4 h-4" />
+                                {label}
                             </button>
                         ))}
                     </div>
@@ -156,82 +187,130 @@ export const TravelSearchModal = ({ isOpen, onClose, initialMode = "flight" }: P
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
                     {/* Form */}
-                    {mode === "flight" ? (
-                        <div className="grid grid-cols-2 gap-3">
-                            <Field label="From" icon={MapPin}>
-                                <input value={fFrom} onChange={e => setFFrom(e.target.value)} placeholder="City or IATA (e.g. VIE)" className={inputCls} />
+                    {mode === "flight" && (
+                        <>
+                            <div className="grid grid-cols-1 gap-3">
+                                <Field label="From — city or airport" icon={MapPin} required>
+                                    <CityInput value={fFrom} onChange={setFFrom} placeholder="e.g. Vienna or VIE" suggestions={POPULAR_AIRPORTS} />
+                                </Field>
+                                <Field label="To — city or airport" icon={MapPin} required>
+                                    <CityInput value={fTo} onChange={setFTo} placeholder="e.g. Tokyo or NRT" suggestions={POPULAR_AIRPORTS} />
+                                </Field>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <Field label="Depart" required>
+                                    <input type="date" value={fDepart} onChange={e => setFDepart(e.target.value)} className={inputCls} />
+                                </Field>
+                                <Field label="Return (optional)">
+                                    <input type="date" value={fReturn} onChange={e => setFReturn(e.target.value)} className={inputCls} />
+                                </Field>
+                                <Field label="Passengers" icon={Users}>
+                                    <input type="number" min={1} max={9} value={fPax} onChange={e => setFPax(Math.max(1, Math.min(9, +e.target.value || 1)))} className={inputCls} />
+                                </Field>
+                                <Field label="Cabin">
+                                    <select value={fCabin} onChange={e => setFCabin(e.target.value as any)} className={inputCls}>
+                                        <option value="economy">Economy</option>
+                                        <option value="premium">Premium Eco</option>
+                                        <option value="business">Business</option>
+                                        <option value="first">First</option>
+                                    </select>
+                                </Field>
+                            </div>
+                        </>
+                    )}
+
+                    {mode === "hotel" && (
+                        <>
+                            <Field label="Which city?" icon={Building2} required>
+                                <CityInput value={hCity} onChange={setHCity} placeholder="e.g. Lisbon, Tokyo, New York" suggestions={POPULAR_CITIES} />
                             </Field>
-                            <Field label="To" icon={MapPin}>
-                                <input value={fTo} onChange={e => setFTo(e.target.value)} placeholder="City or IATA (e.g. NRT)" className={inputCls} />
-                            </Field>
-                            <Field label="Depart">
-                                <input type="date" value={fDepart} onChange={e => setFDepart(e.target.value)} className={inputCls} />
-                            </Field>
-                            <Field label="Return (optional)">
-                                <input type="date" value={fReturn} onChange={e => setFReturn(e.target.value)} className={inputCls} />
-                            </Field>
-                            <Field label="Passengers" icon={Users}>
-                                <input type="number" min={1} max={9} value={fPax} onChange={e => setFPax(Math.max(1, Math.min(9, +e.target.value || 1)))} className={inputCls} />
-                            </Field>
-                            <Field label="Cabin">
-                                <select value={fCabin} onChange={e => setFCabin(e.target.value as any)} className={inputCls}>
-                                    <option value="economy">Economy</option>
-                                    <option value="premium">Premium Eco</option>
-                                    <option value="business">Business</option>
-                                    <option value="first">First</option>
-                                </select>
-                            </Field>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-2 gap-3">
-                            <Field label="City" icon={Building2}>
-                                <input value={hCity} onChange={e => setHCity(e.target.value)} placeholder="e.g. Lisbon" className={inputCls} />
-                            </Field>
-                            <Field label="Guests" icon={Users}>
-                                <input type="number" min={1} max={8} value={hGuests} onChange={e => setHGuests(Math.max(1, Math.min(8, +e.target.value || 1)))} className={inputCls} />
-                            </Field>
-                            <Field label="Check-in">
-                                <input type="date" value={hIn} onChange={e => setHIn(e.target.value)} className={inputCls} />
-                            </Field>
-                            <Field label="Check-out">
-                                <input type="date" value={hOut} onChange={e => setHOut(e.target.value)} className={inputCls} />
-                            </Field>
-                            <Field label="Budget">
-                                <select value={hBudget} onChange={e => setHBudget(e.target.value as any)} className={inputCls}>
-                                    <option value="any">Any</option>
-                                    <option value="budget">Budget ($)</option>
-                                    <option value="mid">Mid-range ($$)</option>
-                                    <option value="luxury">Luxury ($$$+)</option>
-                                </select>
-                            </Field>
+                            <div className="grid grid-cols-2 gap-3">
+                                <Field label="Check-in" required>
+                                    <input type="date" value={hIn} onChange={e => setHIn(e.target.value)} className={inputCls} />
+                                </Field>
+                                <Field label="Check-out" required>
+                                    <input type="date" value={hOut} onChange={e => setHOut(e.target.value)} className={inputCls} />
+                                </Field>
+                                <Field label="Guests" icon={Users}>
+                                    <input type="number" min={1} max={8} value={hGuests} onChange={e => setHGuests(Math.max(1, Math.min(8, +e.target.value || 1)))} className={inputCls} />
+                                </Field>
+                                <Field label="Budget">
+                                    <select value={hBudget} onChange={e => setHBudget(e.target.value as any)} className={inputCls}>
+                                        <option value="any">Any</option>
+                                        <option value="budget">Budget ($)</option>
+                                        <option value="mid">Mid-range ($$)</option>
+                                        <option value="luxury">Luxury ($$$+)</option>
+                                    </select>
+                                </Field>
+                            </div>
                             <Field label="Vibe (optional)">
-                                <input value={hVibe} onChange={e => setHVibe(e.target.value)} placeholder="e.g. near old town, walkable" className={inputCls} />
+                                <input value={hVibe} onChange={e => setHVibe(e.target.value)} placeholder="e.g. near old town, walkable, pool" className={inputCls} />
                             </Field>
+                        </>
+                    )}
+
+                    {mode === "car" && (
+                        <>
+                            <Field label="Pickup city" icon={Building2} required>
+                                <CityInput value={cCity} onChange={setCCity} placeholder="e.g. Lisbon, Miami, Rome" suggestions={POPULAR_CITIES} />
+                            </Field>
+                            <div className="grid grid-cols-2 gap-3">
+                                <Field label="Pickup date" required>
+                                    <input type="date" value={cIn} onChange={e => setCIn(e.target.value)} className={inputCls} />
+                                </Field>
+                                <Field label="Drop-off date" required>
+                                    <input type="date" value={cOut} onChange={e => setCOut(e.target.value)} className={inputCls} />
+                                </Field>
+                                <Field label="Car type">
+                                    <select value={cType} onChange={e => setCType(e.target.value as any)} className={inputCls}>
+                                        <option value="any">Any</option>
+                                        <option value="economy">Economy</option>
+                                        <option value="compact">Compact</option>
+                                        <option value="suv">SUV</option>
+                                        <option value="luxury">Luxury</option>
+                                        <option value="van">Van / 7+ seats</option>
+                                    </select>
+                                </Field>
+                                <Field label="Drivers" icon={Users}>
+                                    <input type="number" min={1} max={4} value={cDrivers} onChange={e => setCDrivers(Math.max(1, Math.min(4, +e.target.value || 1)))} className={inputCls} />
+                                </Field>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Validation hint */}
+                    {validation && !loading && (
+                        <div className="flex items-center gap-2 text-xs text-amber-200/90 bg-amber-500/10 border border-amber-400/30 rounded-xl px-3 py-2">
+                            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                            {validation}
                         </div>
                     )}
 
                     <button
                         onClick={run}
-                        disabled={!canSubmit || loading}
+                        disabled={loading || !!validation}
                         className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[hsl(var(--gold))] to-amber-600 text-black font-semibold py-3 disabled:opacity-40 hover:scale-[1.01] active:scale-[0.99] transition-transform"
                     >
                         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                        {loading ? "AI is searching across platforms…" : `Search ${mode === "flight" ? "Flights" : "Hotels"} with AI`}
+                        {loading
+                            ? "AI is comparing across platforms…"
+                            : `Search ${mode === "flight" ? "Flights" : mode === "hotel" ? "Hotels" : "Cars"} with AI`}
                     </button>
 
                     {error && <div className="text-red-300 text-sm bg-red-500/10 border border-red-400/30 rounded-xl px-3 py-2">{error}</div>}
 
-                    {/* Results */}
-                    {results && (
+                    {loading && <ResultsSkeleton />}
+
+                    {results && !loading && (
                         <div className="space-y-3 pt-2">
                             <div className="text-sm text-white/80">{results.summary}</div>
                             {results.options
                                 .slice()
-                                .sort((a, b) => (a.category === "ai_pick" ? -1 : b.category === "ai_pick" ? 1 : 0))
-                                .map((opt, i) => (
-                                    mode === "flight"
-                                        ? <FlightCard key={i} opt={opt as FlightOption} />
-                                        : <HotelCard key={i} opt={opt as HotelOption} />
+                                .sort((a: any, b: any) => (a.category === "ai_pick" ? -1 : b.category === "ai_pick" ? 1 : 0))
+                                .map((opt: any, i: number) => (
+                                    mode === "flight" ? <FlightCard key={i} opt={opt} />
+                                        : mode === "hotel" ? <HotelCard key={i} opt={opt} />
+                                            : <CarCard key={i} opt={opt} city={cCity} />
                                 ))}
                             <p className="text-[10px] text-white/40 italic pt-1">{results.disclaimer || "AI-curated estimates — verify on booking sites before purchasing."}</p>
                         </div>
@@ -244,14 +323,43 @@ export const TravelSearchModal = ({ isOpen, onClose, initialMode = "flight" }: P
 
 const inputCls = "w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-[hsl(var(--gold)/0.5)]";
 
-const Field = ({ label, icon: Icon, children }: { label: string; icon?: any; children: React.ReactNode }) => (
+const Field = ({ label, icon: Icon, required, children }: { label: string; icon?: any; required?: boolean; children: React.ReactNode }) => (
     <label className="flex flex-col gap-1">
         <span className="text-[11px] uppercase tracking-wider text-white/50 font-semibold flex items-center gap-1.5">
             {Icon && <Icon className="w-3 h-3" />}
             {label}
+            {required && <span className="text-[hsl(var(--gold))]">*</span>}
         </span>
         {children}
     </label>
+);
+
+const CityInput = ({ value, onChange, placeholder, suggestions }: { value: string; onChange: (v: string) => void; placeholder: string; suggestions: string[] }) => (
+    <div className="space-y-2">
+        <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className={inputCls} autoComplete="off" />
+        {!value && (
+            <div className="flex flex-wrap gap-1.5">
+                {suggestions.slice(0, 6).map(s => (
+                    <button key={s} type="button" onClick={() => onChange(s)} className="text-[11px] px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-colors">
+                        {s}
+                    </button>
+                ))}
+            </div>
+        )}
+    </div>
+);
+
+const ResultsSkeleton = () => (
+    <div className="space-y-3 pt-2">
+        {[0, 1, 2, 3].map(i => (
+            <div key={i} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-2 animate-pulse">
+                <div className="h-4 w-24 bg-white/10 rounded-full" />
+                <div className="h-6 w-48 bg-white/10 rounded" />
+                <div className="h-3 w-full bg-white/10 rounded" />
+                <div className="h-3 w-3/4 bg-white/10 rounded" />
+            </div>
+        ))}
+    </div>
 );
 
 const CategoryBadge = ({ category }: { category: string }) => {
@@ -274,6 +382,9 @@ const bookingUrl = (platform: string, query: string) => {
     if (p.includes("booking")) return `https://www.booking.com/searchresults.html?ss=${q}`;
     if (p.includes("hotels")) return `https://www.hotels.com/search.do?q-destination=${q}`;
     if (p.includes("agoda")) return `https://www.agoda.com/search?q=${q}`;
+    if (p.includes("rentalcars")) return `https://www.rentalcars.com/SearchResults.do?city=${q}`;
+    if (p.includes("discovercars")) return `https://www.discovercars.com/?country=&pickupLocation=${q}`;
+    if (p.includes("expedia")) return `https://www.expedia.com/Hotel-Search?destination=${q}`;
     return `https://www.google.com/search?q=${q}+${encodeURIComponent(platform)}`;
 };
 
@@ -331,9 +442,7 @@ const HotelCard = ({ opt }: { opt: HotelOption }) => (
             <h4 className="font-bold text-white text-base leading-tight">{opt.name}</h4>
             <p className="text-xs text-white/60 mt-0.5">{"★".repeat(opt.starClass)}{"☆".repeat(Math.max(0, 5 - opt.starClass))} · {opt.neighborhood}{opt.distanceToCenter ? ` · ${opt.distanceToCenter}` : ""}</p>
         </div>
-        <div className="flex items-center justify-between">
-            {stars(opt.rating)}
-        </div>
+        <div>{stars(opt.rating)}</div>
         <div className="flex flex-wrap gap-1.5">
             {opt.amenities.slice(0, 5).map(a => (
                 <span key={a} className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/70">{a}</span>
@@ -343,6 +452,39 @@ const HotelCard = ({ opt }: { opt: HotelOption }) => (
         <div className="flex flex-wrap gap-2 pt-1">
             {opt.bookingPlatforms.map(p => (
                 <a key={p} href={bookingUrl(p, opt.name)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/15 text-white border border-white/10">
+                    {p} <ExternalLink className="w-3 h-3" />
+                </a>
+            ))}
+        </div>
+    </div>
+);
+
+const CarCard = ({ opt, city }: { opt: CarOption; city: string }) => (
+    <div className={`rounded-2xl border bg-gradient-to-br ${opt.category === "ai_pick" ? "from-[hsl(var(--gold)/0.12)] to-transparent border-[hsl(var(--gold)/0.4)]" : "from-white/[0.04] to-transparent border-white/10"} p-4 space-y-3`}>
+        <div className="flex items-start justify-between gap-2">
+            <CategoryBadge category={opt.category} />
+            <div className="text-right">
+                <div className="font-display text-2xl font-bold text-white">${opt.pricePerDayUSD}</div>
+                <div className="text-[10px] text-white/50 uppercase">/ day · ${opt.totalUSD} total</div>
+            </div>
+        </div>
+        <div>
+            <h4 className="font-bold text-white text-base leading-tight">{opt.company} — {opt.carModel}</h4>
+            <p className="text-xs text-white/60 mt-0.5 capitalize">{opt.carType}{opt.seats ? ` · ${opt.seats} seats` : ""} · {opt.transmission}{opt.mileagePolicy ? ` · ${opt.mileagePolicy}` : ""}</p>
+            <p className="text-[11px] text-white/50 mt-1 flex items-center gap-1"><MapPin className="w-3 h-3" />{opt.pickupLocation}</p>
+        </div>
+        <div>{stars(opt.rating)}</div>
+        {opt.features?.length ? (
+            <div className="flex flex-wrap gap-1.5">
+                {opt.features.slice(0, 5).map(f => (
+                    <span key={f} className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/70">{f}</span>
+                ))}
+            </div>
+        ) : null}
+        <p className="text-xs text-white/80 italic">"{opt.whyPick}"</p>
+        <div className="flex flex-wrap gap-2 pt-1">
+            {opt.bookingPlatforms.map(p => (
+                <a key={p} href={bookingUrl(p, `${city} ${opt.company}`)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/15 text-white border border-white/10">
                     {p} <ExternalLink className="w-3 h-3" />
                 </a>
             ))}
