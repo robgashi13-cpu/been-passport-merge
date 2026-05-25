@@ -354,20 +354,57 @@ const Field = ({ label, icon: Icon, required, children }: { label: string; icon?
     </label>
 );
 
-const CityInput = ({ value, onChange, placeholder, suggestions }: { value: string; onChange: (v: string) => void; placeholder: string; suggestions: string[] }) => (
-    <div className="space-y-2">
-        <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className={inputCls} autoComplete="off" />
-        {!value && (
-            <div className="flex flex-wrap gap-1.5">
-                {suggestions.slice(0, 6).map(s => (
-                    <button key={s} type="button" onClick={() => onChange(s)} className="text-[11px] px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-colors">
-                        {s}
-                    </button>
-                ))}
-            </div>
-        )}
-    </div>
-);
+const CityInput = ({ value, onChange, placeholder, suggestions }: { value: string; onChange: (v: string) => void; placeholder: string; suggestions: string[] }) => {
+    const [focused, setFocused] = useState(false);
+    const [active, setActive] = useState(0);
+    const matches = useMemo<Airport[]>(() => (value.trim().length >= 1 ? searchAirports(value, 8) : []), [value]);
+    const showList = focused && matches.length > 0;
+    return (
+        <div className="relative">
+            <input
+                value={value}
+                onChange={e => { onChange(e.target.value); setActive(0); }}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setTimeout(() => setFocused(false), 150)}
+                onKeyDown={(e) => {
+                    if (!showList) return;
+                    if (e.key === "ArrowDown") { e.preventDefault(); setActive(a => Math.min(a + 1, matches.length - 1)); }
+                    else if (e.key === "ArrowUp") { e.preventDefault(); setActive(a => Math.max(a - 1, 0)); }
+                    else if (e.key === "Enter") { e.preventDefault(); const a = matches[active]; if (a) { onChange(`${a.city} (${a.iata})`); setFocused(false); } }
+                }}
+                placeholder={placeholder}
+                className={inputCls}
+                autoComplete="off"
+            />
+            {showList && (
+                <div className="absolute z-50 left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-xl border border-white/15 bg-[hsl(var(--card))] shadow-2xl backdrop-blur-xl">
+                    {matches.map((a, i) => (
+                        <button
+                            key={a.iata + a.city}
+                            type="button"
+                            onMouseDown={(e) => { e.preventDefault(); onChange(`${a.city} (${a.iata})`); setFocused(false); }}
+                            onMouseEnter={() => setActive(i)}
+                            className={`w-full text-left flex items-center gap-2 px-3 py-2 text-sm ${i === active ? "bg-white/10" : ""} hover:bg-white/10`}
+                        >
+                            <span className="font-mono font-bold text-[hsl(var(--gold))] w-12 shrink-0">{a.iata}</span>
+                            <span className="text-white truncate flex-1">{a.city}</span>
+                            <span className="text-white/50 text-xs truncate">{a.country}</span>
+                        </button>
+                    ))}
+                </div>
+            )}
+            {!value && !focused && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                    {suggestions.slice(0, 6).map(s => (
+                        <button key={s} type="button" onClick={() => onChange(s)} className="text-[11px] px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-colors">
+                            {s}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
 
 const ResultsSkeleton = () => (
     <div className="space-y-3 pt-2">
