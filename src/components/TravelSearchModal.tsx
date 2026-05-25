@@ -1,17 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
     X, Plane, Hotel, Car, Loader2, Sparkles, Star, DollarSign, Zap, Award,
     ArrowRight, Clock, MapPin, ExternalLink, Search, Users, Building2, AlertCircle
 } from "lucide-react";
+import { AIRPORTS, searchAirports, formatAirport, type Airport } from "@/data/airports";
 
 type Mode = "flight" | "hotel" | "car";
+
+export interface TravelSearchInitialValues {
+    city?: string;        // hotel/car prefill
+    from?: string;        // flight prefill (city or IATA)
+    to?: string;
+}
 
 interface Props {
     isOpen: boolean;
     onClose: () => void;
     initialMode?: Mode;
+    initialValues?: TravelSearchInitialValues;
 }
 
 interface FlightOption {
@@ -73,22 +81,22 @@ const todayPlus = (days: number) => {
     return d.toISOString().slice(0, 10);
 };
 
-export const TravelSearchModal = ({ isOpen, onClose, initialMode = "flight" }: Props) => {
+export const TravelSearchModal = ({ isOpen, onClose, initialMode = "flight", initialValues }: Props) => {
     const [mode, setMode] = useState<Mode>(initialMode);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [results, setResults] = useState<{ summary: string; disclaimer: string; options: any[] } | null>(null);
 
     // Flight
-    const [fFrom, setFFrom] = useState("");
-    const [fTo, setFTo] = useState("");
+    const [fFrom, setFFrom] = useState(initialValues?.from || "");
+    const [fTo, setFTo] = useState(initialValues?.to || "");
     const [fDepart, setFDepart] = useState(todayPlus(14));
     const [fReturn, setFReturn] = useState(todayPlus(21));
     const [fPax, setFPax] = useState(1);
     const [fCabin, setFCabin] = useState<"economy" | "premium" | "business" | "first">("economy");
 
     // Hotel
-    const [hCity, setHCity] = useState("");
+    const [hCity, setHCity] = useState(initialValues?.city || "");
     const [hIn, setHIn] = useState(todayPlus(14));
     const [hOut, setHOut] = useState(todayPlus(17));
     const [hGuests, setHGuests] = useState(2);
@@ -96,13 +104,20 @@ export const TravelSearchModal = ({ isOpen, onClose, initialMode = "flight" }: P
     const [hVibe, setHVibe] = useState("");
 
     // Car
-    const [cCity, setCCity] = useState("");
+    const [cCity, setCCity] = useState(initialValues?.city || "");
     const [cIn, setCIn] = useState(todayPlus(14));
     const [cOut, setCOut] = useState(todayPlus(17));
     const [cType, setCType] = useState<"any" | "economy" | "compact" | "suv" | "luxury" | "van">("any");
     const [cDrivers, setCDrivers] = useState(1);
 
-    useEffect(() => { if (isOpen) setMode(initialMode); }, [isOpen, initialMode]);
+    useEffect(() => {
+        if (isOpen) {
+            setMode(initialMode);
+            if (initialValues?.city) { setHCity(initialValues.city); setCCity(initialValues.city); }
+            if (initialValues?.from) setFFrom(initialValues.from);
+            if (initialValues?.to) setFTo(initialValues.to);
+        }
+    }, [isOpen, initialMode, initialValues?.city, initialValues?.from, initialValues?.to]);
 
     if (!isOpen) return null;
 
@@ -339,20 +354,57 @@ const Field = ({ label, icon: Icon, required, children }: { label: string; icon?
     </label>
 );
 
-const CityInput = ({ value, onChange, placeholder, suggestions }: { value: string; onChange: (v: string) => void; placeholder: string; suggestions: string[] }) => (
-    <div className="space-y-2">
-        <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className={inputCls} autoComplete="off" />
-        {!value && (
-            <div className="flex flex-wrap gap-1.5">
-                {suggestions.slice(0, 6).map(s => (
-                    <button key={s} type="button" onClick={() => onChange(s)} className="text-[11px] px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-colors">
-                        {s}
-                    </button>
-                ))}
-            </div>
-        )}
-    </div>
-);
+const CityInput = ({ value, onChange, placeholder, suggestions }: { value: string; onChange: (v: string) => void; placeholder: string; suggestions: string[] }) => {
+    const [focused, setFocused] = useState(false);
+    const [active, setActive] = useState(0);
+    const matches = useMemo<Airport[]>(() => (value.trim().length >= 1 ? searchAirports(value, 8) : []), [value]);
+    const showList = focused && matches.length > 0;
+    return (
+        <div className="relative">
+            <input
+                value={value}
+                onChange={e => { onChange(e.target.value); setActive(0); }}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setTimeout(() => setFocused(false), 150)}
+                onKeyDown={(e) => {
+                    if (!showList) return;
+                    if (e.key === "ArrowDown") { e.preventDefault(); setActive(a => Math.min(a + 1, matches.length - 1)); }
+                    else if (e.key === "ArrowUp") { e.preventDefault(); setActive(a => Math.max(a - 1, 0)); }
+                    else if (e.key === "Enter") { e.preventDefault(); const a = matches[active]; if (a) { onChange(`${a.city} (${a.iata})`); setFocused(false); } }
+                }}
+                placeholder={placeholder}
+                className={inputCls}
+                autoComplete="off"
+            />
+            {showList && (
+                <div className="absolute z-50 left-0 right-0 mt-1 max-h-64 overflow-y-auto rounded-xl border border-white/15 bg-[hsl(var(--card))] shadow-2xl backdrop-blur-xl">
+                    {matches.map((a, i) => (
+                        <button
+                            key={a.iata + a.city}
+                            type="button"
+                            onMouseDown={(e) => { e.preventDefault(); onChange(`${a.city} (${a.iata})`); setFocused(false); }}
+                            onMouseEnter={() => setActive(i)}
+                            className={`w-full text-left flex items-center gap-2 px-3 py-2 text-sm ${i === active ? "bg-white/10" : ""} hover:bg-white/10`}
+                        >
+                            <span className="font-mono font-bold text-[hsl(var(--gold))] w-12 shrink-0">{a.iata}</span>
+                            <span className="text-white truncate flex-1">{a.city}</span>
+                            <span className="text-white/50 text-xs truncate">{a.country}</span>
+                        </button>
+                    ))}
+                </div>
+            )}
+            {!value && !focused && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                    {suggestions.slice(0, 6).map(s => (
+                        <button key={s} type="button" onClick={() => onChange(s)} className="text-[11px] px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/70 hover:text-white transition-colors">
+                            {s}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
 
 const ResultsSkeleton = () => (
     <div className="space-y-3 pt-2">

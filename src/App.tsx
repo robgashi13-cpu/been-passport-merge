@@ -9,17 +9,16 @@ import Calendar from "./pages/Calendar";
 import NotFound from "./pages/NotFound";
 
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import SyncSplash from "@/components/SyncSplash";
 import { useColdSync } from "@/hooks/useColdSync";
 import { useDailyAIVerify } from "@/hooks/useDailyAIVerify";
 
 const queryClient = new QueryClient();
 
-// Sits inside <UserProvider> so it can read the user's countries.
-const ColdSyncOverlay = () => {
-  const { visible, progress, label, online, skip } = useColdSync();
+// Silent background sync — no UI overlay anymore (the "updating China…" splash is gone).
+const BackgroundSync = () => {
+  useColdSync();
   useDailyAIVerify();
-  return <SyncSplash visible={visible} progress={progress} label={label} online={online} onSkip={skip} />;
+  return null;
 };
 
 const App = () => (
@@ -29,7 +28,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <ColdSyncOverlay />
+          <BackgroundSync />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />

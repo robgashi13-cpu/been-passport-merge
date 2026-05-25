@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import ReactMarkdown from "react-markdown";
-import { Sparkles, Send, X, Plane, MapPin, Compass, Loader2 } from "lucide-react";
+import { MessageCircle, Send, X, Plane, MapPin, Compass, Loader2, Sparkles } from "lucide-react";
 import { useTravelData } from "@/hooks/useTravelData";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
@@ -82,7 +82,7 @@ export const AIAssistant = ({ initialDestination }: AIAssistantProps = {}) => {
                            hover:scale-[1.04] active:scale-95 transition-transform"
                 style={{ bottom: "calc(env(safe-area-inset-bottom) + 6.5rem)" }}
             >
-                <Sparkles className="w-4 h-4" />
+                <MessageCircle className="w-4 h-4" />
                 <span className="text-sm">Ask AI</span>
             </button>
 
@@ -101,7 +101,7 @@ export const AIAssistant = ({ initialDestination }: AIAssistantProps = {}) => {
                         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
                             <div className="flex items-center gap-3">
                                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[hsl(var(--gold))] to-amber-600 flex items-center justify-center">
-                                    <Sparkles className="w-4 h-4 text-black" />
+                                    <MessageCircle className="w-4 h-4 text-black" />
                                 </div>
                                 <div>
                                     <div className="font-display text-lg font-semibold text-white">Wanderlust AI</div>

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Sparkles, RefreshCw, AlertTriangle, Plane, Calendar, ShieldCheck, MapPin, Check } from 'lucide-react';
+import { Wand2, RefreshCw, AlertTriangle, Plane, Calendar, ShieldCheck, MapPin, Check } from 'lucide-react';
 import { useCountryAI, AISection } from '@/hooks/useCountryAI';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -48,7 +48,7 @@ export const AISectionPanel = ({ countryCode, countryName, section, passportName
             <div className="absolute -right-12 -top-12 h-44 w-44 rounded-full bg-violet-400/15 blur-3xl pointer-events-none" />
             <div className="relative flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-violet-200/90">
-                    <Sparkles className="h-3.5 w-3.5" />
+                    <Wand2 className="h-3.5 w-3.5" />
                     AI Insights · {section}
                 </div>
                 <button
