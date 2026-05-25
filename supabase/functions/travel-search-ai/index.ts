@@ -54,7 +54,7 @@ const flightTool = {
                 disclaimer: { type: "string" },
                 options: {
                     type: "array",
-                    minItems: 4,
+                    minItems: 20,
                     items: {
                         type: "object",
                         additionalProperties: false,
@@ -98,7 +98,7 @@ const hotelTool = {
                 disclaimer: { type: "string" },
                 options: {
                     type: "array",
-                    minItems: 4,
+                    minItems: 20,
                     items: {
                         type: "object",
                         additionalProperties: false,
@@ -137,7 +137,7 @@ const carTool = {
                 disclaimer: { type: "string" },
                 options: {
                     type: "array",
-                    minItems: 4,
+                    minItems: 20,
                     items: {
                         type: "object",
                         additionalProperties: false,
@@ -169,11 +169,27 @@ const carTool = {
 function buildPrompt(b: Body): { system: string; user: string; tool: any } {
     if (b.type === "flight") {
         return {
-            system: `You are Wanderlust AI's flight scout. Generate 4 realistic flight options for a route based on your knowledge of airline networks, schedules, and typical pricing. Use REAL airlines that actually fly this route. Use realistic IATA codes, flight numbers, durations, and prices. Cover four categories: cheapest, fastest, best_value, ai_pick. The ai_pick should be the one YOU recommend overall balancing comfort, timing, and value — explain why in whyPick. bookingPlatforms should list 2-3 real platforms (Google Flights, Skyscanner, Kayak, airline.com). Be FAST and concise.`,
+            system: `You are Wanderlust AI's flight scout. Generate EXACTLY 20 realistic flight options for the route — 5 per category: cheapest, fastest, best_value, ai_pick. Use REAL airlines that actually fly this route. Realistic IATA codes, flight numbers, durations, prices. Within each category the 5 options must be different airlines/times/aircraft so the user can compare. ai_pick = your top recommendations balancing comfort, timing, value (explain in whyPick). bookingPlatforms: 2-3 real platforms (Google Flights, Skyscanner, Kayak, airline.com). Be FAST and concise.`,
             user: `Find flights:\n- From: ${b.from}\n- To: ${b.to}\n- Depart: ${b.departDate}${b.returnDate ? `\n- Return: ${b.returnDate}` : ""}\n- Passengers: ${b.passengers ?? 1}\n- Cabin: ${b.cabin ?? "economy"}`,
             tool: flightTool
         };
     }
+    if (b.type === "hotel") {
+        const nights = Math.max(1, Math.round((new Date(b.checkOut).getTime() - new Date(b.checkIn).getTime()) / 86400000));
+        return {
+            system: `You are Wanderlust AI's hotel scout. Generate EXACTLY 20 real hotel options in the requested city — 5 per category: cheapest, best_value, luxury, ai_pick. Use REAL hotel names that exist. Realistic neighborhoods, star classes, guest ratings, and per-night pricing for the dates. Within each category the 5 options must be different hotels/neighborhoods. ai_pick = your top recommendations (explain in whyPick). bookingPlatforms: 2-3 real platforms (Booking.com, Hotels.com, Agoda, the hotel's own site). Be FAST and concise.`,
+            user: `Find hotels:\n- City: ${b.city}\n- Check-in: ${b.checkIn}\n- Check-out: ${b.checkOut} (${nights} night${nights > 1 ? "s" : ""})\n- Guests: ${b.guests ?? 2}\n- Budget: ${b.budget ?? "any"}${b.vibe ? `\n- Vibe / preferences: ${b.vibe}` : ""}`,
+            tool: hotelTool
+        };
+    }
+    // car
+    const days = Math.max(1, Math.round((new Date(b.dropoffDate).getTime() - new Date(b.pickupDate).getTime()) / 86400000));
+    return {
+        system: `You are Wanderlust AI's car rental scout. Compare across ALL major rental companies in the requested city (Hertz, Avis, Sixt, Enterprise, Europcar, Budget, Alamo, National, plus relevant local market leaders). Generate EXACTLY 20 real options — 5 per category: cheapest, best_value, luxury, ai_pick. Use REAL company names and realistic pricing. Within each category, vary company/model. ai_pick = your top recommendations (explain in whyPick). bookingPlatforms: 2-3 real platforms (Kayak, Rentalcars.com, DiscoverCars, the company's own site). Be FAST and concise.`,
+        user: `Find rental cars:\n- City: ${b.city}\n- Pickup: ${b.pickupDate}\n- Drop-off: ${b.dropoffDate} (${days} day${days > 1 ? "s" : ""})\n- Car type: ${b.carType ?? "any"}\n- Drivers: ${b.drivers ?? 1}`,
+        tool: carTool
+    };
+}
     if (b.type === "hotel") {
         const nights = Math.max(1, Math.round((new Date(b.checkOut).getTime() - new Date(b.checkIn).getTime()) / 86400000));
         return {
