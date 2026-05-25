@@ -1,17 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
     X, Plane, Hotel, Car, Loader2, Sparkles, Star, DollarSign, Zap, Award,
     ArrowRight, Clock, MapPin, ExternalLink, Search, Users, Building2, AlertCircle
 } from "lucide-react";
+import { AIRPORTS, searchAirports, formatAirport, type Airport } from "@/data/airports";
 
 type Mode = "flight" | "hotel" | "car";
+
+export interface TravelSearchInitialValues {
+    city?: string;        // hotel/car prefill
+    from?: string;        // flight prefill (city or IATA)
+    to?: string;
+}
 
 interface Props {
     isOpen: boolean;
     onClose: () => void;
     initialMode?: Mode;
+    initialValues?: TravelSearchInitialValues;
 }
 
 interface FlightOption {
@@ -73,22 +81,22 @@ const todayPlus = (days: number) => {
     return d.toISOString().slice(0, 10);
 };
 
-export const TravelSearchModal = ({ isOpen, onClose, initialMode = "flight" }: Props) => {
+export const TravelSearchModal = ({ isOpen, onClose, initialMode = "flight", initialValues }: Props) => {
     const [mode, setMode] = useState<Mode>(initialMode);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [results, setResults] = useState<{ summary: string; disclaimer: string; options: any[] } | null>(null);
 
     // Flight
-    const [fFrom, setFFrom] = useState("");
-    const [fTo, setFTo] = useState("");
+    const [fFrom, setFFrom] = useState(initialValues?.from || "");
+    const [fTo, setFTo] = useState(initialValues?.to || "");
     const [fDepart, setFDepart] = useState(todayPlus(14));
     const [fReturn, setFReturn] = useState(todayPlus(21));
     const [fPax, setFPax] = useState(1);
     const [fCabin, setFCabin] = useState<"economy" | "premium" | "business" | "first">("economy");
 
     // Hotel
-    const [hCity, setHCity] = useState("");
+    const [hCity, setHCity] = useState(initialValues?.city || "");
     const [hIn, setHIn] = useState(todayPlus(14));
     const [hOut, setHOut] = useState(todayPlus(17));
     const [hGuests, setHGuests] = useState(2);
@@ -96,13 +104,20 @@ export const TravelSearchModal = ({ isOpen, onClose, initialMode = "flight" }: P
     const [hVibe, setHVibe] = useState("");
 
     // Car
-    const [cCity, setCCity] = useState("");
+    const [cCity, setCCity] = useState(initialValues?.city || "");
     const [cIn, setCIn] = useState(todayPlus(14));
     const [cOut, setCOut] = useState(todayPlus(17));
     const [cType, setCType] = useState<"any" | "economy" | "compact" | "suv" | "luxury" | "van">("any");
     const [cDrivers, setCDrivers] = useState(1);
 
-    useEffect(() => { if (isOpen) setMode(initialMode); }, [isOpen, initialMode]);
+    useEffect(() => {
+        if (isOpen) {
+            setMode(initialMode);
+            if (initialValues?.city) { setHCity(initialValues.city); setCCity(initialValues.city); }
+            if (initialValues?.from) setFFrom(initialValues.from);
+            if (initialValues?.to) setFTo(initialValues.to);
+        }
+    }, [isOpen, initialMode, initialValues?.city, initialValues?.from, initialValues?.to]);
 
     if (!isOpen) return null;
 
