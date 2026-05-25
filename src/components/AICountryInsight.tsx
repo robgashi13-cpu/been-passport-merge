@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Sparkles, Loader2, Plane } from "lucide-react";
+import { Globe2, Loader2, Plane } from "lucide-react";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const ENDPOINT = `${SUPABASE_URL}/functions/v1/travel-ai`;
@@ -63,7 +63,7 @@ export const AICountryInsight = ({ countryCode, countryName, passportCode }: AIC
             <div className="rounded-2xl border border-[hsl(var(--gold)/0.3)]
                             bg-gradient-to-br from-[hsl(var(--gold)/0.06)] to-transparent p-4">
                 <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="w-4 h-4 text-[hsl(var(--gold))]" />
+                    <Globe2 className="w-4 h-4 text-[hsl(var(--gold))]" />
                     <h4 className="font-display text-sm font-semibold text-white">AI Insight</h4>
                 </div>
                 {loading && !summary ? (

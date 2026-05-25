@@ -1,6 +1,6 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Sparkles, Loader2, RefreshCw } from "lucide-react";
+import { Compass, Loader2, RefreshCw } from "lucide-react";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const ENDPOINT = `${SUPABASE_URL}/functions/v1/travel-ai`;
@@ -80,7 +80,7 @@ export const AIRecommendations = ({ passportCode, visitedCountries, bucketList =
             <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[hsl(var(--gold))] to-amber-600 flex items-center justify-center">
-                        <Sparkles className="w-4 h-4 text-black" />
+                        <Compass className="w-4 h-4 text-black" />
                     </div>
                     <div>
                         <h3 className="font-display text-base font-semibold text-white">AI Picks for You</h3>
