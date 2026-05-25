@@ -28,7 +28,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <ColdSyncOverlay />
+          <BackgroundSync />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
