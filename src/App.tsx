@@ -10,9 +10,10 @@ import { Toaster } from "@/components/ui/sonner";
 
 const WorldApp = lazy(() => import("@/wi/App"));
 const TravelApp = lazy(() => import("@/travel/TravelApp"));
+const CamerasApp = lazy(() => import("@/cameras/CamerasApp"));
 const queryClient = new QueryClient();
 
-const TITLES: Record<string, string> = { "/": "Dashboard", "/world": "World News", "/travel": "Travel" };
+const TITLES: Record<string, string> = { "/": "Dashboard", "/world": "World News", "/travel": "Travel", "/cameras": "Cameras" };
 function TitleSync() {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -86,6 +87,18 @@ export default function App() {
                     <AppShell>
                       <Suspense fallback={<Splash label="Loading Travel" />}>
                         <TravelApp />
+                      </Suspense>
+                    </AppShell>
+                  </Protected>
+                }
+              />
+              <Route
+                path="/cameras"
+                element={
+                  <Protected>
+                    <AppShell>
+                      <Suspense fallback={<Splash label="Loading Cameras" />}>
+                        <CamerasApp />
                       </Suspense>
                     </AppShell>
                   </Protected>

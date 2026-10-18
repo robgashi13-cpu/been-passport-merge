@@ -24,7 +24,9 @@ import {
   CloudSnow,
   CloudLightning,
   CloudFog,
+  Cctv,
 } from "lucide-react";
+import { ago as camAgo, camLabel, type FEvent, type Status as CamStatus, useAuthedBlob, useFrigate } from "@/cameras/frigate";
 import { usePoll } from "@/wi/api";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./auth";
@@ -37,7 +39,7 @@ type CardProps = {
   className?: string | undefined;
   glow?: string | undefined;
   children: ReactNode;
-  to?: "/world" | "/travel" | "/" | undefined;
+  to?: "/world" | "/travel" | "/cameras" | "/" | undefined;
   hash?: string | undefined;
   href?: string | undefined;
   delay?: number | undefined;
@@ -861,6 +863,60 @@ function WorldTileCard() {
   );
 }
 
+
+/* ---------------------------------------------------------------- cameras */
+
+function CamerasCard() {
+  const st = useFrigate<CamStatus>("status", 30000);
+  const s = st.data;
+  const ok = !!s && s.configured && s.reachable;
+  const ev = useFrigate<{ items: FEvent[] }>(ok ? "events?limit=1" : null, 30000);
+  const last = ev.data?.items?.[0];
+  const thumb = useAuthedBlob(last ? `event/${last.id}/thumb` : null);
+  const active = ok ? s.cameras.filter((c) => c.enabled) : [];
+  const online = active.filter((c) => c.online).length;
+  return (
+    <Card to="/cameras" className="col-span-1" glow="hsl(150 70% 55% / 0.12)" delay={380}>
+      <CardHead
+        icon={<Cctv className="h-4 w-4" />}
+        label="Cameras"
+        right={
+          ok ? (
+            <span className={`h-2 w-2 rounded-full ${online ? "hq-live-dot bg-emerald-400" : "bg-rose-500/80"}`} />
+          ) : undefined
+        }
+      />
+      <div className="mt-auto flex items-end justify-between gap-2">
+        <div className="min-w-0">
+          <div className="hq-num text-4xl font-semibold leading-none text-white">
+            {ok ? (
+              <>
+                {online}
+                <span className="text-xl text-white/40">/{active.length}</span>
+              </>
+            ) : (
+              "—"
+            )}
+          </div>
+          <div className="mt-1 text-[11px] text-muted-foreground">
+            {!s ? "connecting…" : !s.configured ? "setup needed" : !s.reachable ? "Frigate offline" : "cameras online"}
+          </div>
+        </div>
+        {thumb.url && (
+          <img src={thumb.url} alt="" className="h-12 w-16 rounded-md object-cover ring-1 ring-white/15" />
+        )}
+      </div>
+      <div className="mt-2 truncate text-[11px] capitalize text-muted-foreground">
+        {last
+          ? `${last.subLabel ?? last.label} · ${camLabel(last.camera)} · ${camAgo(last.start)}`
+          : ok
+            ? "No recent detections"
+            : "Frigate NVR · live view & events"}
+      </div>
+    </Card>
+  );
+}
+
 /* ---------------------------------------------------------------- page */
 
 export function Dashboard() {
@@ -877,7 +933,7 @@ export function Dashboard() {
         <PassportCard {...travel} />
         <WorldTileCard />
         <LinksCard />
-        <FutureSlot delay={380} />
+        <CamerasCard />
         <FutureSlot delay={420} />
       </div>
       <p className="mt-6 text-center text-[11px] text-white/25">

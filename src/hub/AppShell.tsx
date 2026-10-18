@@ -8,6 +8,7 @@ import {
   ArrowUpRight,
   LogOut,
   Plus,
+  Cctv,
 } from "lucide-react";
 import { useAuth } from "./auth";
 import { Logo } from "./Logo";
@@ -21,6 +22,7 @@ const TABS = [
   { to: "/", label: "Dashboard", icon: LayoutGrid },
   { to: "/world", label: "World News", icon: Globe2 },
   { to: "/travel", label: "Travel", icon: Plane },
+  { to: "/cameras", label: "Cameras", icon: Cctv },
 ] as const;
 
 /** Client-only gate: login → allowlist → content. Nothing private renders before both pass. */
