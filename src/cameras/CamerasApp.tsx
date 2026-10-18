@@ -217,18 +217,18 @@ function Events({ cams }: { cams: Cam[] }) {
       ) : (
         <ul className="grid gap-2 md:grid-cols-2">
           {items.map((ev) => (
-            <li key={ev.id}>
+            <li key={ev.id} className="min-w-0">
               <button onClick={() => setOpen(ev)} className="flex w-full items-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-2 text-left transition hover:border-white/15 hover:bg-white/[0.05]">
                 <EventThumb ev={ev} />
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 text-sm font-medium capitalize">
+                  <div className="flex min-w-0 items-center gap-1.5 text-sm font-medium capitalize">
                     <LabelIcon label={ev.label} /> {ev.label}
                     {ev.subLabel && <span className="truncate rounded bg-white/10 px-1.5 text-[11px] normal-case">{ev.subLabel}</span>}
                     {!ev.end && <span className="rounded bg-rose-500/20 px-1.5 text-[10px] uppercase text-rose-300">live</span>}
                   </div>
                   <div className="truncate text-xs text-muted-foreground">{camLabel(ev.camera)} · {fmtWhen(ev.start)} · {ago(ev.start)}</div>
                 </div>
-                {ev.score != null && <span className="hq-num text-xs text-muted-foreground">{Math.round(ev.score * 100)}%</span>}
+                {ev.score != null && <span className="hq-num shrink-0 text-xs text-muted-foreground">{Math.round(ev.score * 100)}%</span>}
               </button>
             </li>
           ))}
