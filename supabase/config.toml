@@ -27,3 +27,6 @@ verify_jwt = false
 
 [functions.wi-refresh]
 verify_jwt = false
+
+[functions.frigate]
+verify_jwt = false
