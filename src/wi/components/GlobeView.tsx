@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { usePoll, timeAgo, fmtTime, flag, useNow, useMobile, authBus, getToken } from '../api';
+import { usePoll, timeAgo, fmtTime, flag, useNow, useMobile, authBus, getToken, getJSON } from '../api';
 import { TYPES, typeOf, LEVEL_COLOR } from '../config';
 import { makeGlobe, countriesGeo, setActive, setLand, countryAt } from './Globe';
 import Panel from './Panel';
@@ -300,6 +300,23 @@ function Detail({ sel, setSel, near = [], pick, threatBy, risk, all, now, flyTo,
 const SEV = ['', 'Low', 'Moderate', 'High', 'Severe'];
 const ALERT = { green: '#39d98a', orange: '#ff9f43', red: '#ff4d57' };
 let regionNames; const countryName = (cc) => { try { return cc ? (regionNames ||= new Intl.DisplayNames(['en'], { type: 'region' })).of(cc) : null; } catch { return cc; } };
+// "What happened": plain-language sentence from the coded fields + the source article's own title/description
+// (fetched server-side, cached, no AI).
+function ArticlePreview({ url }) {
+  const [a, setA] = useState(null);
+  useEffect(() => {
+    let alive = true; setA(null);
+    getJSON(`/api/article?url=${encodeURIComponent(url)}`).then((d) => alive && setA(d)).catch(() => alive && setA({ ok: false }));
+    return () => { alive = false; };
+  }, [url]);
+  if (!a) return <div className="ev-art ev-art-loading">Loading the source article…</div>;
+  if (!a.ok) return <div className="ev-art muted tiny">The source article's summary isn't available. Open it to read more.</div>;
+  return (<a className="ev-art" href={url} target="_blank" rel="noreferrer">
+    <span className="ev-art-site">{a.site}{a.published ? ` · ${String(a.published).slice(0, 10)}` : ''}</span>
+    {a.title && <b>{a.title}</b>}
+    {a.description && <span className="ev-art-desc">{a.description}</span>}
+  </a>);
+}
 // Info card for any globe dot / feed item: shows only the fields the source actually provides (no blank rows).
 function EventCard({ e, near, pick, close, now, t }) {
   const ty = typeOf(e.type); const cn = countryName(e.country);
@@ -325,6 +342,11 @@ function EventCard({ e, near, pick, close, now, t }) {
     </div>
     <div className="card-title">{e.title}</div>
     {desc && <div className="ev-desc">{desc}</div>}
+    {e.source === 'GDELT 2.0' && <div className="ev-what">
+      <div className="ev-what-h">What happened</div>
+      {e.what && <p>{e.what}</p>}
+      {e.url && <ArticlePreview url={e.url} />}
+    </div>}
     {metrics.length > 0 && <div className="ev-metrics">{metrics.map(([k, v]) => <div key={k}><span>{k}</span><b className="num">{v}</b></div>)}</div>}
     {!place && e.lat != null && <div className="kv"><span>Location</span><b className="num">{e.lat.toFixed(2)}, {e.lon.toFixed(2)}</b></div>}
     {place && <div className="kv"><span>Location</span><b>{flag(e.country)} {place}{showCountry ? ` · ${cn}` : ''}{e.precision === 'country' && <span className="muted tiny"> (approximate)</span>}<br /><span className="muted num tiny">{e.lat?.toFixed(2)}, {e.lon?.toFixed(2)}</span></b></div>}

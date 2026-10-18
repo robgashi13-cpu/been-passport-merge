@@ -9,6 +9,7 @@ import {
   LogOut,
   Plus,
   Cctv,
+  Tv,
 } from "lucide-react";
 import { useAuth } from "./auth";
 import { Logo } from "./Logo";
@@ -23,6 +24,7 @@ const TABS = [
   { to: "/world", label: "World News", icon: Globe2 },
   { to: "/travel", label: "Travel", icon: Plane },
   { to: "/cameras", label: "Cameras", icon: Cctv },
+  { to: "/tv", label: "TV", icon: Tv },
 ] as const;
 
 /** Client-only gate: login → allowlist → content. Nothing private renders before both pass. */
