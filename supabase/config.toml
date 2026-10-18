@@ -30,3 +30,6 @@ verify_jwt = false
 
 [functions.frigate]
 verify_jwt = false
+
+[functions.iptv]
+verify_jwt = false
