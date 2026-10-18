@@ -906,9 +906,9 @@ function CamerasCard() {
           <img src={thumb.url} alt="" className="h-12 w-16 rounded-md object-cover ring-1 ring-white/15" />
         )}
       </div>
-      <div className="mt-2 truncate text-[11px] capitalize text-muted-foreground">
+      <div className="mt-2 truncate text-[11px] text-muted-foreground">
         {last
-          ? `${last.subLabel ?? last.label} · ${camLabel(last.camera)} · ${camAgo(last.start)}`
+          ? `${camLabel(last.subLabel ?? last.label)} · ${camLabel(last.camera)} · ${camAgo(last.start)}`
           : ok
             ? "No recent detections"
             : "Frigate NVR · live view & events"}
