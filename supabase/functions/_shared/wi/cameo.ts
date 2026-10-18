@@ -2,12 +2,13 @@
 // Precise CAMEO classification for GDELT 2.0 export rows (shared by WanderPass and the box dashboard).
 // Uses the FULL event code (not just the root) plus actor type codes, so routine police/crime/political
 // reporting is no longer labelled "military". Only events with real military markers become
-// "conflict"/"military": artillery/air strikes/occupation/blockade codes, or a MIL/REB/INS/SEP/UAF actor.
+// "conflict"/"military": artillery/air strikes/occupation/blockade codes, or a MIL/REB/INS/SEP actor (gunmen/UAF -> attack).
 //
 // GDELT 2.0 export columns used: 5/15 actor code, 6/16 actor name, 7/17 actor country, 12-14/22-24 actor
 // type codes, 26 EventCode, 27 EventBaseCode, 28 EventRootCode, 52 ActionGeo_FullName, 59 DATEADDED.
 
-const ARMED = new Set(['MIL', 'REB', 'INS', 'SEP', 'UAF']); // military, rebels, insurgents, separatists, unaligned armed forces
+const ARMED = new Set(['MIL', 'REB', 'INS', 'SEP']); // military, rebels, insurgents, separatists
+const GUNMEN = 'UAF'; // "unaligned armed forces": GDELT uses it for gunmen/criminals -> attack, not war
 const COP = new Set(['COP']);
 
 // code -> [category, human label, verb phrase for the "what happened" sentence]
@@ -85,10 +86,11 @@ function actor(c, base) {
   const name = c[base + 1] || '';
   const types = [c[base + 7], c[base + 8], c[base + 9]].filter(Boolean);
   const code = c[base] || '';
-  const armed = types.some((t) => ARMED.has(t)) || /(MIL|REB|INS|SEP|UAF)/.test(code.slice(3));
+  const armed = types.some((t) => ARMED.has(t)) || /(MIL|REB|INS|SEP)/.test(code.slice(3));
+  const gunmen = types.includes(GUNMEN) || /UAF/.test(code.slice(3));
   const police = types.some((t) => COP.has(t)) || /COP/.test(code.slice(3));
   const mil = types.includes('MIL') || /MIL/.test(code.slice(3));
-  return { name: titleCase(name), country: c[base + 2] || null, types, armed, mil, police };
+  return { name: titleCase(name), country: c[base + 2] || null, types, armed, mil, gunmen, police };
 }
 
 /** Returns null when the row should not be shown, else { type, label, verb, severity, a1, a2, armed }. */
@@ -106,7 +108,9 @@ export function classifyCameo(c) {
     // Only state armed forces get "Military"; rebels / insurgents / gunmen get "Armed group".
     label = a1.mil || a2.mil ? MILITARY_WHEN_ARMED[k] : (k === '190' ? 'Armed group violence' : MILITARY_WHEN_ARMED[k]);
   }
-  if (k === '190' && !armed && (a1.police || a2.police)) label = 'Police use of force';
+  const GUNMEN_LABEL = { '190': 'Armed violence (gunmen)', '193': 'Shooting', '180': 'Armed attack', '183': 'Bombing' };
+  if (!armed && (a1.gunmen || a2.gunmen) && GUNMEN_LABEL[k]) { type = 'attack'; label = GUNMEN_LABEL[k]; }
+  else if (k === '190' && !armed && (a1.police || a2.police)) label = 'Police use of force';
   // GDELT's machine coding often assigns military codes to unrelated stories (fires, tourism, politics).
   // Quality gates: violent/military events must come from the article's lead (IsRootEvent) or be
   // reported by 2+ sources; military-only methods need an armed actor (or a heavy-weapons code in the lead).
