@@ -6,18 +6,41 @@
 //   FRIGATE_URL       public HTTPS base of Frigate's authenticated port (8971), e.g. https://<host>.ts.net
 //   FRIGATE_USER      Frigate user (ideally a "viewer" role user)
 //   FRIGATE_PASSWORD  its password
-// Without them every route answers { configured: false }.
+// Fallback when those env secrets are not set: rows frigate_url / frigate_user / frigate_password in
+// public.hq_secrets (RLS on, no policies, service-role only — same store as the cron key).
+// Without either, every route answers { configured: false }.
 import { guarded, subPath } from '../_shared/guard.ts';
+import { db } from '../_shared/wi/cache.ts';
 
 const CAM_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const EVT_RE = /^[A-Za-z0-9._-]{1,80}$/;
 let session: { token: string; exp: number } | null = null;
 
-function cfg() {
-  const url = (Deno.env.get('FRIGATE_URL') || '').replace(/\/+$/, '');
-  const user = Deno.env.get('FRIGATE_USER') || '';
-  const password = Deno.env.get('FRIGATE_PASSWORD') || '';
-  return { url, user, password, ok: /^https?:\/\//.test(url) };
+let dbCfg: { v: Record<string, string>; exp: number } | null = null;
+async function fromDb(): Promise<Record<string, string>> {
+  if (dbCfg && dbCfg.exp > Date.now()) return dbCfg.v;
+  const v: Record<string, string> = {};
+  try {
+    const s = await db();
+    const { data } = await s.from('hq_secrets').select('name,value').in('name', ['frigate_url', 'frigate_user', 'frigate_password']);
+    for (const r of data || []) v[r.name] = r.value;
+  } catch { /* ignore */ }
+  dbCfg = { v, exp: Date.now() + 5 * 60e3 };
+  return v;
+}
+
+async function cfg() {
+  let url = Deno.env.get('FRIGATE_URL') || '';
+  let user = Deno.env.get('FRIGATE_USER') || '';
+  let password = Deno.env.get('FRIGATE_PASSWORD') || '';
+  if (!url) {
+    const v = await fromDb();
+    url = v.frigate_url || '';
+    user = v.frigate_user || '';
+    password = v.frigate_password || '';
+  }
+  url = url.replace(/\/+$/, '');
+  return { url, user, password, ok: /^https:\/\//.test(url) };
 }
 
 async function login(c, force = false) {
@@ -118,7 +141,7 @@ async function events(c, q) {
 }
 
 Deno.serve(guarded(async (req) => {
-  const c = cfg();
+  const c = await cfg();
   const path = subPath(req, 'frigate');
   if (!c.ok) return json({ configured: false });
   const q = new URL(req.url).searchParams;
