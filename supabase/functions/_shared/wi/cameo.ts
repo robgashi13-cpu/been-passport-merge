@@ -102,8 +102,15 @@ export function classifyCameo(c) {
   const k = CODES[code] ? code : base;
   if (MILITARY_WHEN_ARMED[k] && armed) { type = 'conflict'; label = MILITARY_WHEN_ARMED[k]; }
   if (k === '190' && !armed && (a1.police || a2.police)) label = 'Police use of force';
-  // mass-violence and military-method codes without any armed actor are frequently mis-coded crime or rhetoric
-  if (type === 'conflict' && !armed && /^(200|201|202|203|196)$/.test(k)) { type = 'attack'; }
+  // GDELT's machine coding often assigns military codes to unrelated stories (fires, tourism, politics).
+  // Quality gates: violent/military events must come from the article's lead (IsRootEvent) or be
+  // reported by 2+ sources; military-only methods need an armed actor (or a heavy-weapons code in the lead).
+  const root = c[25] === '1';
+  const sources = Number(c[32]) || 0;
+  if ((type === 'conflict' || type === 'military' || type === 'attack') && !root && sources < 2) return null;
+  if (!armed && /^(152|154|191|192|196)$/.test(k)) return null;
+  if (!armed && /^(194|195|1951|1952)$/.test(k) && !root) return null;
+  if (type === 'conflict' && !armed && /^(200|201|202|203)$/.test(k)) type = 'attack';
   const severity = type === 'conflict' ? 3 : type === 'attack' ? (/^(183|186|1823|202)/.test(k) ? 3 : 2) : k === '145' || k === '175' ? 2 : 1;
   return { type, label, verb, severity, a1, a2, armed, code };
 }
