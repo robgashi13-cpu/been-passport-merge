@@ -1,83 +1,51 @@
 <!doctype html>
-<html lang="en">
-
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>WanderPass - Track Your Global Journey</title>
-  <meta name="description"
-    content="Track visited countries, check visa requirements, and plan your next adventure with WanderPass." />
-  <meta name="author" content="WanderPass" />
-
-  <!-- PWA / iOS -->
-  <link rel="manifest" href="/manifest.json" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>WanderPass</title>
+  <meta name="description" content="Robert's private hub: dashboard, world news and travel." />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#07080a" />
+  <meta name="color-scheme" content="dark" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="theme-color" content="#000000" />
-  <link rel="apple-touch-icon" href="/app-icon.png" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/app-icon.png" />
-  <link rel="icon" type="image/png" href="/app-icon.png" />
-
+  <meta name="apple-mobile-web-app-title" content="WanderPass" />
+  <meta name="application-name" content="WanderPass" />
+  <meta name="format-detection" content="telephone=no" />
   <meta property="og:title" content="WanderPass" />
-  <meta property="og:description" content="Track visited countries and check visa requirements." />
+  <meta property="og:description" content="Private hub." />
   <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:site" content="@Wanderlust" />
-  <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-
-  <link rel="canonical" href="https://wanderlust.app" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" />
   <style>
-    html, body { background-color: #06080f; color: #ffffff; }
-    #root { min-height: 100vh; background-color: #06080f; }
-    /* Pre-React splash so PWA cold-launch never flashes a white blank page */
-    #pwa-boot {
-      position: fixed; inset: 0; z-index: 99999;
-      display: flex; align-items: center; justify-content: center;
-      background: #06080f; color: #fff;
-      font-family: Inter, system-ui, -apple-system, sans-serif;
-      transition: opacity .35s ease;
-    }
-    #pwa-boot .ring {
-      width: 56px; height: 56px; border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.12);
-      border-top-color: rgba(255,209,102,0.9);
-      animation: pwaspin 0.9s linear infinite;
-    }
-    #pwa-boot .label {
-      margin-top: 18px; font-size: 12px; letter-spacing: 0.2em;
-      text-transform: uppercase; color: rgba(255,255,255,0.7);
-    }
+    html, body { background-color: #07080a; color: #ffffff; }
+    #root { min-height: 100vh; background-color: #07080a; }
+    #pwa-boot { position: fixed; inset: 0; z-index: 99999; display: flex; align-items: center; justify-content: center; background: #07080a; transition: opacity .35s ease; }
+    #pwa-boot .ring { width: 48px; height: 48px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.12); border-top-color: rgba(125,211,252,0.9); animation: pwaspin 0.9s linear infinite; }
     @keyframes pwaspin { to { transform: rotate(360deg); } }
   </style>
 </head>
-
 <body>
   <div id="root"></div>
-  <div id="pwa-boot" aria-hidden="true">
-    <div style="display:flex;flex-direction:column;align-items:center">
-      <div class="ring"></div>
-      <div class="label">WanderPass</div>
-    </div>
-  </div>
+  <div id="pwa-boot" aria-hidden="true"><div class="ring"></div></div>
   <script>
-    // Remove boot splash once the app has mounted
-    window.addEventListener('load', function () {
-      var tryHide = function () {
-        var root = document.getElementById('root');
-        var boot = document.getElementById('pwa-boot');
+    (function () {
+      var hide = function () {
+        var root = document.getElementById('root'), boot = document.getElementById('pwa-boot');
         if (!boot) return;
-        if (root && root.children.length > 0) {
-          boot.style.opacity = '0';
-          setTimeout(function () { boot.remove(); }, 380);
-        } else {
-          setTimeout(tryHide, 100);
-        }
+        if (root && root.children.length > 0) { boot.style.opacity = '0'; setTimeout(function () { boot.remove(); }, 380); }
+        else setTimeout(hide, 100);
       };
-      tryHide();
-    });
+      window.addEventListener('load', hide);
+    })();
   </script>
   <script type="module" src="/src/main.tsx"></script>
 </body>
-
 </html>

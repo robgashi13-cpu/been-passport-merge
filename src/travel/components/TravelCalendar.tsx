@@ -1,0 +1,235 @@
+// @ts-nocheck
+import { useState, useMemo } from 'react';
+import { TripEntry, calculateDays, calculateDaysByCountry, getCurrentTrips } from '@/travel/data/trips';
+import { countries, getCountryByCode } from '@/travel/data/countries';
+import { ChevronLeft, ChevronRight, MapPin, Plane, Calendar, Clock } from 'lucide-react';
+
+interface TravelCalendarProps {
+    trips: TripEntry[];
+    onDateClick?: (date: Date) => void;
+    onClearAll?: () => void;
+}
+
+export const TravelCalendar = ({ trips, onDateClick, onClearAll }: TravelCalendarProps) => {
+    const [currentDate, setCurrentDate] = useState(new Date());
+
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+
+    // Get first day of month and total days
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+    const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    // Create calendar days array
+    const calendarDays = useMemo(() => {
+        const days = [];
+
+        // Add empty cells for days before the first day of month
+        for (let i = 0; i < firstDayOfMonth; i++) {
+            days.push({ day: null, trips: [] as TripEntry[] });
+        }
+
+        // Add days of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(currentYear, currentMonth, day);
+
+            // Find trips that include this date
+            const dayTrips = trips.filter(trip => {
+                const start = new Date(trip.startDate);
+                const end = new Date(trip.endDate);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(23, 59, 59, 999);
+                date.setHours(12, 0, 0, 0);
+                return date >= start && date <= end;
+            });
+
+            days.push({ day, trips: dayTrips });
+        }
+
+        return days;
+    }, [currentYear, currentMonth, trips, firstDayOfMonth, daysInMonth]);
+
+    // Navigation
+    const previousMonth = () => {
+        setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
+    };
+
+    const nextMonth = () => {
+        setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
+    };
+
+    // Current trips
+    const activeTrips = getCurrentTrips(trips);
+    const daysByCountry = calculateDaysByCountry(trips);
+    const totalDays = trips.reduce((sum, trip) => sum + calculateDays(trip), 0);
+
+    return (
+        <div className="space-y-3 animate-fade-in max-w-md mx-auto">
+            {/* Currently Traveling Banner - Compact */}
+            {activeTrips.length > 0 && (
+                <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-lg border border-green-500/30 p-2 animate-pulse-slow">
+                    <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-green-500/30 flex items-center justify-center">
+                            <Plane className="w-3 h-3 text-green-400" />
+                        </div>
+                        <div className="min-w-0">
+                            <h3 className="font-bold text-xs text-green-400">Currently Traveling</h3>
+                            {activeTrips.map((trip, idx) => (
+                                <p key={idx} className="text-[10px] text-muted-foreground line-clamp-1">
+                                    {getCountryByCode(trip.countryCode)?.flagEmoji} {trip.countryName}
+                                </p>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Stats Row - Ultra compact */}
+            <div className="grid grid-cols-4 gap-1.5">
+                {[
+                    { v: totalDays, l: 'Days' },
+                    { v: trips.length, l: 'Trips' },
+                    { v: Object.keys(daysByCountry).length, l: 'Countries' },
+                    { v: trips.length > 0 ? Math.round(totalDays / trips.length) : 0, l: 'Avg' },
+                ].map((s, i) => (
+                    <div key={i} className="bg-gradient-card rounded-md border border-border/50 p-1.5 text-center">
+                        <div className="font-display text-sm font-bold leading-none">{s.v}</div>
+                        <div className="text-[9px] text-muted-foreground uppercase tracking-wider mt-0.5">{s.l}</div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Calendar - Compact */}
+            <div className="bg-gradient-card rounded-lg border border-border/50 p-2 overflow-hidden">
+                {/* Month Navigation */}
+                <div className="flex items-center justify-between mb-2">
+                    <button
+                        onClick={previousMonth}
+                        className="p-1 rounded-md hover:bg-white/10 transition-colors"
+                    >
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <h3 className="font-display text-xs font-bold">
+                        {monthNames[currentMonth]} {currentYear}
+                    </h3>
+                    <button
+                        onClick={nextMonth}
+                        className="p-1 rounded-md hover:bg-white/10 transition-colors"
+                    >
+                        <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                </div>
+
+                {/* Day Headers */}
+                <div className="grid grid-cols-7 gap-0.5 mb-0.5">
+                    {dayNames.map(day => (
+                        <div key={day} className="text-center text-[8px] text-muted-foreground font-medium">
+                            {day.charAt(0)}
+                        </div>
+                    ))}
+                </div>
+
+                {/* Calendar Grid */}
+                <div className="grid grid-cols-7 gap-0.5">
+                    {calendarDays.map((dayData, idx) => {
+                        const hasTrips = dayData.trips.length > 0;
+                        const isToday = dayData.day === new Date().getDate() &&
+                            currentMonth === new Date().getMonth() &&
+                            currentYear === new Date().getFullYear();
+
+                        return (
+                            <div
+                                key={idx}
+                                onClick={() => {
+                                    if (dayData.day && onDateClick) {
+                                        const clickedDate = new Date(currentYear, currentMonth, dayData.day);
+                                        clickedDate.setHours(12, 0, 0, 0);
+                                        onDateClick(clickedDate);
+                                    }
+                                }}
+                                className={`
+                  aspect-square rounded-sm flex flex-col items-center justify-center transition-all duration-200 relative
+                  ${dayData.day ? 'hover:bg-white/10 cursor-pointer active:scale-95' : ''}
+                  ${hasTrips ? 'bg-white/10 ring-1 ring-white/20' : ''}
+                  ${isToday ? 'ring-1 ring-primary' : ''}
+                `}
+                            >
+                                {dayData.day && (
+                                    <>
+                                        <span className={`text-[9px] font-medium leading-none ${hasTrips ? 'text-white' : 'text-muted-foreground'}`}>
+                                            {dayData.day}
+                                        </span>
+                                        {hasTrips && (
+                                            <span className="text-[8px] leading-none mt-0.5">
+                                                {getCountryByCode(dayData.trips[0].countryCode)?.flagEmoji}
+                                            </span>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Days by Country - Compact List */}
+            {Object.keys(daysByCountry).length > 0 && (
+                <div className="bg-gradient-card rounded-xl border border-border/50 p-4">
+                    <h3 className="font-display text-sm font-bold mb-3">Days Per Country</h3>
+                    <div className="space-y-2">
+                        {Object.entries(daysByCountry)
+                            .sort(([, a], [, b]) => b - a)
+                            .slice(0, 5) // Limit to top 5 to save space
+                            .map(([code, days]) => {
+                                const country = getCountryByCode(code);
+                                const percentage = totalDays > 0 ? (days / totalDays) * 100 : 0;
+
+                                return (
+                                    <div key={code} className="space-y-1">
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="flex items-center gap-1.5">
+                                                <span className="text-base">{country?.flagEmoji}</span>
+                                                <span className="font-medium truncate max-w-[120px]">{country?.name || code}</span>
+                                            </span>
+                                            <span className="text-muted-foreground">{days}d</span>
+                                        </div>
+                                        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full bg-gradient-to-r from-white/60 to-white/90 rounded-full"
+                                                style={{ width: `${percentage}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        {Object.keys(daysByCountry).length > 5 && (
+                            <div className="text-center pt-1">
+                                <span className="text-[10px] text-muted-foreground italic">
+                                    + {Object.keys(daysByCountry).length - 5} more countries
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Empty State */}
+            {trips.length === 0 && (
+                <div className="bg-gradient-card rounded-2xl border border-border/50 p-12 text-center">
+                    <div className="text-6xl mb-4">🌍</div>
+                    <h3 className="font-display text-xl font-bold mb-2">No trips yet</h3>
+                    <p className="text-muted-foreground">
+                        Import photos with location data to see your travel history on the calendar
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+};

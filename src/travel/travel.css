@@ -1,0 +1,617 @@
+/* Travel module styles, ported from Been Passport Merge index.css (Tailwind v3 layer and apply
+   directives removed; risky global element rules scoped under .travel-root). */
+.travel-root { --gradient-shimmer: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent); --gradient-premium: linear-gradient(135deg, #1a1d29 0%, #0b0d12 100%); --shadow-card: 0 10px 30px -10px rgba(0,0,0,.6); }
+
+
+  .font-numbers {
+    font-family: var(--font-display);
+    font-variant-numeric: oldstyle-nums;
+    font-feature-settings: "onum", "tnum";
+  }
+
+  .text-gradient-white {
+    background: var(--gradient-white);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-gold {
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gold {
+    color: hsl(var(--gold));
+  }
+
+  .bg-gradient-white {
+    background: var(--gradient-white);
+  }
+
+  .bg-gradient-dark {
+    background: var(--gradient-dark);
+  }
+
+  .bg-gradient-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    /* Subtle border */
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  .bg-gradient-gold {
+    background: var(--gradient-gold);
+  }
+
+  .bg-gradient-premium {
+    background: var(--gradient-premium);
+  }
+
+  .shadow-white {
+    box-shadow: var(--shadow-white);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .glow-white {
+    box-shadow: 0 0 60px hsl(0 0% 100% / 0.15);
+  }
+
+  /* Modern micro-animations */
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.4s ease-out forwards;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: tvPulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2.5s linear infinite;
+    background: var(--gradient-shimmer);
+    background-size: 200% 100%;
+  }
+
+  .animate-glow-pulse {
+    animation: glowPulse 3s ease-in-out infinite;
+  }
+
+  /* Smooth transitions */
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .transition-fast {
+    transition: all 0.15s ease-out;
+  }
+
+  /* Hover effects */
+  .hover-lift {
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+  }
+
+  .hover-glow {
+    transition: box-shadow 0.3s ease-out;
+  }
+
+  .hover-glow:hover {
+    box-shadow: 0 0 30px hsl(0 0% 100% / 0.2);
+  }
+
+  /* Stagger animation delays */
+  .stagger-1 {
+    animation-delay: 0.1s;
+  }
+
+  .stagger-2 {
+    animation-delay: 0.2s;
+  }
+
+  .stagger-3 {
+    animation-delay: 0.3s;
+  }
+
+  .stagger-4 {
+    animation-delay: 0.4s;
+  }
+
+  .stagger-5 {
+    animation-delay: 0.5s;
+  }
+
+  /* Glass morphism */
+  .glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Text glow effect */
+  .text-glow {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5),
+      0 0 20px rgba(255, 255, 255, 0.3),
+      0 0 30px rgba(255, 255, 255, 0.2);
+  }
+
+  /* 3D hover */
+  .hover-3d {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    perspective: 1000px;
+  }
+
+  .hover-3d:hover {
+    transform: translateY(-4px) rotateX(2deg);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Bounce animation */
+  .animate-bounce-in {
+    animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  /* Spin slow */
+  .animate-spin-slow {
+    animation: spin 20s linear infinite;
+  }
+
+  /* Gradient shift */
+  .animate-gradient {
+    animation: gradientShift 8s ease infinite;
+    background-size: 200% 200%;
+  }
+
+  /* Scale hover */
+  .hover-scale {
+    transition: transform 0.2s ease;
+  }
+
+  .hover-scale:hover {
+    transform: scale(1.05);
+  }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes tvPulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+
+
+@keyframes glowPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px hsl(0 0% 100% / 0.1);
+  }
+
+  50% {
+    box-shadow: 0 0 40px hsl(0 0% 100% / 0.2);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+
+  70% {
+    transform: scale(0.95);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.glass-panel { background: rgb(0 0 0 / 0.4); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border: 1px solid rgb(255 255 255 / 0.1); }
+.mt-safe-top { margin-top: env(safe-area-inset-top); }
+
+/* Modal overlay - always centered on viewport */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  /* Use dvh for mobile browsers that have dynamic toolbars */
+  height: 100dvh;
+  height: 100vh;
+  /* Fallback */
+  z-index: 9999;
+}
+
+/* Modal container - properly sized */
+.modal-container {
+  position: relative;
+  width: 100%;
+  max-height: 85vh;
+  max-height: 85dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 1rem;
+  /* Ensure it's above the backdrop */
+  z-index: 1;
+}
+
+/* Prevent body scroll when modal is open */
+body.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+/* ============================================================
+   LIQUID DESIGN UPGRADE
+   Modern high-tech glass + microanimations applied app-wide.
+   ============================================================ */
+
+
+@keyframes liquidShift {
+  0%, 100% { background-position: 0% 0%, 100% 0%, 50% 100%, 0 0; }
+  50%      { background-position: 30% 20%, 60% 40%, 40% 70%, 0 0; }
+}
+
+/* Liquid Glass: premium frosted card with sheen + spring hover */
+.liquid-glass,
+.glass-card,
+.bg-gradient-card {
+  position: relative;
+  background: linear-gradient(135deg,
+    hsl(var(--card) / 0.65) 0%,
+    hsl(var(--card) / 0.35) 100%);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid hsl(var(--foreground) / 0.08);
+  box-shadow:
+    inset 0 1px 0 0 hsl(var(--foreground) / 0.08),
+    0 8px 32px -8px hsl(0 0% 0% / 0.45);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 0.3s ease;
+}
+.liquid-glass::before,
+.glass-card::before,
+.bg-gradient-card::before {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(115deg,
+    transparent 30%,
+    hsl(var(--foreground) / 0.06) 50%,
+    transparent 70%);
+  background-size: 220% 220%;
+  background-position: 100% 100%;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.6s ease, background-position 1.2s cubic-bezier(0.22,1,0.36,1);
+}
+.liquid-glass:hover::before,
+.glass-card:hover::before,
+.bg-gradient-card:hover::before {
+  opacity: 1;
+  background-position: 0% 0%;
+}
+.liquid-glass:hover,
+.glass-card:hover,
+.bg-gradient-card:hover {
+  transform: translateY(-2px);
+  border-color: hsl(var(--gold) / 0.35);
+  box-shadow:
+    inset 0 1px 0 0 hsl(var(--foreground) / 0.10),
+    0 16px 48px -10px hsl(0 0% 0% / 0.55),
+    0 0 0 1px hsl(var(--gold) / 0.12);
+}
+
+/* Soft floating blobs for ambient backgrounds */
+.liquid-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(64px);
+  opacity: 0.35;
+  pointer-events: none;
+  animation: blobFloat 14s ease-in-out infinite;
+}
+@keyframes blobFloat {
+  0%, 100% { transform: translate(0,0) scale(1); }
+  33%      { transform: translate(20px,-30px) scale(1.08); }
+  66%      { transform: translate(-25px,15px) scale(0.95); }
+}
+
+/* Spring tap microanimation — applies to every button & link */
+.travel-root button, .travel-root a, .travel-root [role="button"] {
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
+              opacity 0.2s ease, color 0.2s ease, background-color 0.25s ease;
+}
+.travel-root button:active, .travel-root a:active, .travel-root [role="button"]:active {
+  transform: scale(0.96);
+}
+
+/* Shimmer text accent */
+.shimmer-text {
+  background: linear-gradient(90deg,
+    hsl(var(--foreground)) 0%,
+    hsl(var(--gold)) 50%,
+    hsl(var(--foreground)) 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 4s linear infinite;
+}
+
+/* Soft float for hero icons / orbs */
+.float-soft { animation: floatSoft 8s ease-in-out infinite; }
+@keyframes floatSoft {
+  0%,100% { transform: translateY(0) rotate(0); }
+  50%     { transform: translateY(-8px) rotate(0.5deg); }
+}
+
+/* Gradient outline — for primary CTAs */
+.ring-liquid {
+  position: relative;
+  isolation: isolate;
+}
+.ring-liquid::after {
+  content: "";
+  position: absolute; inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg,
+    hsl(var(--gold) / 0.7),
+    hsl(var(--gold) / 0.15) 40%,
+    hsl(var(--gold) / 0.6));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Smooth route enter for main view */
+.travel-root main, .travel-root [data-page] {
+  animation: pageEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px) scale(0.995); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Stagger helpers (extra steps) */
+.stagger-6 { animation-delay: 0.6s; }
+.stagger-7 { animation-delay: 0.7s; }
+.stagger-8 { animation-delay: 0.8s; }
+
+/* Inputs get a subtle glow on focus — high-tech */
+.travel-root input:focus-visible,
+.travel-root textarea:focus-visible,
+.travel-root select:focus-visible,
+[role="dialog"] input:focus-visible,
+[role="dialog"] textarea:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px hsl(var(--background)),
+    0 0 0 4px hsl(var(--gold) / 0.45),
+    0 8px 24px -8px hsl(var(--gold) / 0.35);
+  transition: box-shadow 0.25s ease;
+}
+
+/* Scrollbar — minimal, themed */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--foreground) / 0.12);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--gold) / 0.35);
+}
+
+/* ============================================================
+   LIQUID MODAL SYSTEM (app-wide, no component edits needed)
+   Matches the common pattern: .fixed.inset-0 > .absolute.inset-0(.bg-black) + child
+   ============================================================ */
+
+/* Liquid overlay — animated frosted backdrop */
+.fixed.inset-0 > .absolute.inset-0 {
+  background:
+    radial-gradient(at 20% 15%, hsl(45 60% 18% / 0.35) 0, transparent 55%),
+    radial-gradient(at 80% 85%, hsl(220 70% 18% / 0.35) 0, transparent 55%),
+    rgba(0, 0, 0, 0.55) !important;
+  backdrop-filter: blur(28px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(140%) !important;
+  animation: overlayIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes overlayIn {
+  from { opacity: 0; backdrop-filter: blur(0) saturate(100%); }
+  to   { opacity: 1; }
+}
+
+/* Liquid container — spring rise + sheen */
+.fixed.inset-0 > .relative,
+.fixed.inset-0 > .modal-container,
+.modal-container {
+  animation: liquidRise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes liquidRise {
+  from { opacity: 0; transform: translateY(24px) scale(0.96); filter: blur(8px); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    filter: blur(0); }
+}
+
+/* Smoother card interiors inside modals — liquid glass tiles */
+.fixed.inset-0 .bg-white\/5 {
+  background: linear-gradient(140deg, hsl(var(--card) / 0.5), hsl(var(--card) / 0.25)) !important;
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border-color: hsl(var(--foreground) / 0.10) !important;
+}
+
+/* ============================================================
+   GLOBE MAP — Liquid chrome upgrade
+   ============================================================ */
+.globe-chrome {
+  background: hsl(var(--card) / 0.56);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+  border: 1px solid hsl(var(--foreground) / 0.10);
+  box-shadow:
+    inset 0 1px 0 0 hsl(var(--foreground) / 0.08),
+    0 12px 32px -10px hsl(0 0% 0% / 0.6);
+  transition: transform 0.35s cubic-bezier(0.22,1,0.36,1),
+              border-color 0.3s ease, background 0.3s ease;
+}
+.globe-chrome:hover { border-color: hsl(var(--foreground) / 0.28); }
+
+.globe-toggle-pill {
+  position: relative;
+  transition: color 0.25s ease, transform 0.18s cubic-bezier(0.34,1.56,0.64,1);
+}
+.globe-toggle-pill[data-active="true"] {
+  background: hsl(var(--foreground) / 0.95);
+  color: hsl(var(--background));
+  box-shadow: 0 8px 24px -8px hsl(var(--foreground) / 0.28), inset 0 1px 0 0 hsl(var(--foreground) / 0.62);
+}
+
+.globe-fab {
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  border-radius: 999px;
+  color: hsl(var(--foreground));
+}
+.globe-fab:hover { color: hsl(var(--foreground)); transform: translateY(-1px); }
+
+/* Atmospheric edge glow over the canvas (vignette-like) */
+.globe-stage::before {
+  content: "";
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 50%, transparent 58%, hsl(var(--foreground) / 0.06) 78%, hsl(220 60% 8% / 0.46) 100%);
+  z-index: 1;
+}
+.globe-stage::after {
+  content: "";
+  position: absolute; inset: -1px;
+  pointer-events: none;
+  box-shadow: inset 0 0 120px 30px rgba(0,0,0,0.55);
+  z-index: 2;
+}
+
+/* Disabled heavy blurred orbs behind the globe */
+.globe-orb {
+  display: none;
+}
+.globe-orb-gold { background: radial-gradient(circle, hsl(var(--foreground) / 0.6), transparent 70%); top: -80px; left: -80px; }
+.globe-orb-blue { background: radial-gradient(circle, hsl(220 80% 55% / 0.5), transparent 70%); bottom: -80px; right: -80px; animation-delay: -6s; }
+
+/* Smooth color fade for map paint changes */
+.mapboxgl-canvas { transition: filter 0.4s ease; }
+
+/* Legend chip */
+.legend-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+}
