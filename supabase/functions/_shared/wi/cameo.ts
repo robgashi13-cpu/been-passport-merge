@@ -87,7 +87,8 @@ function actor(c, base) {
   const code = c[base] || '';
   const armed = types.some((t) => ARMED.has(t)) || /(MIL|REB|INS|SEP|UAF)/.test(code.slice(3));
   const police = types.some((t) => COP.has(t)) || /COP/.test(code.slice(3));
-  return { name: titleCase(name), country: c[base + 2] || null, types, armed, police };
+  const mil = types.includes('MIL') || /MIL/.test(code.slice(3));
+  return { name: titleCase(name), country: c[base + 2] || null, types, armed, mil, police };
 }
 
 /** Returns null when the row should not be shown, else { type, label, verb, severity, a1, a2, armed }. */
@@ -100,7 +101,11 @@ export function classifyCameo(c) {
   const armed = a1.armed || a2.armed;
   let [type, label, verb] = def;
   const k = CODES[code] ? code : base;
-  if (MILITARY_WHEN_ARMED[k] && armed) { type = 'conflict'; label = MILITARY_WHEN_ARMED[k]; }
+  if (MILITARY_WHEN_ARMED[k] && armed) {
+    type = 'conflict';
+    // Only state armed forces get "Military"; rebels / insurgents / gunmen get "Armed group".
+    label = a1.mil || a2.mil ? MILITARY_WHEN_ARMED[k] : (k === '190' ? 'Armed group violence' : MILITARY_WHEN_ARMED[k]);
+  }
   if (k === '190' && !armed && (a1.police || a2.police)) label = 'Police use of force';
   // GDELT's machine coding often assigns military codes to unrelated stories (fires, tourism, politics).
   // Quality gates: violent/military events must come from the article's lead (IsRootEvent) or be
@@ -109,6 +114,7 @@ export function classifyCameo(c) {
   const sources = Number(c[32]) || 0;
   if ((type === 'conflict' || type === 'military' || type === 'attack') && !root && sources < 2) return null;
   if (!armed && /^(152|154|191|192|196)$/.test(k)) return null;
+  if (!armed && k === '186' && sources < 2) return null; // single-source "assassination" is mostly metaphor/noise
   if (!armed && /^(194|195|1951|1952)$/.test(k) && !root) return null;
   if (type === 'conflict' && !armed && /^(200|201|202|203)$/.test(k)) type = 'attack';
   const severity = type === 'conflict' ? 3 : type === 'attack' ? (/^(183|186|1823|202)/.test(k) ? 3 : 2) : k === '145' || k === '175' ? 2 : 1;
