@@ -224,3 +224,17 @@ a.hq-card:active, button.hq-card:active { transform: scale(0.99); }
   padding-inline: 1rem;
   max-width: 1400px;
 }
+
+/* ---- dashboard edit mode ---- */
+@keyframes hq-jiggle {
+  0% { transform: rotate(-0.5deg); }
+  50% { transform: rotate(0.5deg); }
+  100% { transform: rotate(-0.5deg); }
+}
+.hq-jiggle { animation: hq-jiggle 0.32s ease-in-out infinite; transform-origin: 50% 50%; }
+.hq-dragging .hq-jiggle { animation: none; transform: scale(1.03); }
+.hq-dragging { opacity: 0.92; filter: drop-shadow(0 18px 30px rgb(0 0 0 / 0.6)); }
+.hq-edit { cursor: grab; -webkit-touch-callout: none; }
+.hq-dragging.hq-edit { cursor: grabbing; }
+.hq-edit .hq-rise { animation: none !important; opacity: 1 !important; transform: none !important; }
+@media (prefers-reduced-motion: reduce) { .hq-jiggle { animation: none; } }

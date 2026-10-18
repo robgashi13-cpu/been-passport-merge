@@ -6,6 +6,9 @@
 //    URLs never reach the browser, and a token can only ever fetch the exact URL it was minted for.
 // Provider settings: Lovable Secrets IPTV_URL / IPTV_USER / IPTV_PASS override rows
 // iptv_url / iptv_user / iptv_pass in public.hq_secrets (service-role only).
+// Optional home media proxy (provider blocks datacenter IPs for streams):
+//   IPTV_MEDIA_BASE / hq_secrets.iptv_media_base  public HTTPS base of tools/iptv-proxy (e.g. https://<mac>.ts.net/iptv)
+//   IPTV_TOKEN_KEY  / hq_secrets.iptv_token_key   shared secret used to seal tokens (same value on the proxy)
 import { CORS, guarded, subPath, withCors } from '../_shared/guard.ts';
 import { db } from '../_shared/wi/cache.ts';
 
@@ -16,31 +19,33 @@ const EXT_RE = /^[a-z0-9]{2,5}$/i;
 /* ------------------------------------------------------------------ config */
 let dbCfg = null;
 async function cfg() {
-  let url = Deno.env.get('IPTV_URL') || '';
-  let user = Deno.env.get('IPTV_USER') || '';
-  let pass = Deno.env.get('IPTV_PASS') || '';
-  if (!url) {
-    if (!dbCfg || dbCfg.exp < Date.now()) {
-      const v = {};
-      try {
-        const s = await db();
-        const { data } = await s.from('hq_secrets').select('name,value').in('name', ['iptv_url', 'iptv_user', 'iptv_pass']);
-        for (const r of data || []) v[r.name] = r.value;
-      } catch { /* ignore */ }
-      dbCfg = { v, exp: Date.now() + 5 * 60e3 };
-    }
-    url = dbCfg.v.iptv_url || ''; user = dbCfg.v.iptv_user || ''; pass = dbCfg.v.iptv_pass || '';
+  if (!dbCfg || dbCfg.exp < Date.now()) {
+    const v = {};
+    try {
+      const s = await db();
+      const { data } = await s.from('hq_secrets').select('name,value').in('name', ['iptv_url', 'iptv_user', 'iptv_pass', 'iptv_media_base', 'iptv_token_key']);
+      for (const r of data || []) v[r.name] = r.value;
+    } catch { /* ignore */ }
+    dbCfg = { v, exp: Date.now() + 5 * 60e3 };
   }
-  url = url.replace(/\/+$/, '');
-  return { url, user, pass, ok: /^https?:\/\//.test(url) && !!user && !!pass };
+  const env = (k) => Deno.env.get(k) || '';
+  const v = dbCfg.v;
+  const fromEnv = !!env('IPTV_URL');
+  const url = (fromEnv ? env('IPTV_URL') : v.iptv_url || '').replace(/\/+$/, '');
+  const user = fromEnv ? env('IPTV_USER') : v.iptv_user || '';
+  const pass = fromEnv ? env('IPTV_PASS') : v.iptv_pass || '';
+  const mediaBase = (env('IPTV_MEDIA_BASE') || v.iptv_media_base || '').replace(/\/+$/, '') || null;
+  const tokenKey = env('IPTV_TOKEN_KEY') || v.iptv_token_key || env('SUPABASE_SERVICE_ROLE_KEY');
+  return { url, user, pass, mediaBase, tokenKey, ok: /^https?:\/\//.test(url) && !!user && !!pass };
 }
 
 /* ------------------------------------------------------------------ tokens */
+// key = SHA-256("wanderpass-iptv-v1:" + tokenKey) → AES-256-GCM; token = base64url(iv[12] | ciphertext+tag)
 let keyP = null;
 function key() {
   return (keyP ||= (async () => {
-    const raw = new TextEncoder().encode('wanderpass-iptv-v1:' + (Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''));
-    const h = await crypto.subtle.digest('SHA-256', raw);
+    const c = await cfg();
+    const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('wanderpass-iptv-v1:' + (c.tokenKey || '')));
     return crypto.subtle.importKey('raw', h, 'AES-GCM', false, ['encrypt', 'decrypt']);
   })());
 }
@@ -78,7 +83,7 @@ async function api(c, action, params = {}, ttl = 10 * 60e3) {
 }
 const json = (v, status = 200, cache = 'private, max-age=60') => Response.json(v, { status, headers: { 'cache-control': cache } });
 const arr = (v) => (Array.isArray(v) ? v : []);
-const img = (u) => (typeof u === 'string' && /^https?:\/\//.test(u) ? u : null);
+const img = (u) => (typeof u === 'string' && /^https?:\/\//.test(u) ? u.replace(/^http:\/\//, 'https://') : null); // https upgrade avoids mixed content
 const decode = (s) => { try { return new TextDecoder().decode(Uint8Array.from(atob(s || ''), (ch) => ch.charCodeAt(0))); } catch { return s || ''; } };
 
 const slimLive = (x) => ({ id: x.stream_id, name: x.name, logo: img(x.stream_icon), cat: String(x.category_id ?? ''), epg: x.epg_channel_id || null, archive: !!x.tv_archive });
@@ -89,7 +94,7 @@ async function routes(req, c, path, q) {
   if (path === 'status') {
     const d = await api(c, '', {}, 60e3);
     const u = d.user_info || {};
-    return json({ configured: true, ok: u.auth === 1, status: u.status, exp: Number(u.exp_date) || null, maxConnections: Number(u.max_connections) || null, activeCons: Number(u.active_cons) || 0 }, 200, 'no-store');
+    return json({ configured: true, ok: u.auth === 1, mediaProxy: c.mediaBase ? 'home' : 'cloud', status: u.status, exp: Number(u.exp_date) || null, maxConnections: Number(u.max_connections) || null, activeCons: Number(u.active_cons) || 0 }, 200, 'no-store');
   }
   const cats = { 'live/categories': 'get_live_categories', 'vod/categories': 'get_vod_categories', 'series/categories': 'get_series_categories' };
   if (cats[path]) return json(arr(await api(c, cats[path], {}, 30 * 60e3)).map((x) => ({ id: String(x.category_id), name: x.category_name })));
@@ -159,13 +164,13 @@ async function routes(req, c, path, q) {
     const e = Date.now() + 8 * 3600e3;
     if (kind === 'live') {
       const tok = await seal({ k: 'pl', u: `${c.url}/live/${c.user}/${c.pass}/${id}.m3u8`, e });
-      return json({ type: 'hls', path: `p/${tok}/index.m3u8` }, 200, 'no-store');
+      return json({ type: 'hls', base: c.mediaBase, path: `p/${tok}/index.m3u8` }, 200, 'no-store');
     }
     if (kind === 'movie' || kind === 'series') {
       const ext = (q.get('ext') || 'mp4').toLowerCase();
       if (!EXT_RE.test(ext)) return json({ error: 'bad ext' }, 400);
       const tok = await seal({ k: 'f', u: `${c.url}/${kind}/${c.user}/${c.pass}/${id}.${ext}`, e });
-      return json({ type: 'file', ext, path: `f/${tok}/video.${ext}` }, 200, 'no-store');
+      return json({ type: 'file', ext, base: c.mediaBase, path: `f/${tok}/video.${ext}` }, 200, 'no-store');
     }
     return json({ error: 'bad kind' }, 400);
   }
@@ -207,7 +212,7 @@ async function mediaRoute(req, path) {
     const t = await unseal(tok, 'pl');
     if (!t) return media('expired', { status: 403 });
     const r = await fetch(t.u, { headers: { 'user-agent': UA }, signal: AbortSignal.timeout(15000) });
-    if (!r.ok) return media(`upstream ${r.status}`, { status: r.status === 404 ? 404 : 502 });
+    if (!r.ok) return media(`upstream ${r.status}${r.status === 511 || r.status === 403 ? ' (provider blocks cloud IPs; set up the home media proxy)' : ''}`, { status: r.status === 404 ? 404 : 502 });
     const body = await rewrite(await r.text(), r.url || t.u);
     return media(body, { headers: { 'content-type': 'application/vnd.apple.mpegurl', 'cache-control': 'no-store' } });
   }

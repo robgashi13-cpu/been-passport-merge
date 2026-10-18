@@ -25,7 +25,13 @@ import {
   CloudLightning,
   CloudFog,
   Cctv,
+  Tv,
+  Play,
+  Star,
+  Link2 as LinkIcon,
 } from "lucide-react";
+import { EditableGrid, type CardDef } from "./EditableGrid";
+import { useFavs, useHistory } from "@/tv/api";
 import { ago as camAgo, camLabel, type FEvent, type Status as CamStatus, useAuthedBlob, useFrigate } from "@/cameras/frigate";
 import { usePoll } from "@/wi/api";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,7 +64,7 @@ function Card({
     ...(glow ? { ["--glow" as any]: glow } : {}),
     animationDelay: `${delay}ms`,
   };
-  const cls = `hq-card hq-rise flex flex-col p-4 sm:p-5 ${className}`;
+  const cls = `hq-card hq-rise flex h-full flex-col p-4 sm:p-5 ${className}`;
   if (href)
     return (
       <a
@@ -829,7 +835,7 @@ function LinksCard() {
 function FutureSlot({ delay = 0 }: { delay?: number }) {
   return (
     <div
-      className="hq-rise col-span-1 flex flex-col items-center justify-center gap-2 rounded-3xl border border-dashed border-white/10 p-4 text-center"
+      className="hq-rise col-span-1 flex h-full flex-col items-center justify-center gap-2 rounded-3xl border border-dashed border-white/10 p-4 text-center"
       style={{ animationDelay: `${delay}ms` }}
     >
       <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.04] text-white/40">
@@ -917,25 +923,78 @@ function CamerasCard() {
   );
 }
 
+
+/* ---------------------------------------------------------------- tv */
+
+function TvCard() {
+  const { favs } = useFavs();
+  const { hist } = useHistory();
+  const live = favs.filter((f) => f.kind === "live");
+  const quick = (live.length ? live : hist.filter((h) => h.kind === "live")).slice(0, 6);
+  return (
+    <Card className="col-span-1" glow="hsl(330 80% 60% / 0.12)" delay={400}>
+      <Link to="/tv" className="block">
+        <CardHead icon={<Tv className="h-4 w-4" />} label="TV" />
+      </Link>
+      {quick.length ? (
+        <ul className="mt-auto grid grid-cols-3 gap-1.5">
+          {quick.map((f) => (
+            <li key={f.id}>
+              <Link
+                to={`/tv?play=live:${f.id}`}
+                title={`Play ${f.name}`}
+                className="group relative flex aspect-video items-center justify-center overflow-hidden rounded-lg bg-white/[0.05] ring-1 ring-white/5 transition hover:ring-white/30"
+              >
+                {f.logo ? (
+                  <img src={f.logo} alt={f.name} loading="lazy" referrerPolicy="no-referrer" className="h-full w-full object-contain p-1" />
+                ) : (
+                  <span className="truncate px-1 text-[10px] text-white/70">{f.name}</span>
+                )}
+                <Play className="absolute h-4 w-4 fill-white text-white opacity-0 drop-shadow transition group-hover:opacity-100" />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div className="mt-auto">
+          <div className="font-display text-lg font-semibold leading-tight text-white">Live TV, movies & series</div>
+          <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
+            <Star className="h-3 w-3" /> Star channels to quick-play here
+          </div>
+        </div>
+      )}
+      <div className="mt-2 truncate text-[11px] text-muted-foreground">
+        {live.length ? `${live.length} favorite${live.length > 1 ? "s" : ""}` : quick.length ? "Recently watched" : "Open TV"}
+      </div>
+    </Card>
+  );
+}
+
 /* ---------------------------------------------------------------- page */
 
 export function Dashboard() {
   const travel = useTravelSummary();
+  const defs: CardDef[] = [
+    { id: "hero", label: "Clock & weather", icon: <Clock3 className="h-4 w-4" />, size: "M", render: () => <HeroCard /> },
+    { id: "korauto", label: "KORAUTO", icon: <CarFront className="h-4 w-4" />, size: "L", render: () => <KorautoCard /> },
+    { id: "threat", label: "World threat", icon: <Activity className="h-4 w-4" />, size: "S", render: () => <ThreatCard /> },
+    { id: "hazards", label: "Earthquakes", icon: <ShieldAlert className="h-4 w-4" />, size: "S", render: () => <HazardsCard /> },
+    { id: "headlines", label: "World headlines", icon: <Newspaper className="h-4 w-4" />, size: "L", render: () => <HeadlinesCard /> },
+    { id: "travel", label: "Travel", icon: <Plane className="h-4 w-4" />, size: "S", render: () => <TravelCard {...travel} /> },
+    { id: "passport", label: "Passport", icon: <BookMarked className="h-4 w-4" />, size: "S", render: () => <PassportCard {...travel} /> },
+    { id: "world", label: "World News", icon: <Globe2 className="h-4 w-4" />, size: "S", render: () => <WorldTileCard /> },
+    { id: "cameras", label: "Cameras", icon: <Cctv className="h-4 w-4" />, size: "S", render: () => <CamerasCard /> },
+    { id: "tv", label: "TV favorites", icon: <Tv className="h-4 w-4" />, size: "S", render: () => <TvCard /> },
+    { id: "links", label: "Quick links", icon: <LinkIcon className="h-4 w-4" />, size: "S", render: () => <LinksCard /> },
+    { id: "slot", label: "Next project slot", icon: <Plus className="h-4 w-4" />, size: "S", render: () => <FutureSlot delay={420} /> },
+  ];
   return (
-    <main className="mx-auto max-w-[1440px] px-3 pb-12 pt-4 sm:px-5 sm:pt-6">
-      <div className="grid grid-flow-row-dense auto-rows-[minmax(168px,auto)] grid-cols-2 gap-3 sm:auto-rows-[190px] sm:gap-4 md:grid-cols-4 lg:auto-rows-[210px]">
-        <HeroCard />
-        <KorautoCard />
-        <ThreatCard />
-        <HazardsCard />
-        <HeadlinesCard />
-        <TravelCard {...travel} />
-        <PassportCard {...travel} />
-        <WorldTileCard />
-        <LinksCard />
-        <CamerasCard />
-        <FutureSlot delay={420} />
-      </div>
+    <main className="mx-auto max-w-[1440px] px-3 pb-12 pt-3 sm:px-5 sm:pt-4">
+      <EditableGrid
+        defs={defs}
+        prefKey="dashboard_layout"
+        className="grid grid-flow-row-dense auto-rows-[minmax(168px,auto)] grid-cols-2 gap-3 sm:auto-rows-[190px] sm:gap-4 md:grid-cols-4 lg:auto-rows-[210px]"
+      />
       <p className="mt-6 text-center text-[11px] text-white/25">
         WanderPass · private · data refreshes automatically
       </p>

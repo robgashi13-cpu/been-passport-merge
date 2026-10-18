@@ -2,6 +2,7 @@
 // The /api/* surface of the original Express server, served from api_cache. Every route requires a valid session token.
 import { getRow, getRows, db, putRow } from './cache.ts';
 import { verifyToken } from './auth.ts';
+import { fetchArticleMeta, articleUrlOk } from './article.ts';
 import { REGIONS, COUNTRY_NAMES } from './geo.ts';
 import { NEWS } from './news-config.ts';
 import { LABELS, refreshQuakes, refreshEonet, refreshGdacs, refreshNws, refreshKev, refreshPolymarket, refreshManifold, refreshNhc, refreshRisk, xSearch, ytLive } from './sources.ts';
@@ -122,6 +123,18 @@ async function hlsProxy(url, token) {
   } catch { return new Response('proxy error', { status: 502 }); } finally { clearTimeout(tm); }
 }
 
+// "What happened" preview for GDELT dots: source article title + og/meta description, cached in public.article_meta (no AI).
+async function article(url) {
+  if (!articleUrlOk(url)) return { ok: false, error: 'url not allowed' };
+  const s = await db();
+  const { data: hit } = await s.from('article_meta').select('data, fetched_at').eq('url', url).maybeSingle();
+  if (hit && Date.now() - Date.parse(hit.fetched_at) < (hit.data?.ok ? 7 * 86400e3 : 1800e3)) return hit.data;
+  let v;
+  try { v = await fetchArticleMeta(url); } catch (e) { v = { ok: false, error: String(e?.message || e).slice(0, 120) }; }
+  await s.from('article_meta').upsert({ url, data: v, fetched_at: new Date().toISOString() });
+  return v;
+}
+
 export async function handleApi(request, splat) {
   const url = new URL(request.url);
   const path = '/' + String(splat || '').replace(/^\/+/, '');
@@ -140,6 +153,7 @@ export async function handleApi(request, splat) {
       case '/gdacs': return json(await src('gdacs'));
       case '/nws': return json(await src('nws'));
       case '/kev': return json(await src('kev'));
+      case '/article': return json(await article(String(q('url') || '')));
       case '/gdelt': return json(await gdelt(Math.min(24, Number(q('hours') || 6)), Math.min(4000, Number(q('limit') || 1500))));
       case '/events': {
         const hours = Math.min(24, Number(q('hours') || 6));

@@ -270,3 +270,13 @@
 .wi-root .ev-near{margin-top:12px;border-top:1px solid var(--hair);padding-top:10px}
 .wi-root .ev-near-h{font-size:11.5px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
 .wi-root .ev-near .feed-item{padding:8px 6px;height:auto;border-radius:8px}
+
+.wi-root .ev-what{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07)}
+.wi-root .ev-what-h{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx3,#8b96a3);margin-bottom:6px}
+.wi-root .ev-what p{margin:0 0 8px;font-size:13px;line-height:1.45;color:var(--tx1,#e8edf2)}
+.wi-root .ev-art{display:flex;flex-direction:column;gap:3px;padding:8px 10px;border-radius:10px;background:rgba(0,0,0,.25);text-decoration:none;color:inherit;border:1px solid rgba(255,255,255,.06)}
+.wi-root a.ev-art:hover{border-color:rgba(255,255,255,.18)}
+.wi-root .ev-art b{font-size:13px;line-height:1.35;color:var(--tx1,#e8edf2)}
+.wi-root .ev-art-site{font-size:11px;color:var(--tx3,#8b96a3)}
+.wi-root .ev-art-desc{font-size:12.5px;line-height:1.45;color:var(--tx2,#b8c2cc)}
+.wi-root .ev-art-loading{font-size:12px;color:var(--tx3,#8b96a3)}

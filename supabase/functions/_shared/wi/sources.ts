@@ -1,5 +1,6 @@
 // @ts-nocheck
 // Upstream refreshers (ported 1:1 from the original server's sources/*.js). Results land in api_cache.
+import { classifyCameo, whatHappened } from './cameo.ts';
 import { XMLParser } from 'npm:fast-xml-parser@5';
 import { unzipSync, strFromU8 } from 'npm:fflate@0.8';
 import { runSource, fetchJSON, fetchText, fetchBuffer, db, getRow, putRow, pool } from './cache.ts';
@@ -105,25 +106,22 @@ export function parseExportCsv(csv, stamp) {
     const c = line.split('\t');
     if (c.length < 61) continue;
     const root = c[28];
-    const cat = CAMEO[root]; if (!cat) continue;
-    if (root === '13' && c[26] !== '138') continue;
-    if (root === '17' && !['173', '175', '171'].includes(c[26])) continue;
-    if (root === '15' && !['152', '154'].includes(c[26])) continue;
+    const cls = classifyCameo(c); if (!cls) continue; // precise full-code + actor-type mapping (cameo.ts)
     const geoType = +c[51];
     const lat = parseFloat(c[56]), lon = parseFloat(c[57]);
     if (!Number.isFinite(lat) || !Number.isFinite(lon) || geoType === 0) continue;
     const numSources = +c[32], numArticles = +c[33];
     const url = c[60]?.trim();
     if (!url) continue;
-    const a1 = c[6] || c[5], a2 = c[16] || c[15];
     const country = countryAt(lat, lon);
-    out.push({ id: 'gdelt:' + c[0], type: cat.type, cameo: c[26], cameoRoot: root,
-      title: `${CAMEO_DETAIL[c[26]] || CAMEO_DETAIL[c[27]] || cat.label}${a1 || a2 ? ' — ' + [a1, a2].filter(Boolean).join(' / ') : ''}`,
+    const time = `${c[59].slice(0, 4)}-${c[59].slice(4, 6)}-${c[59].slice(6, 8)}T${c[59].slice(8, 10)}:${c[59].slice(10, 12)}:00Z`;
+    const actors = [cls.a1.name, cls.a2.name].filter(Boolean);
+    out.push({ id: 'gdelt:' + c[0], type: cls.type, cameo: c[26], cameoRoot: root, label: cls.label,
+      title: `${cls.label}${actors.length ? ' — ' + actors.join(' / ') : ''}`,
+      what: whatHappened(cls, c[52], time), actor1: cls.a1.name || null, actor2: cls.a2.name || null, armedActor: cls.armed,
       place: c[52], lat, lon, precision: geoType === 1 ? 'country' : geoType === 2 || geoType === 5 ? 'state' : 'city',
-      time: `${c[59].slice(0, 4)}-${c[59].slice(4, 6)}-${c[59].slice(6, 8)}T${c[59].slice(8, 10)}:${c[59].slice(10, 12)}:00Z`,
-      url, source: 'GDELT 2.0', goldstein: +c[30], mentions: +c[31], numSources, numArticles, tone: +c[34],
-      severity: (root === '20' || root === '19' || c[26].startsWith('183') || c[26] === '186') ? 3 : root === '18' || c[26] === '145' ? 2 : 1,
-      country, region: regionOf(country), stamp });
+      time, url, source: 'GDELT 2.0', goldstein: +c[30], mentions: +c[31], numSources, numArticles, tone: +c[34],
+      severity: cls.severity, country, region: regionOf(country), stamp });
   }
   return out;
 }
