@@ -14,159 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      allowed_emails: {
-        Row: {
-          created_at: string
-          email: string
-          note: string | null
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          note?: string | null
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          note?: string | null
-        }
-        Relationships: []
-      }
-      api_cache: {
-        Row: {
-          error: string | null
-          key: string
-          meta: Json | null
-          payload: Json | null
-          status: string
-          ttl_seconds: number
-          updated_at: string
-        }
-        Insert: {
-          error?: string | null
-          key: string
-          meta?: Json | null
-          payload?: Json | null
-          status?: string
-          ttl_seconds?: number
-          updated_at?: string
-        }
-        Update: {
-          error?: string | null
-          key?: string
-          meta?: Json | null
-          payload?: Json | null
-          status?: string
-          ttl_seconds?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      gdelt_day_counts: {
-        Row: {
-          attack: number
-          conflict: number
-          country: string
-          day: string
-          military: number
-          protest: number
-          unrest: number
-        }
-        Insert: {
-          attack?: number
-          conflict?: number
-          country: string
-          day: string
-          military?: number
-          protest?: number
-          unrest?: number
-        }
-        Update: {
-          attack?: number
-          conflict?: number
-          country?: string
-          day?: string
-          military?: number
-          protest?: number
-          unrest?: number
-        }
-        Relationships: []
-      }
-      gdelt_events: {
-        Row: {
-          cameo_root: string
-          country: string | null
-          data: Json
-          id: string
-          num_articles: number
-          region: string | null
-          severity: number
-          stamp: string
-          time: string
-          type: string
-          url: string
-        }
-        Insert: {
-          cameo_root: string
-          country?: string | null
-          data: Json
-          id: string
-          num_articles?: number
-          region?: string | null
-          severity: number
-          stamp: string
-          time: string
-          type: string
-          url: string
-        }
-        Update: {
-          cameo_root?: string
-          country?: string | null
-          data?: Json
-          id?: string
-          num_articles?: number
-          region?: string | null
-          severity?: number
-          stamp?: string
-          time?: string
-          type?: string
-          url?: string
-        }
-        Relationships: []
-      }
-      gdelt_files: {
-        Row: {
-          loaded_at: string
-          n: number
-          stamp: string
-        }
-        Insert: {
-          loaded_at?: string
-          n?: number
-          stamp: string
-        }
-        Update: {
-          loaded_at?: string
-          n?: number
-          stamp?: string
-        }
-        Relationships: []
-      }
-      hq_secrets: {
-        Row: {
-          name: string
-          value: string
-        }
-        Insert: {
-          name: string
-          value: string
-        }
-        Update: {
-          name?: string
-          value?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -198,12 +45,9 @@ export type Database = {
         Row: {
           bucket_list: string[] | null
           created_at: string
-          flight_history: Json
           held_visas: string[] | null
           id: string
-          lived_countries: string[]
           passport_code: string | null
-          trips: Json
           updated_at: string
           user_id: string
           visited_cities: string[] | null
@@ -212,12 +56,9 @@ export type Database = {
         Insert: {
           bucket_list?: string[] | null
           created_at?: string
-          flight_history?: Json
           held_visas?: string[] | null
           id?: string
-          lived_countries?: string[]
           passport_code?: string | null
-          trips?: Json
           updated_at?: string
           user_id: string
           visited_cities?: string[] | null
@@ -226,12 +67,9 @@ export type Database = {
         Update: {
           bucket_list?: string[] | null
           created_at?: string
-          flight_history?: Json
           held_visas?: string[] | null
           id?: string
-          lived_countries?: string[]
           passport_code?: string | null
-          trips?: Json
           updated_at?: string
           user_id?: string
           visited_cities?: string[] | null
@@ -244,10 +82,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      email_is_allowed: { Args: { p_email: string }; Returns: boolean }
-      gdelt_country_stats: { Args: never; Returns: Json }
-      gdelt_window: { Args: { _hours: number; _limit: number }; Returns: Json }
-      is_allowed: { Args: never; Returns: boolean }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
@@ -266,12 +101,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -295,11 +130,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -320,11 +155,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends (DefaultSchemaTableNameOrOptions extends {
+  TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -345,11 +180,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never) = never,
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -362,11 +197,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never) = never,
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

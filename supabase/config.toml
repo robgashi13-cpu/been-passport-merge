@@ -1,5 +1,6 @@
 project_id = "jtwtpqofzttbsvzewddm"
 
+# All functions do their own auth (signed-in + allowlisted session, or the cron key for wi-refresh).
 [functions.travel-ai]
 verify_jwt = false
 
@@ -18,3 +19,11 @@ verify_jwt = false
 [functions.travel-search-ai]
 verify_jwt = false
 
+[functions.wi-api]
+verify_jwt = false
+
+[functions.hq-korauto]
+verify_jwt = false
+
+[functions.wi-refresh]
+verify_jwt = false
