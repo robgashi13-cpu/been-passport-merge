@@ -62,6 +62,24 @@ export type Database = {
         }
         Relationships: []
       }
+      article_meta: {
+        Row: {
+          data: Json
+          fetched_at: string
+          url: string
+        }
+        Insert: {
+          data: Json
+          fetched_at?: string
+          url: string
+        }
+        Update: {
+          data?: Json
+          fetched_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       gdelt_day_counts: {
         Row: {
           attack: number
