@@ -1,7 +1,10 @@
 # App stability and media polish
-- [ ] Reveal dashboard Edit on downward swipe; retain accessible editing.
-- [ ] Expand opt-in widgets from existing tabs and improve card alignment.
-- [ ] Reduce duplicate loading and add lightweight spring motion with reduced-motion support.
-- [ ] Speed up camera previews and add recorded clip downloads.
-- [ ] Speed up TV startup and add movie downloads.
-- [ ] Deploy changed media functions and verify supported flows; report external service limits.
+- [x] Reveal dashboard Edit on downward swipe; retain accessible editing. Isolated desktop/touch interactions passed.
+- [x] Add eight opt-in widgets from existing tabs and bound card tracks.
+- [x] Reduce duplicate loading and add transform/opacity spring motion with reduced-motion support.
+- [x] Speed up camera snapshot previews and add prepared recording downloads.
+- [x] Improve TV startup and add streaming attachment movie downloads.
+- [x] Deploy frigate and iptv; app compiles and three layout tests pass.
+- [ ] Verify real signed-in dashboard and media downloads: blocked until the user signs in in preview.
+- [ ] Verify home-proxy movie downloads: updated tools/iptv-proxy/server.mjs must be installed on the owner's existing home host.
+- [ ] Measure sub-second camera startup and 120fps on the user's hardware: live cameras currently use snapshot previews, not continuous video.
