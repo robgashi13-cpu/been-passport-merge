@@ -13,6 +13,11 @@ import {
 type Tab = "live" | "movies" | "series";
 type Playing = { item: PlayItem; startAt?: number } | null;
 
+// Albania / USA / UK categories first, then alphabetical (mirrors the server sort).
+const CAT_RANK = [/\b(albania|shqip|albanian|kosov|xk)\b/i, /\b(usa|united states|us[:\s|])/i, /\b(uk|united kingdom|britain|british)\b/i];
+const catRank = (n: string) => { const i = CAT_RANK.findIndex((r) => r.test(n)); return i === -1 ? 9 : i; };
+const sortCats = (list: Cat[]) => [...list].sort((a, b) => catRank(a.name) - catRank(b.name) || a.name.localeCompare(b.name));
+
 function useDebounced<T>(v: T, ms = 350) {
   const [d, setD] = useState(v);
   useEffect(() => { const t = setTimeout(() => setD(v), ms); return () => clearTimeout(t); }, [v, ms]);
