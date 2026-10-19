@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Clapperboard, Film, Play, Search, Star, Tv, X, Loader2, History } from "lucide-react";
+import { Clapperboard, Film, Play, RefreshCw, Search, Star, Tv, X, Loader2, History } from "lucide-react";
 import { useAuth } from "@/hub/auth";
 import { usePref } from "@/hub/prefs";
 import { Player } from "./Player";
 import { DownloadButton } from "./DownloadButton";
 import {
-  cleanName, hhmm, tvGet, useFavs, useHistory, useTv,
+  cleanName, clearTvCache, hhmm, tvGet, useFavs, useHistory, useTv,
   type Cat, type Epg, type Hist, type Live, type PlayItem, type Series, type Status, type Vod,
 } from "./api";
 
@@ -22,6 +22,12 @@ function useDebounced<T>(v: T, ms = 350) {
   const [d, setD] = useState(v);
   useEffect(() => { const t = setTimeout(() => setD(v), ms); return () => clearTimeout(t); }, [v, ms]);
   return d;
+}
+
+/** Bumping the key forces every list to refetch from the server with fresh data. */
+function useRefreshKey() {
+  const [key, setKey] = useState(0);
+  return [key, () => setKey((k) => k + 1)] as const;
 }
 
 const Logo = ({ src, className = "" }: { src: string | null; className?: string }) => {
@@ -68,16 +74,16 @@ function CatPicker({ cats, value, onChange }: { cats: Cat[]; value: string; onCh
 }
 
 /* ------------------------------------------------------------------ live */
-function LiveSection({ onPlay }: { onPlay: (i: PlayItem) => void }) {
+function LiveSection({ onPlay, refreshKey }: { onPlay: (i: PlayItem) => void; refreshKey: number }) {
   const { token } = useAuth();
-  const rawCats = useTv<Cat[]>("live/categories", 30 * 60e3);
+  const rawCats = useTv<Cat[]>(`live/categories${refreshKey ? "?refresh=1" : ""}`, 30 * 60e3);
   const cats = useMemo(() => (rawCats.data ? { ...rawCats, data: sortCats(rawCats.data) } : rawCats), [rawCats]);
   const [cat, setCat] = usePref<string>("tv_live_cat", "");
   const [q, setQ] = useState("");
   const dq = useDebounced(q.trim());
   const [limit, setLimit] = useState(60);
   const activeCat = cat || cats.data?.[0]?.id || "";
-  const list = useTv<Live[]>(dq.length >= 2 ? `search?type=live&q=${encodeURIComponent(dq)}` : activeCat ? `live/streams?category=${activeCat}` : null);
+  const list = useTv<Live[]>(dq.length >= 2 ? `search?type=live&q=${encodeURIComponent(dq)}` : activeCat ? `live/streams?category=${activeCat}${refreshKey ? "&refresh=1" : ""}` : null);
   const { isFav, toggle } = useFavs();
   const [epg, setEpg] = useState<Record<string, Epg[]>>({});
   const shown = (list.data || []).slice(0, limit);
@@ -257,15 +263,15 @@ function SeriesDetail({ s, onPlay, onClose }: { s: Series; onPlay: (i: PlayItem,
   );
 }
 
-function CatalogSection({ kind, onPlay }: { kind: "vod" | "series"; onPlay: (i: PlayItem, at?: number) => void }) {
-  const rawCats = useTv<Cat[]>(`${kind}/categories`, 30 * 60e3);
+function CatalogSection({ kind, onPlay, refreshKey }: { kind: "vod" | "series"; onPlay: (i: PlayItem, at?: number) => void; refreshKey: number }) {
+  const rawCats = useTv<Cat[]>(`${kind}/categories${refreshKey ? "?refresh=1" : ""}`, 30 * 60e3);
   const cats = useMemo(() => (rawCats.data ? { ...rawCats, data: sortCats(rawCats.data) } : rawCats), [rawCats]);
   const [cat, setCat] = usePref<string>(`tv_${kind}_cat`, "");
   const [q, setQ] = useState("");
   const dq = useDebounced(q.trim());
   const [limit, setLimit] = useState(48);
   const activeCat = cat || cats.data?.[0]?.id || "";
-  const path = dq.length >= 2 ? `search?type=${kind}&q=${encodeURIComponent(dq)}` : activeCat ? (kind === "vod" ? `vod/streams?category=${activeCat}` : `series/list?category=${activeCat}`) : null;
+  const path = dq.length >= 2 ? `search?type=${kind}&q=${encodeURIComponent(dq)}` : activeCat ? (kind === "vod" ? `vod/streams?category=${activeCat}${refreshKey ? "&refresh=1" : ""}` : `series/list?category=${activeCat}${refreshKey ? "&refresh=1" : ""}`) : null;
   const list = useTv<(Vod | Series)[]>(path);
   const [open, setOpen] = useState<Vod | Series | null>(null);
   const { hist } = useHistory();
@@ -303,11 +309,24 @@ function Row({ title, icon, children }: { title: string; icon: ReactNode; childr
 export default function TvApp() {
   const status = useTv<Status>("status", 60e3);
   const { token } = useAuth();
+  const [refreshKey, bumpRefresh] = useRefreshKey();
+  const [refreshing, setRefreshing] = useState(false);
   // Warm the category caches as soon as TV opens so every tab is instant.
   useEffect(() => {
     if (!token) return;
     for (const p of ["live/categories", "vod/categories", "series/categories"]) tvGet(p, token, 30 * 60e3).catch(() => {});
   }, [token]);
+  const refresh = async () => {
+    if (!token || refreshing) return;
+    setRefreshing(true);
+    try {
+      await tvGet("refresh", token, 0).catch(() => {}); // clear server cache
+      clearTvCache(); // clear browser cache
+      bumpRefresh(); // refetch everything with refresh=1
+    } finally {
+      setTimeout(() => setRefreshing(false), 800);
+    }
+  };
   const [params, setParams] = useSearchParams();
   const [tab, setTab] = usePref<Tab>("tv_tab", "live");
   const [playing, setPlaying] = useState<Playing>(null);
@@ -343,13 +362,18 @@ export default function TvApp() {
           <div className="hq-label flex items-center gap-2"><Tv className="h-3.5 w-3.5" /> IPTV</div>
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">TV</h1>
         </div>
-        {s && s.configured && !s.error && (
-          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1"><span className={`h-2 w-2 rounded-full ${s.ok ? "bg-emerald-400" : "bg-rose-500"}`} />{s.status}</span>
-            {s.exp && <span className="rounded-full border border-white/10 px-3 py-1">until {new Date(s.exp * 1000).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>}
-            {s.maxConnections && <span className="rounded-full border border-white/10 px-3 py-1">{s.activeCons}/{s.maxConnections} stream{s.maxConnections > 1 ? "s" : ""}</span>}
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <button onClick={refresh} disabled={refreshing} className="flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1 text-xs text-white/70 transition hover:border-white/25 hover:text-white disabled:opacity-50" title="Pull new movies and channels from the provider">
+            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} /> {refreshing ? "Updating…" : "Update"}
+          </button>
+          {s && s.configured && !s.error && (
+            <>
+              <span className="flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1 text-xs text-muted-foreground"><span className={`h-2 w-2 rounded-full ${s.ok ? "bg-emerald-400" : "bg-rose-500"}`} />{s.status}</span>
+              {s.exp && <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-muted-foreground">until {new Date(s.exp * 1000).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>}
+              {s.maxConnections && <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-muted-foreground">{s.activeCons}/{s.maxConnections} stream{s.maxConnections > 1 ? "s" : ""}</span>}
+            </>
+          )}
+        </div>
       </header>
 
       {status.loading && !s ? (
@@ -402,9 +426,9 @@ export default function TvApp() {
               </button>
             ))}
           </div>
-          {tab === "live" && <LiveSection onPlay={play} />}
-          {tab === "movies" && <CatalogSection kind="vod" onPlay={play} />}
-          {tab === "series" && <CatalogSection kind="series" onPlay={play} />}
+          {tab === "live" && <LiveSection onPlay={play} refreshKey={refreshKey} />}
+          {tab === "movies" && <CatalogSection kind="vod" onPlay={play} refreshKey={refreshKey} />}
+          {tab === "series" && <CatalogSection kind="series" onPlay={play} refreshKey={refreshKey} />}
         </>
       )}
       {playing && <Player item={playing.item} startAt={playing.startAt} onClose={() => setPlaying(null)} />}
