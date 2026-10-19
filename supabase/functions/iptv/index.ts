@@ -166,7 +166,7 @@ async function routes(req, c, path, q) {
     const res = [];
     for (const x of all) {
       const n = String(x.name || '').toLowerCase();
-      if (words.every((w) => n.includes(w))) { res.push(slim(x)); if (res.length >= 80) break; }
+      if (words.every((w) => n.includes(w))) { const s = slim(x); if (hideItem(s)) continue; res.push(s); if (res.length >= 80) break; }
     }
     return json(res);
   }
