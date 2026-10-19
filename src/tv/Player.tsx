@@ -53,6 +53,7 @@ export function Player({ item, startAt = 0, onClose }: { item: PlayItem; startAt
             levelLoadingRetryDelay: 300,
             fragLoadingRetryDelay: 300,
             liveSyncDurationCount: 2,
+            startPosition: item.kind === "live" ? -1 : 0,
             liveMaxLatencyDurationCount: 6,
             nudgeMaxRetry: 8,
           });
