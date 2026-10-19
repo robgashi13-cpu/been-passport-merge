@@ -91,9 +91,11 @@ const CAT_RANK = [/\b(albania|shqip|albanian|kosov|xk)\b/i, /\b(usa|united state
 const catRank = (n) => { const i = CAT_RANK.findIndex((r) => r.test(n)); return i === -1 ? 9 : i; };
 const sortCats = (list) => [...list].sort((a, b) => catRank(a.name) - catRank(b.name) || String(a.name).localeCompare(String(b.name)));
 
-// Hide Arab / Middle-East and Asian categories.
-const HIDE_CAT = /\b(arab|arabic|arabia|saudi|emirates|uae|dubai|qatar|kuwait|bahrain|oman|yemen|iraq|iran|syria|lebanon|jordan|palestine|egypt|morocco|algeria|tunisia|libya|sudan|mauritania|maghreb|mena|middle\s?east|islam|muslim|hindi|india|indian|bollywood|pakistan|urdu|bangla|bengali|punjabi|tamil|telugu|desi|china|chinese|japan|japanese|korea|korean|thai|thailand|vietnam|vietnamese|indonesia|indonesian|malaysia|malay|philippines|filipino|pinoy|singapore|taiwan|hong\s?kong|nepal|sri\s?lanka|afghan|kurd|turk|turkey|turkish|persian|farsi|asia|asian)\b/i;
+// Hide Arab / Middle-East, Asian and African categories (and their channels/movies).
+const HIDE_CAT = /\b(arab|arabic|arabia|saudi|emirates|uae|dubai|qatar|kuwait|bahrain|oman|yemen|iraq|iran|syria|lebanon|jordan|palestine|egypt|morocco|algeria|tunisia|libya|sudan|mauritania|maghreb|mena|middle\s?east|islam|muslim|hindi|india|indian|bollywood|pakistan|urdu|bangla|bengali|punjabi|tamil|telugu|desi|china|chinese|japan|japanese|korea|korean|thai|thailand|vietnam|vietnamese|indonesia|indonesian|malaysia|malay|philippines|filipino|pinoy|singapore|taiwan|hong\s?kong|nepal|sri\s?lanka|afghan|kurd|turk|turkey|turkish|persian|farsi|asia|asian|africa|african|nigeria|nigerian|nollywood|ghana|ghanaian|kenya|kenyan|south\s?africa|ethiopia|ethiopian|somalia|somali|senegal|mali|cameroon|congo|congolese|angola|angolan|zimbabwe|uganda|tanzania|rwanda|mozambique|zambia|botswana|namibia|ivory\s?coast|cote\s?d'ivoire|burkina|niger|chad|guinea|benin|togo|gabon|malawi|eritrea|djibouti|yoruba|igbo|hausa|swahili|amharic|zulu|afrikaans)\b/i;
 const hideCat = (n) => HIDE_CAT.test(String(n || ''));
+// Items whose own name carries a hidden-region tag (e.g. "Nollywood: Movie X") are filtered too.
+const hideItem = (x) => hideCat(x.name);
 
 const slimLive = (x) => ({ id: x.stream_id, name: x.name, logo: img(x.stream_icon), cat: String(x.category_id ?? ''), epg: x.epg_channel_id || null, archive: !!x.tv_archive });
 const slimVod = (x) => ({ id: x.stream_id, name: x.name, logo: img(x.stream_icon), cat: String(x.category_id ?? ''), rating: Number(x.rating) || null, ext: x.container_extension || 'mp4', added: Number(x.added) || null });
@@ -111,9 +113,9 @@ async function routes(req, c, path, q) {
   if (cats[path]) return json(sortCats(arr(await api(c, cats[path], {}, 30 * 60e3, fresh)).map((x) => ({ id: String(x.category_id), name: x.category_name })).filter((x) => !hideCat(x.name))), 200, 'private, max-age=600');
   const cat = q.get('category') || '';
   if (cat && !ID_RE.test(cat)) return json({ error: 'bad category' }, 400);
-  if (path === 'live/streams') return json(arr(await api(c, 'get_live_streams', cat ? { category_id: cat } : {}, 30 * 60e3, fresh)).map(slimLive).slice(0, 3000), 200, 'private, max-age=300');
-  if (path === 'vod/streams') return json(arr(await api(c, 'get_vod_streams', cat ? { category_id: cat } : {}, 30 * 60e3, fresh)).map(slimVod).slice(0, 3000), 200, 'private, max-age=300');
-  if (path === 'series/list') return json(arr(await api(c, 'get_series', cat ? { category_id: cat } : {}, 30 * 60e3, fresh)).map(slimSeries).slice(0, 3000), 200, 'private, max-age=300');
+  if (path === 'live/streams') return json(arr(await api(c, 'get_live_streams', cat ? { category_id: cat } : {}, 30 * 60e3, fresh)).map(slimLive).filter((x) => !hideItem(x)).slice(0, 3000), 200, 'private, max-age=300');
+  if (path === 'vod/streams') return json(arr(await api(c, 'get_vod_streams', cat ? { category_id: cat } : {}, 30 * 60e3, fresh)).map(slimVod).filter((x) => !hideItem(x)).slice(0, 3000), 200, 'private, max-age=300');
+  if (path === 'series/list') return json(arr(await api(c, 'get_series', cat ? { category_id: cat } : {}, 30 * 60e3, fresh)).map(slimSeries).filter((x) => !hideItem(x)).slice(0, 3000), 200, 'private, max-age=300');
   if (path === 'series/info') {
     const id = q.get('id') || '';
     if (!ID_RE.test(id)) return json({ error: 'bad id' }, 400);
