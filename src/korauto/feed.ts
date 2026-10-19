@@ -25,6 +25,7 @@ export type Car = {
 };
 export type Feed = {
   configured: boolean;
+  missing?: string[];
   generatedAt?: string;
   todayStart?: string;
   addedToday?: Car[];

@@ -1,0 +1,2 @@
+- [ ] Copy p5 files byte-for-byte and verify all supplied SHA256 checksums.
+- [ ] Deploy hq-korauto and any other importing functions.
