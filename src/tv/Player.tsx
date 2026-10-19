@@ -116,45 +116,56 @@ export function Player({ item, startAt = 0, onClose }: { item: PlayItem; startAt
   const airplay = () => v()?.webkitShowPlaybackTargetPicker?.();
   const hasAirplay = typeof window !== "undefined" && "WebKitPlaybackTargetAvailabilityEvent" in window;
 
+  const ctl = "flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white/80 backdrop-blur-md transition hover:bg-white/15 hover:text-white active:scale-95";
   return (
-    <div className="fixed inset-0 z-[90] flex flex-col bg-black" role="dialog" aria-modal="true" aria-label={`Playing ${item.name}`}>
-      <div className="flex flex-wrap items-center gap-2 px-3 py-2 text-foreground" style={{ paddingTop: "max(env(safe-area-inset-top), 0.5rem)" }}>
-        {item.logo && <img src={item.logo} alt="" className="h-8 w-8 rounded-md bg-white/5 object-contain" referrerPolicy="no-referrer" />}
+    <div className="fixed inset-0 z-[90] flex flex-col bg-black/95 backdrop-blur-xl" role="dialog" aria-modal="true" aria-label={`Playing ${item.name}`}>
+      {/* ambient glow from the poster */}
+      {item.logo && <img src={item.logo} alt="" aria-hidden className="pointer-events-none absolute inset-0 h-full w-full scale-125 object-cover opacity-[0.07] blur-3xl" referrerPolicy="no-referrer" />}
+
+      {/* floating glass header */}
+      <div className="relative z-10 mx-auto mt-2 flex w-full max-w-5xl items-center gap-2.5 rounded-2xl border border-white/10 bg-white/[0.05] px-3 py-2 shadow-2xl shadow-black/50 backdrop-blur-xl sm:mx-4 sm:w-auto" style={{ marginTop: "max(env(safe-area-inset-top), 0.5rem)", marginLeft: "max(0.75rem, env(safe-area-inset-left))", marginRight: "max(0.75rem, env(safe-area-inset-right))" }}>
+        {item.logo && <img src={item.logo} alt="" className="h-9 w-9 shrink-0 rounded-lg bg-white/5 object-contain ring-1 ring-white/10" referrerPolicy="no-referrer" />}
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold">{item.name}</div>
-          {item.sub && <div className="truncate text-xs text-white/60">{item.sub}</div>}
+          <div className="truncate text-sm font-semibold text-white">{item.name}</div>
+          {item.sub && <div className="truncate text-xs text-white/50">{item.sub}</div>}
         </div>
+        {item.kind === "live" && <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-rose-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-rose-300"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-400" />Live</span>}
         {item.kind !== "live" && <DownloadButton item={item} />}
-        {hasAirplay && (
-          <button onClick={airplay} className="rounded-lg p-2 hover:bg-white/10" aria-label="AirPlay"><Airplay className="h-5 w-5" /></button>
-        )}
-        <button onClick={pip} className="rounded-lg p-2 hover:bg-white/10" aria-label="Picture in picture"><PictureInPicture2 className="h-5 w-5" /></button>
-        <button onClick={fullscreen} className="rounded-lg p-2 hover:bg-white/10" aria-label="Fullscreen"><Maximize className="h-5 w-5" /></button>
-        <button onClick={onClose} className="rounded-lg p-2 hover:bg-white/10" aria-label="Close player"><X className="h-5 w-5" /></button>
+        {hasAirplay && <button onClick={airplay} className={ctl} aria-label="AirPlay"><Airplay className="h-4.5 w-4.5" /></button>}
+        <button onClick={pip} className={ctl} aria-label="Picture in picture"><PictureInPicture2 className="h-4.5 w-4.5" /></button>
+        <button onClick={fullscreen} className={ctl} aria-label="Fullscreen"><Maximize className="h-4.5 w-4.5" /></button>
+        <button onClick={onClose} className={`${ctl} hover:bg-rose-500/20 hover:text-rose-300`} aria-label="Close player"><X className="h-4.5 w-4.5" /></button>
       </div>
-      <div className="relative flex min-h-0 flex-1 items-center justify-center">
-        <video
-          ref={video}
-          className="h-full max-h-full w-full bg-black object-contain"
-          controls
-          preload="auto"
-          playsInline
-          autoPlay
-          x-webkit-airplay="allow"
-          {...({ "webkit-playsinline": "true" } as any)}
-        />
-        {state === "loading" && (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-white/60" /></div>
-        )}
-        {state === "error" && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/80 p-6">
-            <div className="max-w-md text-center text-white">
-              <AlertTriangle className="mx-auto mb-3 h-8 w-8 text-amber-400" />
-              <div className="text-sm leading-relaxed text-white/80">{err}</div>
-              <button onClick={onClose} className="mt-4 rounded-full bg-white px-5 py-2 text-sm font-medium text-black">Close</button>
+
+      {/* video stage */}
+      <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center p-3 sm:p-5">
+        <div className="relative flex h-full max-h-full w-full max-w-6xl items-center justify-center overflow-hidden rounded-2xl bg-black shadow-2xl shadow-black/60 ring-1 ring-white/10">
+          <video
+            ref={video}
+            className="h-full max-h-full w-full bg-black object-contain"
+            controls
+            preload="auto"
+            playsInline
+            autoPlay
+            x-webkit-airplay="allow"
+            {...({ "webkit-playsinline": "true" } as any)}
+          />
+          {state === "loading" && (
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/40">
+              <Loader2 className="h-9 w-9 animate-spin text-white/70" />
+              <div className="text-[11px] font-medium uppercase tracking-[0.25em] text-white/40">Loading stream</div>
             </div>
-          </div>
-        )}
+          )}
+          {state === "error" && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/85 p-6 backdrop-blur-sm">
+              <div className="max-w-md text-center text-white">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-amber-400/30 bg-amber-400/10"><AlertTriangle className="h-7 w-7 text-amber-400" /></div>
+                <div className="text-sm leading-relaxed text-white/80">{err}</div>
+                <button onClick={onClose} className="mt-5 rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-black transition hover:bg-white/90 active:scale-95">Close</button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
