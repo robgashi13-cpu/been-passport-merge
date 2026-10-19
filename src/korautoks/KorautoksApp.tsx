@@ -103,7 +103,7 @@ function Gallery({ images, alt }: { images: string[]; alt: string }) {
   useEffect(() => setI(0), [images]);
   if (!images.length) return <div className="flex aspect-[16/10] items-center justify-center rounded-2xl bg-white/[0.04]"><CarFront className="h-10 w-10 text-white/25" /></div>;
   return (
-    <div data-testid="kks-gallery">
+    <div data-testid="kks-gallery" className="min-w-0">
       <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-black">
         <img src={images[i]} alt={alt} referrerPolicy="no-referrer" className="h-full w-full object-contain" />
         <span className="absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-[11px] text-white">{i + 1} / {images.length}</span>
@@ -133,7 +133,7 @@ function CarDetail({ d, onBack }: { d: Detail; onBack: () => void }) {
     <article className="space-y-3" data-testid="kks-detail">
       <button onClick={onBack} className="flex items-center gap-1.5 text-[13px] text-white/70 hover:text-white lg:hidden"><ArrowLeft className="h-4 w-4" /> Results</button>
       <div className="hq-card p-4">
-        <div className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
           <Gallery images={images} alt={title(c)} />
           <div className="min-w-0">
             <h2 className="font-display text-2xl font-semibold text-white" data-testid="kks-title">{title(c)} <span className="text-white/45">{c.year}</span></h2>
@@ -154,7 +154,7 @@ function CarDetail({ d, onBack }: { d: Detail; onBack: () => void }) {
         </div>
       </div>
 
-      <div className="grid gap-3 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
         <Section title="Status & admin" testid="kks-admin">
           <Rows rows={[
             ["Published", yes(c.is_published)], ["Hidden from inventory", yes(c.inventory_hidden)], ["Sold status", c.sold_status || "—"], ["Sold detected", dt(c.sold_detected_at)],
@@ -304,7 +304,7 @@ export default function KorautoksApp() {
         <button className="shrink-0 rounded-full bg-white px-5 text-sm font-medium text-black">Search</button>
       </form>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[380px_minmax(0,1fr)]">
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[380px_minmax(0,1fr)]">
         <section className={`${carId ? "hidden lg:block" : ""} min-w-0`}>
           <div className="mb-2 text-[12px] text-muted-foreground">
             {res.loading ? "Searching…" : q.trim().length >= 3 ? `${res.items.length} result${res.items.length === 1 ? "" : "s"}${kindLabel ? ` · matched by ${kindLabel}` : ""}${res.mode === "public" ? " · published cars" : ""}` : "Search by VIN (17 chars), Encar lot number, or Korean plate (spaces/dashes ignored)."}
