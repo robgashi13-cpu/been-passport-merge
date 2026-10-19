@@ -72,6 +72,10 @@ export function AppShell({
   const { user, signOut } = useAuth();
   const [menu, setMenu] = useState(false);
   const initial = (user?.email || "R").charAt(0).toUpperCase();
+  // On narrow screens the tab row scrolls; keep the active tab in view.
+  useEffect(() => {
+    document.querySelector('header nav a[aria-current="page"]')?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [path]);
 
   return (
     <div className={flush ? "" : "hq-ambient min-h-[100dvh]"}>
@@ -99,6 +103,8 @@ export function AppShell({
                 <Link
                   key={t.to}
                   to={t.to}
+                  aria-current={active ? "page" : undefined}
+                  title={t.label}
                   className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors ${
                     active
                       ? "bg-white text-black"

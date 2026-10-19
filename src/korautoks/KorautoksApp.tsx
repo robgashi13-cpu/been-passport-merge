@@ -159,7 +159,7 @@ function CarDetail({ d, onBack }: { d: Detail; onBack: () => void }) {
           <Rows rows={[
             ["Published", yes(c.is_published)], ["Hidden from inventory", yes(c.inventory_hidden)], ["Sold status", c.sold_status || "—"], ["Sold detected", dt(c.sold_detected_at)],
             ["Price locked", yes(c.price_locked)], ["Description locked", yes(c.description_locked)], ["Duplicate of original", yes(c.duplicate_of_original)], ["Verified", dt(c.verified_at)],
-            ["Badges", (c.badges || []).length ? (c.badges as string[]).join(", ") : "—"], ["Original price", x.original_price ? eur(x.original_price) : "—"], ["Discount", x.discount_pct ? `${x.discount_pct}%` : "—"],
+            ["Badges", (c.badges || []).length ? (c.badges as string[]).join(", ") : "—"], ["Price before discount", x.discount_pct && x.original_price ? eur(x.original_price) : "—"], ["Discount", x.discount_pct ? `${x.discount_pct}%` : "—"],
             ["Pricing mode", x.pricing_mode || x.pricing?.formula || "—"], ["Source price (KRW)", x.pricing?.originalKrw ? Number(x.pricing.originalKrw).toLocaleString("de-DE") : x.priceKrw ? String(x.priceKrw) : "—"],
             ["Created", dt(c.created_at)], ["Updated", dt(c.updated_at)],
           ]} />
