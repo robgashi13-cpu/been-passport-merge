@@ -5,11 +5,10 @@ import {
   Globe2,
   Plane,
   CarFront,
-  ArrowUpRight,
   LogOut,
-  Plus,
   Cctv,
   Tv,
+  Search,
 } from "lucide-react";
 import { useAuth } from "./auth";
 import { Logo } from "./Logo";
@@ -25,6 +24,8 @@ const TABS = [
   { to: "/travel", label: "Travel", icon: Plane },
   { to: "/cameras", label: "Cameras", icon: Cctv },
   { to: "/tv", label: "TV", icon: Tv },
+  { to: "/korauto", label: "KORAUTO", icon: CarFront },
+  { to: "/korautoks", label: "korautoks.com", icon: Search },
 ] as const;
 
 /** Client-only gate: login → allowlist → content. Nothing private renders before both pass. */
@@ -92,7 +93,7 @@ export function AppShell({
           <nav className="no-scrollbar -mx-1 flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-1 md:justify-center">
             {TABS.map((t) => {
               const active =
-                t.to === "/" ? path === "/" : path.startsWith(t.to);
+                t.to === "/" ? path === "/" : path === t.to || path.startsWith(t.to + "/");
               const Icon = t.icon;
               return (
                 <Link
@@ -111,23 +112,6 @@ export function AppShell({
                 </Link>
               );
             })}
-            <a
-              href={KORAUTO_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium text-white/60 transition-colors hover:bg-white/[0.06] hover:text-white"
-              title="Open KORAUTO Manager"
-            >
-              <CarFront className="h-4 w-4" />
-              <span className="hidden min-[420px]:inline">KORAUTO</span>
-              <ArrowUpRight className="h-3 w-3 opacity-60" />
-            </a>
-            <span
-              className="hidden shrink-0 items-center gap-1 rounded-full border border-dashed border-white/10 px-3 py-1.5 text-[12px] text-white/35 lg:flex"
-              title="Slot for future projects"
-            >
-              <Plus className="h-3.5 w-3.5" /> More soon
-            </span>
           </nav>
           <TopClock />
           <div className="relative shrink-0">

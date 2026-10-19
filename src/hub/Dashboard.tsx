@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FN_BASE } from "@/lib/fn";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
@@ -29,6 +29,7 @@ import {
   Play,
   Star,
   Link2 as LinkIcon,
+  Search,
 } from "lucide-react";
 import { EditableGrid, type CardDef } from "./EditableGrid";
 import { useFavs, useHistory } from "@/tv/api";
@@ -37,6 +38,7 @@ import { usePoll } from "@/wi/api";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./auth";
 import { KORAUTO_URL } from "./AppShell";
+import { carName, useKorauto, type Car } from "@/korauto/feed";
 import { ago, fmtDate, fmtTime, greeting, useNow } from "./clock";
 
 /* ---------------------------------------------------------------- primitives */
@@ -45,7 +47,7 @@ type CardProps = {
   className?: string | undefined;
   glow?: string | undefined;
   children: ReactNode;
-  to?: "/world" | "/travel" | "/cameras" | "/" | undefined;
+  to?: "/world" | "/travel" | "/cameras" | "/" | "/korauto" | "/korautoks" | "/tv" | undefined;
   hash?: string | undefined;
   href?: string | undefined;
   delay?: number | undefined;
@@ -235,73 +237,6 @@ function HeroCard() {
 
 /* ---------------------------------------------------------------- KORAUTO */
 
-type Car = {
-  id: string;
-  make?: string;
-  model?: string;
-  year?: number;
-  image_url?: string | null;
-  created_at?: string;
-  updated_at?: string;
-  plate_number?: string | null;
-  sale_status?: string | null;
-  tracking_eta?: string | null;
-  tracking_status_label?: string | null;
-  status?: string | null;
-};
-type Feed = {
-  configured: boolean;
-  generatedAt?: string;
-  todayStart?: string;
-  addedToday?: Car[];
-  latest?: Car[];
-  updatedToday?: Car[];
-  pendingApprovals?: Car[];
-  arrivingThisWeek?: Car[];
-  inspections?: Car[];
-  openComplaints?: { id: string; status?: string }[];
-  pendingWebsiteSales?: number;
-  error?: string;
-  stale?: boolean;
-};
-
-function useKorauto() {
-  const { token } = useAuth();
-  const [feed, setFeed] = useState<Feed | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    if (!token) return;
-    let alive = true;
-    setLoading(true);
-    fetch(`${FN_BASE}/hq-korauto${tick ? "?force=1" : ""}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) =>
-        r.ok ? r.json() : Promise.reject(new Error(String(r.status))),
-      )
-      .then((j) => alive && setFeed(j))
-      .catch(
-        (e) =>
-          alive &&
-          setFeed(
-            (f) => f ?? { configured: true, error: String(e.message || e) },
-          ),
-      )
-      .finally(() => alive && setLoading(false));
-    return () => {
-      alive = false;
-    };
-  }, [token, tick]);
-  useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 5 * 60e3);
-    return () => clearInterval(id);
-  }, []);
-  return { feed, loading, refresh: () => setTick((t) => t + 1) };
-}
-
-const carName = (c: Car) =>
-  [c.make, c.model].filter(Boolean).join(" ") || "Car";
 
 function KorautoCard() {
   const { feed, loading, refresh } = useKorauto();
@@ -339,7 +274,7 @@ function KorautoCard() {
 
   return (
     <Card
-      href={KORAUTO_URL}
+      to="/korauto"
       className="col-span-2 row-span-2"
       glow="hsl(41 90% 60% / 0.14)"
       delay={60}
@@ -364,13 +299,13 @@ function KorautoCard() {
               Your car business, one tap away
             </h3>
             <p className="mt-2 max-w-md text-sm text-muted-foreground">
-              Open KORAUTO Manager for today’s cars, deals and payments. The
-              live “what’s new” feed turns on once a read-only KORAUTO login is
-              added in Lovable Secrets.
+              Stock, shipping and activity from KORAUTO Manager, read-only.
+              Connect it once by adding the read-only KORAUTO login in
+              Lovable Secrets.
             </p>
           </div>
           <div className="mt-4 inline-flex w-fit items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-black">
-            Open korautomanager.biz <ArrowUpRight className="h-4 w-4" />
+            Connect KORAUTO <ArrowUpRight className="h-4 w-4" />
           </div>
         </div>
       ) : (
@@ -467,8 +402,7 @@ function KorautoCard() {
             )}
             {feed?.error && !latest.length && (
               <li className="rounded-xl border border-red-400/15 bg-red-400/[0.05] p-3 text-xs text-red-200">
-                Couldn’t read KORAUTO right now ({feed.error}). Tap to open the
-                manager.
+                Couldn’t read KORAUTO right now ({feed.error}). Tap for details.
               </li>
             )}
             {!feed &&
@@ -970,6 +904,40 @@ function TvCard() {
   );
 }
 
+/* ---------------------------------------------------------------- korautoks.com lookup */
+
+function KorautoksCard() {
+  const nav = useNavigate();
+  const [q, setQ] = useState("");
+  return (
+    <div className="hq-card hq-rise flex h-full flex-col p-4 sm:p-5" data-testid="kks-card">
+      <Link to="/korautoks" className="block">
+        <CardHead icon={<Search className="h-4 w-4" />} label="korautoks.com" />
+      </Link>
+      <div className="mt-auto">
+        <div className="font-display text-lg font-semibold leading-tight text-white">Find a car</div>
+        <form
+          className="mt-2 flex gap-1.5"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const v = q.trim();
+            nav(v ? `/korautoks?q=${encodeURIComponent(v)}` : "/korautoks");
+          }}
+        >
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="VIN, lot or plate"
+            aria-label="Search korautoks.com"
+            className="min-w-0 flex-1 rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-[13px] text-white placeholder:text-white/35 focus:outline-none"
+          />
+          <button className="shrink-0 rounded-full bg-white px-3 text-[12px] font-medium text-black" aria-label="Search">Go</button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 /* ---------------------------------------------------------------- page */
 
 export function Dashboard() {
@@ -984,6 +952,7 @@ export function Dashboard() {
     { id: "passport", label: "Passport", icon: <BookMarked className="h-4 w-4" />, size: "S", render: () => <PassportCard {...travel} /> },
     { id: "world", label: "World News", icon: <Globe2 className="h-4 w-4" />, size: "S", render: () => <WorldTileCard /> },
     { id: "cameras", label: "Cameras", icon: <Cctv className="h-4 w-4" />, size: "S", render: () => <CamerasCard /> },
+    { id: "korautoks", label: "korautoks.com search", icon: <Search className="h-4 w-4" />, size: "S", render: () => <KorautoksCard /> },
     { id: "tv", label: "TV favorites", icon: <Tv className="h-4 w-4" />, size: "S", render: () => <TvCard /> },
     { id: "links", label: "Quick links", icon: <LinkIcon className="h-4 w-4" />, size: "S", render: () => <LinksCard /> },
     { id: "slot", label: "Next project slot", icon: <Plus className="h-4 w-4" />, size: "S", render: () => <FutureSlot delay={420} /> },

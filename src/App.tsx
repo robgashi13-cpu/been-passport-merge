@@ -12,9 +12,11 @@ const WorldApp = lazy(() => import("@/wi/App"));
 const TravelApp = lazy(() => import("@/travel/TravelApp"));
 const CamerasApp = lazy(() => import("@/cameras/CamerasApp"));
 const TvApp = lazy(() => import("@/tv/TvApp"));
+const KorautoPage = lazy(() => import("@/korauto/KorautoPage"));
+const KorautoksApp = lazy(() => import("@/korautoks/KorautoksApp"));
 const queryClient = new QueryClient();
 
-const TITLES: Record<string, string> = { "/": "Dashboard", "/world": "World News", "/travel": "Travel", "/cameras": "Cameras", "/tv": "TV" };
+const TITLES: Record<string, string> = { "/": "Dashboard", "/world": "World News", "/travel": "Travel", "/cameras": "Cameras", "/tv": "TV", "/korauto": "KORAUTO", "/korautoks": "korautoks.com" };
 function TitleSync() {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -117,6 +119,8 @@ export default function App() {
                   </Protected>
                 }
               />
+              <Route path="/korauto" element={<Protected><AppShell><Suspense fallback={<Splash label="Loading KORAUTO" />}><KorautoPage /></Suspense></AppShell></Protected>} />
+              <Route path="/korautoks" element={<Protected><AppShell><Suspense fallback={<Splash label="Loading korautoks.com" />}><KorautoksApp /></Suspense></AppShell></Protected>} />
               {/* old WanderPass route */}
               <Route path="/calendar" element={<Protected><AppShell><Suspense fallback={<Splash label="Loading Travel" />}><TravelApp /></Suspense></AppShell></Protected>} />
               <Route path="/reset" element={<ResetPassword />} />
