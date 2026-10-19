@@ -17,17 +17,33 @@ export function Player({ item, startAt = 0, onClose }: { item: PlayItem; startAt
   const { record } = useHistory();
   const lastSave = useRef(0);
 
+  // VOD: browsers (esp. iPhone) can't decode MKV/AVI etc. → ask the provider for an HLS remux.
+  // Whatever we try first, fall back to the other format once before showing an error.
+  const ext = (item.ext || "mp4").toLowerCase();
+  const fileFirst = item.kind === "live" || ["mp4", "m4v", "mov"].includes(ext);
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => { setAttempt(0); }, [item.kind, item.id]);
+
   useEffect(() => {
     const v = video.current;
     if (!v) return;
     let hls: any = null;
     let alive = true;
+    let failed = false;
     setState("loading");
+    const useHls = item.kind !== "live" && (attempt === 0 ? !fileFirst : fileFirst);
+    const fail = (msg: string) => {
+      if (!alive || failed) return;
+      failed = true;
+      if (item.kind !== "live" && attempt === 0) { setAttempt(1); return; }
+      setErr(msg);
+      setState("error");
+    };
     const hlsModule = v.canPlayType("application/vnd.apple.mpegurl") ? null : import("hls.js");
     let seek: (() => void) | null = null;
     (async () => {
       try {
-        const { url, type } = await playUrl(item, token);
+        const { url, type } = await playUrl(item, token, false, useHls);
         if (!alive) return;
         // Safari / iOS: native AVPlayer (AirPlay, PiP, system controls). Everyone else: hls.js.
         const ua = navigator.userAgent;
@@ -39,7 +55,6 @@ export function Player({ item, startAt = 0, onClose }: { item: PlayItem; startAt
           if (!Hls.isSupported()) throw new Error("This browser can't play HLS");
           hls = new Hls({
             lowLatencyMode: item.kind === "live",
-            // instant start: tiny initial buffer, auto quality from measured bandwidth, fast retries
             startLevel: -1,
             capLevelToPlayerSize: true,
             backBufferLength: 10,
@@ -61,8 +76,7 @@ export function Player({ item, startAt = 0, onClose }: { item: PlayItem; startAt
             if (!d.fatal) return;
             if (d.type === Hls.ErrorTypes.MEDIA_ERROR) { hls.recoverMediaError(); return; }
             const code = d.response?.code;
-            setErr(code === 502 || code === 403 ? "The provider refused the stream relay (it blocks cloud servers). The home media proxy needs to be enabled." : `Stream error: ${d.details}`);
-            setState("error");
+            fail(code === 502 || code === 403 ? "The provider refused the stream relay (it blocks cloud servers). The home media proxy needs to be enabled." : `Stream error: ${d.details}`);
           });
           hls.loadSource(url);
           hls.attachMedia(v);
@@ -72,16 +86,13 @@ export function Player({ item, startAt = 0, onClose }: { item: PlayItem; startAt
         if (startAt > 5) { seek = () => { v.currentTime = startAt; }; v.addEventListener("loadedmetadata", seek, { once: true }); }
         await v.play().catch(() => {});
       } catch (e: any) {
-        if (!alive) return;
-        setErr(String(e?.message || e));
-        setState("error");
+        fail(String(e?.message || e));
       }
     })();
     const onPlaying = () => setState("playing");
     const onError = () => {
       if (hls) return;
-      setErr(item.kind === "live" ? "This channel can't be played right now." : "This file can't be played in the browser (format or relay).");
-      setState("error");
+      fail(item.kind === "live" ? "This channel can't be played right now." : "This title can't be played on this device right now. Try again in a moment.");
     };
     v.addEventListener("playing", onPlaying);
     v.addEventListener("error", onError);
@@ -95,7 +106,7 @@ export function Player({ item, startAt = 0, onClose }: { item: PlayItem; startAt
       v.load();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item.kind, item.id, token]);
+  }, [item.kind, item.id, token, attempt]);
 
   // continue-watching progress (and "recently watched" for live)
   useEffect(() => {
