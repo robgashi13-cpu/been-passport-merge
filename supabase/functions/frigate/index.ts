@@ -73,13 +73,25 @@ const json = (v, status = 200) => Response.json(v, { status, headers: { 'cache-c
 async function passthrough(c, path, type, timeout = 15000) {
   const r = await fget(c, path, { timeout });
   if (!r.ok) return new Response(`upstream ${r.status}`, { status: r.status === 404 ? 404 : 502 });
-  return new Response(r.body, { headers: { 'content-type': r.headers.get('content-type') || type, 'cache-control': 'private, max-age=5' } });
+  return new Response(r.body, { headers: { 'content-type': r.headers.get('content-type') || type, 'cache-control': type.startsWith('image/') && path.includes('latest.jpg') ? 'no-store' : 'private, max-age=5' } });
 }
 
+let statusCache = null;
+let statusPending = null;
 async function status(c) {
+  if (statusCache && statusCache.exp > Date.now()) return json(statusCache.data);
+  if (statusPending) return json(await statusPending);
+  statusPending = readStatus(c);
+  try {
+    const data = await statusPending;
+    if (data.reachable) statusCache = { data, exp: Date.now() + 5000 };
+    return json(data);
+  } finally { statusPending = null; }
+}
+async function readStatus(c) {
   const t0 = Date.now();
   const [cfgR, statsR, verR] = await Promise.all([fget(c, '/api/config'), fget(c, '/api/stats'), fget(c, '/api/version')]);
-  if (!cfgR.ok) return json({ configured: true, reachable: false, error: `config ${cfgR.status}` });
+  if (!cfgR.ok) return { configured: true, reachable: false, error: `config ${cfgR.status}` };
   const conf = await cfgR.json();
   const stats = statsR.ok ? await statsR.json() : {};
   const version = verR.ok ? (await verR.text()).trim() : null;
@@ -101,7 +113,7 @@ async function status(c) {
       ptz: !!cc.onvif?.host,
     };
   });
-  return json({
+  return {
     configured: true,
     reachable: true,
     version,
@@ -110,7 +122,7 @@ async function status(c) {
     latencyMs: Date.now() - t0,
     cameras: cams,
     updated: new Date().toISOString(),
-  });
+  };
 }
 
 async function events(c, q) {

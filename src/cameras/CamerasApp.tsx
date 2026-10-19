@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Car, Cctv, ChevronLeft, ChevronRight, Maximize2, PersonStanding, Play, RefreshCw, ScanFace, ShieldCheck, Video, WifiOff, X,
+  Download, Car, Cctv, ChevronLeft, ChevronRight, Maximize2, PersonStanding, Play, RefreshCw, ScanFace, ShieldCheck, Video, WifiOff, X,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { deliverFile, fileName } from "@/lib/download";
 import { useAuth } from "@/hub/auth";
 import { ago, Cam, camLabel, FEvent, fjson, fmtWhen, Status, useAuthedBlob, useFrigate } from "./frigate";
 
@@ -28,7 +30,7 @@ function Dot({ on }: { on: boolean }) {
 /* ---------- live tile ---------- */
 function CamTile({ cam, onOpen }: { cam: Cam; onOpen: () => void }) {
   const [ref, inView] = useInView<HTMLButtonElement>();
-  const { url, err, at } = useAuthedBlob(cam.enabled ? `snapshot/${cam.name}?h=480` : null, 3000, inView);
+  const { url, err, at } = useAuthedBlob(cam.enabled ? `snapshot/${cam.name}?h=360` : null, 1000, inView);
   return (
     <button ref={ref} onClick={onOpen} className="hq-card group relative block overflow-hidden p-0 text-left" aria-label={`Open ${camLabel(cam.name)}`}>
       <div className="relative aspect-video w-full bg-black/60">
@@ -44,7 +46,7 @@ function CamTile({ cam, onOpen }: { cam: Cam; onOpen: () => void }) {
             <Dot on={cam.online} /> {camLabel(cam.name)}
           </span>
           <span className="rounded bg-black/50 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-white/80">
-            {cam.online ? "Live" : "Offline"}
+            {cam.online ? "Preview" : "Offline"}
           </span>
         </div>
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/70 to-transparent px-3 py-2 text-[11px] text-white/75">
@@ -60,7 +62,7 @@ function CamTile({ cam, onOpen }: { cam: Cam; onOpen: () => void }) {
 /* ---------- fullscreen viewer ---------- */
 function Fullscreen({ cams, index, setIndex, onClose }: { cams: Cam[]; index: number; setIndex: (i: number) => void; onClose: () => void }) {
   const cam = cams[index];
-  const { url, err, at } = useAuthedBlob(`snapshot/${cam.name}?h=1080`, 1000, true);
+  const { url, err, at } = useAuthedBlob(`snapshot/${cam.name}?h=720`, 750, true);
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
@@ -102,7 +104,7 @@ function Fullscreen({ cams, index, setIndex, onClose }: { cams: Cam[]; index: nu
           </>
         )}
         <span className="hq-num absolute bottom-3 right-3 rounded bg-black/60 px-2 py-1 text-[11px] text-white/80">
-          ~1s refresh · {at ? new Date(at).toLocaleTimeString("en-GB", { timeZone: "Europe/Belgrade" }) : "—"} CEST
+          Live snapshots · {at ? new Date(at).toLocaleTimeString("en-GB", { timeZone: "Europe/Belgrade" }) : "—"} CEST
         </span>
       </div>
     </div>
@@ -125,6 +127,8 @@ function EventPlayer({ ev, onClose }: { ev: FEvent; onClose: () => void }) {
   const [mode, setMode] = useState<"clip" | "snapshot">(ev.hasClip && ev.end ? "clip" : "snapshot");
   const clip = useAuthedBlob(mode === "clip" ? `event/${ev.id}/clip` : null);
   const snap = useAuthedBlob(mode === "snapshot" ? `event/${ev.id}/snapshot` : null);
+  const prepared = mode === "clip" ? clip : snap;
+  const [saveError, setSaveError] = useState("");
   useEffect(() => {
     const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", k);
@@ -133,7 +137,7 @@ function EventPlayer({ ev, onClose }: { ev: FEvent; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/85 p-3 backdrop-blur" onClick={onClose} role="dialog" aria-modal="true">
       <div className="hq-card w-full max-w-4xl overflow-hidden p-0" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between gap-2 px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-sm font-medium capitalize">
               <LabelIcon label={ev.label} /> {ev.label}{ev.subLabel ? ` · ${ev.subLabel}` : ""}
@@ -142,6 +146,8 @@ function EventPlayer({ ev, onClose }: { ev: FEvent; onClose: () => void }) {
             <div className="text-xs text-muted-foreground">{camLabel(ev.camera)} · {fmtWhen(ev.start)} CEST{ev.end ? ` · ${Math.max(1, Math.round(ev.end - ev.start))}s` : " · in progress"}</div>
           </div>
           <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" title="Download recording" aria-label="Download recording" disabled={!prepared.blob}
+              onClick={() => { if (prepared.blob) void deliverFile(prepared.blob, fileName(`${ev.camera}-${ev.id}`, mode === "clip" ? "mp4" : "jpg")).catch(() => setSaveError("Couldn't save this file. Try again.")); }}><Download /></Button>
             {ev.hasClip && ev.end && (
               <button onClick={() => setMode("clip")} className={`rounded-lg px-2.5 py-1 text-xs ${mode === "clip" ? "bg-white/15" : "hover:bg-white/10"}`}>Clip</button>
             )}
@@ -151,6 +157,7 @@ function EventPlayer({ ev, onClose }: { ev: FEvent; onClose: () => void }) {
             <button onClick={onClose} className="rounded-lg p-2 hover:bg-white/10" aria-label="Close"><X className="h-4 w-4" /></button>
           </div>
         </div>
+        {saveError && <p role="alert" className="px-4 py-2 text-sm text-destructive">{saveError}</p>}
         <div className="flex aspect-video items-center justify-center bg-black">
           {mode === "clip" ? (
             clip.url ? <video src={clip.url} controls autoPlay playsInline className="h-full w-full" /> : <span className="text-sm text-white/60">{clip.err ? "Clip unavailable" : "Loading clip…"}</span>

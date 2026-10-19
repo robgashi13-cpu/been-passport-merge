@@ -32,6 +32,7 @@ import {
   Search,
 } from "lucide-react";
 import { EditableGrid, type CardDef } from "./EditableGrid";
+import { extraWidgets } from "./ExtraWidgets";
 import { useFavs, useHistory } from "@/tv/api";
 import { ago as camAgo, camLabel, type FEvent, type Status as CamStatus, useAuthedBlob, useFrigate } from "@/cameras/frigate";
 import { usePoll } from "@/wi/api";
@@ -310,7 +311,7 @@ function KorautoCard() {
         </div>
       ) : (
         <>
-          <div className="mt-4 grid grid-cols-4 gap-2">
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
             {stats.map((s) => (
               <div
                 key={s.k}
@@ -955,14 +956,14 @@ export function Dashboard() {
     { id: "korautoks", label: "korautoks.com search", icon: <Search className="h-4 w-4" />, size: "S", render: () => <KorautoksCard /> },
     { id: "tv", label: "TV favorites", icon: <Tv className="h-4 w-4" />, size: "S", render: () => <TvCard /> },
     { id: "links", label: "Quick links", icon: <LinkIcon className="h-4 w-4" />, size: "S", render: () => <LinksCard /> },
-    { id: "slot", label: "Next project slot", icon: <Plus className="h-4 w-4" />, size: "S", render: () => <FutureSlot delay={420} /> },
+    ...extraWidgets(travel),
   ];
   return (
     <main className="mx-auto max-w-[1440px] px-3 pb-12 pt-3 sm:px-5 sm:pt-4">
       <EditableGrid
         defs={defs}
         prefKey="dashboard_layout"
-        className="grid grid-flow-row-dense auto-rows-[minmax(168px,auto)] grid-cols-2 gap-3 sm:auto-rows-[190px] sm:gap-4 md:grid-cols-4 lg:auto-rows-[210px]"
+        className="grid grid-flow-row-dense auto-rows-[180px] grid-cols-2 gap-3 sm:auto-rows-[190px] sm:gap-4 md:grid-cols-4 lg:auto-rows-[210px]"
       />
       <p className="mt-6 text-center text-[11px] text-white/25">
         WanderPass · private · data refreshes automatically

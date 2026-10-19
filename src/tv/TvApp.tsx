@@ -4,6 +4,7 @@ import { Clapperboard, Film, Play, Search, Star, Tv, X, Loader2, History } from 
 import { useAuth } from "@/hub/auth";
 import { usePref } from "@/hub/prefs";
 import { Player } from "./Player";
+import { DownloadButton } from "./DownloadButton";
 import {
   cleanName, hhmm, tvGet, useFavs, useHistory, useTv,
   type Cat, type Epg, type Hist, type Live, type PlayItem, type Series, type Status, type Vod,
@@ -190,6 +191,7 @@ function MovieDetail({ m, onPlay, onClose, resumeAt }: { m: Vod; onPlay: (i: Pla
           <p className="mt-3 line-clamp-6 text-sm text-white/70">{info.loading ? "Loading…" : info.data?.plot || "No description."}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <button onClick={() => onPlay(item, resumeAt)} className="flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-black"><Play className="h-4 w-4 fill-black" /> {resumeAt ? "Resume" : "Play"}</button>
+            <DownloadButton item={item} />
             {resumeAt ? <button onClick={() => onPlay(item, 0)} className="rounded-full border border-white/15 px-4 py-2 text-sm">From start</button> : null}
             <button onClick={() => toggle({ kind: "movie", id: m.id, name: cleanName(m.name), logo: m.logo, ext: m.ext })} className="flex items-center gap-1.5 rounded-full border border-white/15 px-4 py-2 text-sm"><Star className={`h-4 w-4 ${fav ? "fill-amber-400 text-amber-400" : ""}`} /> {fav ? "Saved" : "Save"}</button>
           </div>

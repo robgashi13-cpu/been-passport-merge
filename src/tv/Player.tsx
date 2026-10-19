@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Airplay, PictureInPicture2, Maximize, X, Loader2, AlertTriangle } from "lucide-react";
+import { DownloadButton } from "./DownloadButton";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hub/auth";
 import { playUrl, useHistory, type PlayItem } from "./api";
 
@@ -21,6 +23,8 @@ export function Player({ item, startAt = 0, onClose }: { item: PlayItem; startAt
     let hls: any = null;
     let alive = true;
     setState("loading");
+    const hlsModule = v.canPlayType("application/vnd.apple.mpegurl") ? null : import("hls.js");
+    let seek: (() => void) | null = null;
     (async () => {
       try {
         const { url, type } = await playUrl(item, token);
@@ -30,9 +34,10 @@ export function Player({ item, startAt = 0, onClose }: { item: PlayItem; startAt
         const appleNative = /iPad|iPhone|iPod/.test(ua) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(ua)) || (/Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|Android|Firefox/.test(ua));
         const native = appleNative && !!v.canPlayType("application/vnd.apple.mpegurl");
         if (type === "hls" && !native) {
-          const { default: Hls } = await import("hls.js");
+          const { default: Hls } = await (hlsModule ?? import("hls.js"));
+          if (!alive) return;
           if (!Hls.isSupported()) throw new Error("This browser can't play HLS");
-          hls = new Hls({ lowLatencyMode: false, backBufferLength: 30, maxBufferLength: 30 });
+          hls = new Hls({ lowLatencyMode: item.kind === "live", backBufferLength: 15, maxBufferLength: 10, maxMaxBufferLength: 30, startLevel: 0 });
           hls.on(Hls.Events.ERROR, (_: unknown, d: any) => {
             if (!d.fatal) return;
             if (d.type === Hls.ErrorTypes.MEDIA_ERROR) { hls.recoverMediaError(); return; }
@@ -45,7 +50,7 @@ export function Player({ item, startAt = 0, onClose }: { item: PlayItem; startAt
         } else {
           v.src = url;
         }
-        if (startAt > 5) v.addEventListener("loadedmetadata", () => { v.currentTime = startAt; }, { once: true });
+        if (startAt > 5) { seek = () => { v.currentTime = startAt; }; v.addEventListener("loadedmetadata", seek, { once: true }); }
         await v.play().catch(() => {});
       } catch (e: any) {
         if (!alive) return;
@@ -65,6 +70,7 @@ export function Player({ item, startAt = 0, onClose }: { item: PlayItem; startAt
       alive = false;
       v.removeEventListener("playing", onPlaying);
       v.removeEventListener("error", onError);
+      if (seek) v.removeEventListener("loadedmetadata", seek);
       if (hls) hls.destroy();
       v.removeAttribute("src");
       v.load();
@@ -112,12 +118,13 @@ export function Player({ item, startAt = 0, onClose }: { item: PlayItem; startAt
 
   return (
     <div className="fixed inset-0 z-[90] flex flex-col bg-black" role="dialog" aria-modal="true" aria-label={`Playing ${item.name}`}>
-      <div className="flex items-center gap-3 px-3 py-2 text-white" style={{ paddingTop: "max(env(safe-area-inset-top), 0.5rem)" }}>
+      <div className="flex flex-wrap items-center gap-2 px-3 py-2 text-foreground" style={{ paddingTop: "max(env(safe-area-inset-top), 0.5rem)" }}>
         {item.logo && <img src={item.logo} alt="" className="h-8 w-8 rounded-md bg-white/5 object-contain" referrerPolicy="no-referrer" />}
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold">{item.name}</div>
           {item.sub && <div className="truncate text-xs text-white/60">{item.sub}</div>}
         </div>
+        {item.kind !== "live" && <DownloadButton item={item} />}
         {hasAirplay && (
           <button onClick={airplay} className="rounded-lg p-2 hover:bg-white/10" aria-label="AirPlay"><Airplay className="h-5 w-5" /></button>
         )}
@@ -125,11 +132,12 @@ export function Player({ item, startAt = 0, onClose }: { item: PlayItem; startAt
         <button onClick={fullscreen} className="rounded-lg p-2 hover:bg-white/10" aria-label="Fullscreen"><Maximize className="h-5 w-5" /></button>
         <button onClick={onClose} className="rounded-lg p-2 hover:bg-white/10" aria-label="Close player"><X className="h-5 w-5" /></button>
       </div>
-      <div className="relative flex flex-1 items-center justify-center">
+      <div className="relative flex min-h-0 flex-1 items-center justify-center">
         <video
           ref={video}
           className="h-full max-h-full w-full bg-black object-contain"
           controls
+          preload="auto"
           playsInline
           autoPlay
           x-webkit-airplay="allow"
