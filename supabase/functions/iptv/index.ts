@@ -183,6 +183,11 @@ async function routes(req, c, path, q) {
     if (kind === 'movie' || kind === 'series') {
       const ext = (q.get('ext') || 'mp4').toLowerCase();
       if (!EXT_RE.test(ext)) return json({ error: 'bad ext' }, 400);
+      if (q.get('hls') === '1' && !downloading) {
+        // Provider-side HLS remux: plays MKV/AVI etc. on phones that can't decode the raw container.
+        const tok = await seal({ k: 'pl', u: `${c.url}/${kind}/${c.user}/${c.pass}/${id}.m3u8`, e });
+        return json({ type: 'hls', base: c.mediaBase, path: `p/${tok}/index.m3u8` }, 200, 'no-store');
+      }
       const filename = downloading ? `${(q.get('download') || 'movie').replace(/[^a-zA-Z0-9 _-]/g, '').slice(0, 100) || 'movie'}.${ext}` : null;
       const tok = await seal({ k: 'f', u: `${c.url}/${kind}/${c.user}/${c.pass}/${id}.${ext}`, e, ...(filename ? { download: filename } : {}) });
       return json({ type: 'file', ext, base: c.mediaBase, path: `f/${tok}/video.${ext}` }, 200, 'no-store');
