@@ -177,7 +177,7 @@ function HeroCard() {
   const w = useWeather();
   const WIcon = weatherIcon(w?.code);
   const name = (user?.user_metadata as any)?.name?.split(" ")[0] || "Robert";
-  const shanghai = fmtTime(now, "Asia/Shanghai");
+  const seoul = fmtTime(now, "Asia/Seoul");
   return (
     <Card
       className="col-span-2 justify-between"
@@ -222,7 +222,8 @@ function HeroCard() {
         </div>
         <div className="text-right text-[11px] leading-5 text-muted-foreground">
           <div>
-            Shanghai <span className="hq-num text-white/80">{shanghai}</span>
+            Seoul{" "}
+            <span className="hq-num text-white/80">{seoul}</span>
           </div>
           <div>
             New York{" "}
