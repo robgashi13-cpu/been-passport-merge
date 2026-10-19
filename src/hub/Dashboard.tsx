@@ -222,7 +222,8 @@ function HeroCard() {
         </div>
         <div className="text-right text-[11px] leading-5 text-muted-foreground">
           <div>
-            Shanghai <span className="hq-num text-white/80">{shanghai}</span>
+            Seoul{" "}
+            <span className="hq-num text-white/80">{seoul}</span>
           </div>
           <div>
             New York{" "}
