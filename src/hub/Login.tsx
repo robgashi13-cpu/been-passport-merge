@@ -19,9 +19,10 @@ export function LoginScreen() {
     try {
       const r: any = await lovable.auth.signInWithOAuth("apple", { redirect_uri: window.location.origin });
       if (r?.error) throw r.error;
+      if (r?.redirected) return; // keep spinner while the browser leaves
+      setBusy(false);
     } catch (err: any) {
       setMsg({ kind: "err", text: err?.message || "Apple sign-in failed" });
-    } finally {
       setBusy(false);
     }
   }
