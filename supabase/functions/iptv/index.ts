@@ -86,6 +86,11 @@ const arr = (v) => (Array.isArray(v) ? v : []);
 const img = (u) => (typeof u === 'string' && /^https?:\/\//.test(u) ? u.replace(/^http:\/\//, 'https://') : null); // https upgrade avoids mixed content
 const decode = (s) => { try { return new TextDecoder().decode(Uint8Array.from(atob(s || ''), (ch) => ch.charCodeAt(0))); } catch { return s || ''; } };
 
+// Albania / USA / UK categories first, then alphabetical.
+const CAT_RANK = [/\b(albania|shqip|albanian|kosov|xk)\b/i, /\b(usa|united states|us[:\s|])/i, /\b(uk|united kingdom|britain|british)\b/i];
+const catRank = (n) => { const i = CAT_RANK.findIndex((r) => r.test(n)); return i === -1 ? 9 : i; };
+const sortCats = (list) => [...list].sort((a, b) => catRank(a.name) - catRank(b.name) || String(a.name).localeCompare(String(b.name)));
+
 const slimLive = (x) => ({ id: x.stream_id, name: x.name, logo: img(x.stream_icon), cat: String(x.category_id ?? ''), epg: x.epg_channel_id || null, archive: !!x.tv_archive });
 const slimVod = (x) => ({ id: x.stream_id, name: x.name, logo: img(x.stream_icon), cat: String(x.category_id ?? ''), rating: Number(x.rating) || null, ext: x.container_extension || 'mp4', added: Number(x.added) || null });
 const slimSeries = (x) => ({ id: x.series_id, name: x.name, logo: img(x.cover), cat: String(x.category_id ?? ''), rating: Number(x.rating) || null, year: x.releaseDate || x.release_date || null, plot: x.plot || null });
@@ -97,12 +102,12 @@ async function routes(req, c, path, q) {
     return json({ configured: true, ok: u.auth === 1, mediaProxy: c.mediaBase ? 'home' : 'cloud', status: u.status, exp: Number(u.exp_date) || null, maxConnections: Number(u.max_connections) || null, activeCons: Number(u.active_cons) || 0 }, 200, 'no-store');
   }
   const cats = { 'live/categories': 'get_live_categories', 'vod/categories': 'get_vod_categories', 'series/categories': 'get_series_categories' };
-  if (cats[path]) return json(arr(await api(c, cats[path], {}, 30 * 60e3)).map((x) => ({ id: String(x.category_id), name: x.category_name })));
+  if (cats[path]) return json(sortCats(arr(await api(c, cats[path], {}, 30 * 60e3)).map((x) => ({ id: String(x.category_id), name: x.category_name }))), 200, 'private, max-age=600');
   const cat = q.get('category') || '';
   if (cat && !ID_RE.test(cat)) return json({ error: 'bad category' }, 400);
-  if (path === 'live/streams') return json(arr(await api(c, 'get_live_streams', cat ? { category_id: cat } : {})).map(slimLive).slice(0, 3000));
-  if (path === 'vod/streams') return json(arr(await api(c, 'get_vod_streams', cat ? { category_id: cat } : {})).map(slimVod).slice(0, 3000));
-  if (path === 'series/list') return json(arr(await api(c, 'get_series', cat ? { category_id: cat } : {})).map(slimSeries).slice(0, 3000));
+  if (path === 'live/streams') return json(arr(await api(c, 'get_live_streams', cat ? { category_id: cat } : {}, 30 * 60e3)).map(slimLive).slice(0, 3000), 200, 'private, max-age=300');
+  if (path === 'vod/streams') return json(arr(await api(c, 'get_vod_streams', cat ? { category_id: cat } : {}, 30 * 60e3)).map(slimVod).slice(0, 3000), 200, 'private, max-age=300');
+  if (path === 'series/list') return json(arr(await api(c, 'get_series', cat ? { category_id: cat } : {}, 30 * 60e3)).map(slimSeries).slice(0, 3000), 200, 'private, max-age=300');
   if (path === 'series/info') {
     const id = q.get('id') || '';
     if (!ID_RE.test(id)) return json({ error: 'bad id' }, 400);

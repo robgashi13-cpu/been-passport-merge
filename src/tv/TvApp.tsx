@@ -13,6 +13,11 @@ import {
 type Tab = "live" | "movies" | "series";
 type Playing = { item: PlayItem; startAt?: number } | null;
 
+// Albania / USA / UK categories first, then alphabetical (mirrors the server sort).
+const CAT_RANK = [/\b(albania|shqip|albanian|kosov|xk)\b/i, /\b(usa|united states|us[:\s|])/i, /\b(uk|united kingdom|britain|british)\b/i];
+const catRank = (n: string) => { const i = CAT_RANK.findIndex((r) => r.test(n)); return i === -1 ? 9 : i; };
+const sortCats = (list: Cat[]) => [...list].sort((a, b) => catRank(a.name) - catRank(b.name) || a.name.localeCompare(b.name));
+
 function useDebounced<T>(v: T, ms = 350) {
   const [d, setD] = useState(v);
   useEffect(() => { const t = setTimeout(() => setD(v), ms); return () => clearTimeout(t); }, [v, ms]);
@@ -65,7 +70,8 @@ function CatPicker({ cats, value, onChange }: { cats: Cat[]; value: string; onCh
 /* ------------------------------------------------------------------ live */
 function LiveSection({ onPlay }: { onPlay: (i: PlayItem) => void }) {
   const { token } = useAuth();
-  const cats = useTv<Cat[]>("live/categories", 30 * 60e3);
+  const rawCats = useTv<Cat[]>("live/categories", 30 * 60e3);
+  const cats = useMemo(() => (rawCats.data ? { ...rawCats, data: sortCats(rawCats.data) } : rawCats), [rawCats]);
   const [cat, setCat] = usePref<string>("tv_live_cat", "");
   const [q, setQ] = useState("");
   const dq = useDebounced(q.trim());
@@ -252,7 +258,8 @@ function SeriesDetail({ s, onPlay, onClose }: { s: Series; onPlay: (i: PlayItem,
 }
 
 function CatalogSection({ kind, onPlay }: { kind: "vod" | "series"; onPlay: (i: PlayItem, at?: number) => void }) {
-  const cats = useTv<Cat[]>(`${kind}/categories`, 30 * 60e3);
+  const rawCats = useTv<Cat[]>(`${kind}/categories`, 30 * 60e3);
+  const cats = useMemo(() => (rawCats.data ? { ...rawCats, data: sortCats(rawCats.data) } : rawCats), [rawCats]);
   const [cat, setCat] = usePref<string>(`tv_${kind}_cat`, "");
   const [q, setQ] = useState("");
   const dq = useDebounced(q.trim());
@@ -295,6 +302,12 @@ function Row({ title, icon, children }: { title: string; icon: ReactNode; childr
 
 export default function TvApp() {
   const status = useTv<Status>("status", 60e3);
+  const { token } = useAuth();
+  // Warm the category caches as soon as TV opens so every tab is instant.
+  useEffect(() => {
+    if (!token) return;
+    for (const p of ["live/categories", "vod/categories", "series/categories"]) tvGet(p, token, 30 * 60e3).catch(() => {});
+  }, [token]);
   const [params, setParams] = useSearchParams();
   const [tab, setTab] = usePref<Tab>("tv_tab", "live");
   const [playing, setPlaying] = useState<Playing>(null);
