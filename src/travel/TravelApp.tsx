@@ -30,10 +30,6 @@ import { UserProvider, useUser } from "@/travel/contexts/UserContext";
 import { Button } from "@/travel/components/ui/button";
 import { AddTripModal } from "@/travel/components/AddTripModal";
 import { CountryDetailsModal } from "@/travel/components/CountryDetailsModal";
-import {
-  AchievementCelebration,
-  useAchievementTracker,
-} from "@/travel/components/AchievementCelebration";
 import { AIAssistant } from "@/travel/components/AIAssistant";
 import { AIRecommendations } from "@/travel/components/AIRecommendations";
 import FlightHistoryPanel from "@/travel/components/FlightHistoryPanel";
@@ -148,8 +144,6 @@ function TravelInner() {
     flightHistory,
   } = useTravelData();
   const stats = getStats();
-  const { newAchievement, clearAchievement, duration } =
-    useAchievementTracker(visitedCountries);
 
   const go = (id: Section) => {
     setActive(id);
@@ -338,11 +332,6 @@ function TravelInner() {
       <CountryDetailsModal
         countryCode={selectedCountryCode}
         onClose={() => setSelectedCountryCode(null)}
-      />
-      <AchievementCelebration
-        achievement={newAchievement}
-        onClose={clearAchievement}
-        duration={duration}
       />
     </div>
   );
