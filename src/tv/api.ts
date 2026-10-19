@@ -75,7 +75,8 @@ export async function playUrl(item: PlayItem, token: string | null, download = f
   const q = new URLSearchParams({ kind: item.kind, id: String(item.id) });
   if (item.ext) q.set("ext", item.ext);
   if (download) q.set("download", item.name);
-  const d = await tvGet<{ path?: string; base?: string; type: "hls" | "file"; error?: string }>(`play?${q}`, token, download ? 30000 : 60000);
+  // Cache play URLs for 5 min so reopening a channel starts instantly.
+  const d = await tvGet<{ path?: string; base?: string; type: "hls" | "file"; error?: string }>(`play?${q}`, token, download ? 30000 : 5 * 60e3);
   if (!d.path) throw new Error(d.error || "Playback unavailable");
   return { url: `${d.base || TV}/${d.path}`, type: d.type, home: !!d.base };
 }

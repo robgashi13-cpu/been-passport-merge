@@ -37,7 +37,26 @@ export function Player({ item, startAt = 0, onClose }: { item: PlayItem; startAt
           const { default: Hls } = await (hlsModule ?? import("hls.js"));
           if (!alive) return;
           if (!Hls.isSupported()) throw new Error("This browser can't play HLS");
-          hls = new Hls({ lowLatencyMode: item.kind === "live", backBufferLength: 15, maxBufferLength: 10, maxMaxBufferLength: 30, startLevel: 0 });
+          hls = new Hls({
+            lowLatencyMode: item.kind === "live",
+            // instant start: tiny initial buffer, auto quality from measured bandwidth, fast retries
+            startLevel: -1,
+            capLevelToPlayerSize: true,
+            backBufferLength: 10,
+            maxBufferLength: item.kind === "live" ? 6 : 20,
+            maxMaxBufferLength: 30,
+            maxBufferSize: 20 * 1000 * 1000,
+            manifestLoadingMaxRetry: 4,
+            levelLoadingMaxRetry: 4,
+            fragLoadingMaxRetry: 6,
+            manifestLoadingRetryDelay: 300,
+            levelLoadingRetryDelay: 300,
+            fragLoadingRetryDelay: 300,
+            liveSyncDurationCount: 2,
+            startPosition: item.kind === "live" ? -1 : 0,
+            liveMaxLatencyDurationCount: 6,
+            nudgeMaxRetry: 8,
+          });
           hls.on(Hls.Events.ERROR, (_: unknown, d: any) => {
             if (!d.fatal) return;
             if (d.type === Hls.ErrorTypes.MEDIA_ERROR) { hls.recoverMediaError(); return; }

@@ -200,9 +200,9 @@ async function rewrite(text, base) {
   const e = Date.now() + 3 * 3600e3;
   const lines = text.split(/\r?\n/);
   const isMaster = lines.some((l) => l.startsWith('#EXT-X-STREAM-INF'));
-  const out = [];
-  for (const line of lines) {
-    if (!line) { out.push(line); continue; }
+  // Seal all tokens in parallel — big playlists would otherwise cost one crypto await per line.
+  const out = await Promise.all(lines.map(async (line) => {
+    if (!line) return line;
     if (line.startsWith('#')) {
       // URI="..." attributes (keys, init maps, alternate renditions)
       const m = line.match(/URI="([^"]+)"/);
@@ -210,14 +210,14 @@ async function rewrite(text, base) {
         const abs = new URL(m[1], base).href;
         const isPl = line.startsWith('#EXT-X-MEDIA') || /\.m3u8/i.test(abs);
         const tok = await seal({ k: isPl ? 'pl' : 's', u: abs, e });
-        out.push(line.replace(m[0], `URI="../../${isPl ? 'p' : 's'}/${tok}/${isPl ? 'index.m3u8' : 'k.bin'}"`));
-      } else out.push(line);
-      continue;
+        return line.replace(m[0], `URI="../../${isPl ? 'p' : 's'}/${tok}/${isPl ? 'index.m3u8' : 'k.bin'}"`);
+      }
+      return line;
     }
     const abs = new URL(line.trim(), base).href;
-    if (isMaster || /\.m3u8(\?|$)/i.test(abs)) out.push(`../../p/${await seal({ k: 'pl', u: abs, e })}/index.m3u8`);
-    else out.push(`../../s/${await seal({ k: 's', u: abs, e })}/seg.ts`);
-  }
+    if (isMaster || /\.m3u8(\?|$)/i.test(abs)) return `../../p/${await seal({ k: 'pl', u: abs, e })}/index.m3u8`;
+    return `../../s/${await seal({ k: 's', u: abs, e })}/seg.ts`;
+  }));
   return out.join('\n');
 }
 
