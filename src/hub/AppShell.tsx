@@ -1,5 +1,5 @@
-import { Link, useLocation } from "react-router-dom";
-import { useEffect, useState, type ReactNode } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   LayoutGrid,
   Globe2,
@@ -69,7 +69,76 @@ export function AppShell({
   flush?: boolean;
 }) {
   const path = useLocation().pathname;
+  const navigate = useNavigate();
+  const contentRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
+  const tabIndex = TABS.findIndex((t) => (t.to === "/" ? path === "/" : path === t.to || path.startsWith(t.to + "/")));
+
+  // Apple-style horizontal swipe between tabs: content follows the finger, then springs.
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el || tabIndex < 0) return;
+    let sx = 0, sy = 0, dx = 0, mode: "none" | "h" | "v" = "none", t0 = 0, active = false;
+    const blocked = (t: EventTarget | null) => {
+      let n = t as HTMLElement | null;
+      while (n && n !== el) {
+        if (n.matches?.("input,textarea,select,canvas,video,iframe,[data-no-swipe],[role=dialog],[role=slider]")) return true;
+        const cs = getComputedStyle(n);
+        if ((cs.overflowX === "auto" || cs.overflowX === "scroll") && n.scrollWidth > n.clientWidth + 2) return true;
+        n = n.parentElement;
+      }
+      return false;
+    };
+    const set = (x: number, anim: boolean) => {
+      el.style.transition = anim ? "transform .38s cubic-bezier(.22,1,.36,1), opacity .38s" : "none";
+      el.style.transform = x ? `translate3d(${x}px,0,0)` : "";
+      el.style.opacity = x ? String(1 - Math.min(Math.abs(x) / window.innerWidth, 1) * 0.35) : "";
+    };
+    const start = (e: TouchEvent) => {
+      if (e.touches.length !== 1 || blocked(e.target)) { active = false; return; }
+      active = true; mode = "none"; dx = 0; t0 = performance.now();
+      sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+    };
+    const move = (e: TouchEvent) => {
+      if (!active) return;
+      const x = e.touches[0].clientX - sx, y = e.touches[0].clientY - sy;
+      if (mode === "none") {
+        if (Math.abs(x) < 10 && Math.abs(y) < 10) return;
+        mode = Math.abs(x) > Math.abs(y) * 1.4 ? "h" : "v";
+      }
+      if (mode !== "h") return;
+      e.preventDefault();
+      const edge = (x > 0 && tabIndex === 0) || (x < 0 && tabIndex === TABS.length - 1);
+      dx = edge ? x * 0.25 : x; // rubber-band at the ends
+      set(dx, false);
+    };
+    const end = () => {
+      if (!active || mode !== "h") { active = false; return; }
+      active = false;
+      const w = window.innerWidth;
+      const fast = Math.abs(dx) / Math.max(performance.now() - t0, 1) > 0.5 && Math.abs(dx) > 40;
+      const next = dx < 0 ? tabIndex + 1 : tabIndex - 1;
+      if ((Math.abs(dx) > w * 0.28 || fast) && next >= 0 && next < TABS.length) {
+        const dir = dx < 0 ? -1 : 1;
+        set(dir * w * 0.6, true);
+        window.setTimeout(() => {
+          navigate(TABS[next].to);
+          set(-dir * w * 0.35, false);
+          requestAnimationFrame(() => requestAnimationFrame(() => set(0, true)));
+        }, 160);
+      } else set(0, true);
+    };
+    el.addEventListener("touchstart", start, { passive: true });
+    el.addEventListener("touchmove", move, { passive: false });
+    el.addEventListener("touchend", end);
+    el.addEventListener("touchcancel", end);
+    return () => {
+      el.removeEventListener("touchstart", start);
+      el.removeEventListener("touchmove", move);
+      el.removeEventListener("touchend", end);
+      el.removeEventListener("touchcancel", end);
+    };
+  }, [tabIndex, navigate]);
   const [menu, setMenu] = useState(false);
   const initial = (user?.email || "R").charAt(0).toUpperCase();
   // On narrow screens the tab row scrolls; keep the active tab in view.
@@ -162,7 +231,7 @@ export function AppShell({
           </div>
         </div>
       </header>
-      <div style={{ paddingTop: "var(--hub-h)" }}>{children}</div>
+      <div className="overflow-x-clip"><div ref={contentRef} style={{ paddingTop: "var(--hub-h)", touchAction: "pan-y", willChange: "transform" }}>{children}</div></div>
     </div>
   );
 }
