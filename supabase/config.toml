@@ -33,3 +33,6 @@ verify_jwt = false
 
 [functions.iptv]
 verify_jwt = false
+
+[functions.korautoks]
+verify_jwt = false

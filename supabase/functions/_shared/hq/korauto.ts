@@ -65,23 +65,28 @@ function startOfTodayISO() {
 const CAR_COLS = 'id,make,model,year,plate_number,status,sale_status,approval_status,delivery_status,tracking_status_label,tracking_eta,image_url,created_at,updated_at';
 const safe = async (p) => { try { return await p; } catch (e) { return { __err: String(e?.message || e).slice(0, 120) }; } };
 const arr = (v) => (Array.isArray(v) ? v : []);
+const count = (rows, k) => { const o = {}; for (const r of rows) { const v = r?.[k] ?? 'none'; o[v] = (o[v] || 0) + 1; } return o; };
 
 async function build(c) {
   const token = await signIn(c);
   const today = startOfTodayISO();
   const nowISO = new Date().toISOString();
   const weekISO = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
-  const [todayCars, latest, updated, pending, arriving, inspections, complaints, webSales] = await Promise.all([
+  const [todayCars, latest, updated, pending, arriving, inspections, complaints, webSales, stageRows, shipping, recentUpdates] = await Promise.all([
     safe(sel(c, token, `cars?select=${CAR_COLS}&created_at=gte.${encodeURIComponent(today)}&order=created_at.desc&limit=50`)),
-    safe(sel(c, token, `cars?select=${CAR_COLS}&order=created_at.desc&limit=6`)),
+    safe(sel(c, token, `cars?select=${CAR_COLS}&order=created_at.desc&limit=12`)),
     safe(sel(c, token, `cars?select=${CAR_COLS}&updated_at=gte.${encodeURIComponent(today)}&order=updated_at.desc&limit=20`)),
     safe(sel(c, token, `cars?select=id,make,model,year,created_at&approval_status=eq.pending&order=created_at.desc&limit=20`)),
     safe(sel(c, token, `cars?select=id,make,model,year,tracking_eta,tracking_status_label&tracking_eta=gte.${nowISO.slice(0, 10)}&tracking_eta=lte.${weekISO}&order=tracking_eta.asc&limit=8`)),
-    safe(sel(c, token, `inspections?select=id,make,model,year,status,image_url,created_at&order=created_at.desc&limit=4`)),
+    safe(sel(c, token, `inspections?select=id,make,model,year,status,image_url,created_at&order=created_at.desc&limit=8`)),
     safe(sel(c, token, `customs_complaints?select=id,status,car_label,updated_at&archived=eq.false&order=updated_at.desc&limit=20`)),
-    safe(sel(c, token, `pending_website_sales?select=*&limit=20`)),
+    safe(sel(c, token, `pending_website_sales?select=id&limit=50`)),
+    // stage counts only (no prices / buyer fields)
+    safe(sel(c, token, `cars?select=sale_status,status,tracking_status,approval_status&limit=5000`)),
+    safe(sel(c, token, `cars?select=id,make,model,year,plate_number,image_url,tracking_status,tracking_status_label,tracking_vessel,tracking_eta,tracking_destination,tracking_arrival_port,updated_at&tracking_status=eq.DEPARTED&order=tracking_eta.asc.nullslast&limit=30`)),
+    safe(sel(c, token, `cars?select=${CAR_COLS}&order=updated_at.desc&limit=14`)),
   ]);
-  const errors = [todayCars, latest, updated, pending, arriving, inspections, complaints, webSales].filter((x) => x && x.__err).map((x) => x.__err);
+  const errors = [todayCars, latest, updated, pending, arriving, inspections, complaints, webSales, stageRows, shipping, recentUpdates].filter((x) => x && x.__err).map((x) => x.__err);
   const updatedOnly = arr(updated).filter((u) => u.created_at < today);
   return {
     configured: true,
@@ -95,6 +100,12 @@ async function build(c) {
     inspections: arr(inspections),
     openComplaints: arr(complaints),
     pendingWebsiteSales: arr(webSales).length,
+    stages: count(arr(stageRows), 'sale_status'),
+    statuses: count(arr(stageRows), 'status'),
+    tracking: count(arr(stageRows), 'tracking_status'),
+    totalCars: arr(stageRows).length,
+    shipping: arr(shipping),
+    recentUpdates: arr(recentUpdates),
     errors,
   };
 }
