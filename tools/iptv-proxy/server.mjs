@@ -76,7 +76,7 @@ async function pipe(res, r, status, headers, ac) {
 
 http.createServer(async (req, res) => {
   const ac = new AbortController();
-  req.on('close', () => { if (!res.writableEnded) ac.abort(); });
+  res.on('close', () => { if (!res.writableFinished) ac.abort(); });
   try {
     if (req.method === 'OPTIONS') return send(res, 204, '');
     const path = new URL(req.url, 'http://x').pathname.replace(/^\/iptv(?=\/)/, '').replace(/^\/+/, '');
