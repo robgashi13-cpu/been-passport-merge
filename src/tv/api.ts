@@ -28,24 +28,37 @@ export type Fav = { kind: Kind; id: number; name: string; logo: string | null; e
 export type Hist = PlayItem & { pos: number; dur: number; at: number };
 
 const cache = new Map<string, { at: number; v: unknown }>();
+const pending = new Map<string, Promise<unknown>>();
+const cacheKey = (path: string, token: string | null) => `${token}:${path}`;
 
 export async function tvGet<T>(path: string, token: string | null, ttl = 5 * 60e3): Promise<T> {
-  const hit = cache.get(path);
+  if (!token) throw new Error("Sign in to view TV");
+  const key = cacheKey(path, token);
+  const hit = cache.get(key);
   if (hit && Date.now() - hit.at < ttl) return hit.v as T;
-  const r = await fetch(`${TV}/${path}`, { headers: { Authorization: `Bearer ${token || ""}` } });
-  const v = await r.json().catch(() => ({ error: `HTTP ${r.status}` }));
-  if (!r.ok) throw new Error((v as any)?.error || `HTTP ${r.status}`);
-  cache.set(path, { at: Date.now(), v });
-  return v as T;
+  const existing = pending.get(key);
+  if (existing) return existing as Promise<T>;
+  const request = (async () => {
+    const r = await fetch(`${TV}/${path}`, { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(30000) });
+    const v = await r.json().catch(() => ({ error: `HTTP ${r.status}` }));
+    if (!r.ok) throw new Error(v?.error || `HTTP ${r.status}`);
+    if (cache.size > 100) cache.clear();
+    cache.set(key, { at: Date.now(), v });
+    return v as T;
+  })();
+  pending.set(key, request);
+  try { return await request; } finally { pending.delete(key); }
 }
 
-export function useTv<T>(path: string | null, ttl?: number) {
+export function useTv<T>(path: string | null, ttl = 5 * 60e3) {
   const { token } = useAuth();
-  const [s, setS] = useState<{ data: T | null; error: string | null; loading: boolean }>({ data: null, error: null, loading: !!path });
+  const hit = path ? cache.get(cacheKey(path, token)) : null;
+  const [s, setS] = useState<{ data: T | null; error: string | null; loading: boolean }>({ data: hit ? hit.v as T : null, error: null, loading: !!path && !hit });
   useEffect(() => {
     if (!path || !token) { setS({ data: null, error: null, loading: false }); return; }
     let alive = true;
-    setS((p) => ({ data: cache.has(path) ? p.data : null, error: null, loading: true }));
+    const hit = cache.get(cacheKey(path, token));
+    setS({ data: hit ? hit.v as T : null, error: null, loading: !hit });
     tvGet<T>(path, token, ttl)
       .then((d) => alive && setS({ data: d, error: null, loading: false }))
       .catch((e) => alive && setS({ data: null, error: String(e.message || e), loading: false }));
@@ -54,14 +67,14 @@ export function useTv<T>(path: string | null, ttl?: number) {
   return s;
 }
 
-/** Ask the server for a short-lived opaque media URL. */
-export async function playUrl(item: PlayItem, token: string | null) {
+/** Opaque URLs stay in memory, scoped to the current session. */
+export async function playUrl(item: PlayItem, token: string | null, download = false) {
   const q = new URLSearchParams({ kind: item.kind, id: String(item.id) });
   if (item.ext) q.set("ext", item.ext);
-  const r = await fetch(`${TV}/play?${q}`, { headers: { Authorization: `Bearer ${token || ""}` } });
-  const d = await r.json();
-  if (!r.ok || !d.path) throw new Error(d.error || `HTTP ${r.status}`);
-  return { url: `${d.base || TV}/${d.path}`, type: d.type as "hls" | "file", home: !!d.base };
+  if (download) q.set("download", item.name);
+  const d = await tvGet<{ path?: string; base?: string; type: "hls" | "file"; error?: string }>(`play?${q}`, token, download ? 30000 : 60000);
+  if (!d.path) throw new Error(d.error || "Playback unavailable");
+  return { url: `${d.base || TV}/${d.path}`, type: d.type, home: !!d.base };
 }
 
 export function useFavs() {

@@ -161,7 +161,8 @@ async function routes(req, c, path, q) {
     const kind = q.get('kind');
     const id = q.get('id') || '';
     if (!ID_RE.test(id)) return json({ error: 'bad id' }, 400);
-    const e = Date.now() + 8 * 3600e3;
+    const downloading = q.has('download');
+    const e = Date.now() + (downloading ? 10 * 60e3 : 8 * 3600e3);
     if (kind === 'live') {
       const tok = await seal({ k: 'pl', u: `${c.url}/live/${c.user}/${c.pass}/${id}.m3u8`, e });
       return json({ type: 'hls', base: c.mediaBase, path: `p/${tok}/index.m3u8` }, 200, 'no-store');
@@ -169,7 +170,8 @@ async function routes(req, c, path, q) {
     if (kind === 'movie' || kind === 'series') {
       const ext = (q.get('ext') || 'mp4').toLowerCase();
       if (!EXT_RE.test(ext)) return json({ error: 'bad ext' }, 400);
-      const tok = await seal({ k: 'f', u: `${c.url}/${kind}/${c.user}/${c.pass}/${id}.${ext}`, e });
+      const filename = downloading ? `${(q.get('download') || 'movie').replace(/[^a-zA-Z0-9 _-]/g, '').slice(0, 100) || 'movie'}.${ext}` : null;
+      const tok = await seal({ k: 'f', u: `${c.url}/${kind}/${c.user}/${c.pass}/${id}.${ext}`, e, ...(filename ? { download: filename } : {}) });
       return json({ type: 'file', ext, base: c.mediaBase, path: `f/${tok}/video.${ext}` }, 200, 'no-store');
     }
     return json({ error: 'bad kind' }, 400);
@@ -231,7 +233,8 @@ async function mediaRoute(req, path) {
     if (range) h['range'] = range;
     const r = await fetch(t.u, { headers: h, method: req.method === 'HEAD' ? 'HEAD' : 'GET' });
     if (!r.ok && r.status !== 206) return media(`upstream ${r.status}`, { status: 502 });
-    const out = { 'cache-control': 'private, max-age=300', 'accept-ranges': 'bytes' };
+    const out = { 'cache-control': t.download ? 'no-store' : 'private, max-age=300', 'accept-ranges': 'bytes' };
+    if (t.download) out['content-disposition'] = `attachment; filename="${String(t.download).replace(/[^a-zA-Z0-9 ._-]/g, '')}"`;
     for (const k of ['content-type', 'content-length', 'content-range']) { const v = r.headers.get(k); if (v) out[k] = v; }
     if (/octet-stream/.test(out['content-type'] || '') || !out['content-type']) out['content-type'] = /\.mkv$/i.test(path) ? 'video/x-matroska' : 'video/mp4';
     return media(r.body, { status: r.status, headers: out });

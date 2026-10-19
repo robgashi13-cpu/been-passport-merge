@@ -93,7 +93,8 @@ http.createServer(async (req, res) => {
       if (req.headers.range) h.range = req.headers.range;
       const r = await fetch(t.u, { headers: h, method: req.method === 'HEAD' ? 'HEAD' : 'GET' });
       if (!r.ok && r.status !== 206) return send(res, 502, `upstream ${r.status}`);
-      const out = { 'accept-ranges': 'bytes', 'cache-control': 'private, max-age=300' };
+      const out = { 'accept-ranges': 'bytes', 'cache-control': t.download ? 'no-store' : 'private, max-age=300' };
+      if (t.download) out['content-disposition'] = `attachment; filename="${String(t.download).replace(/[^a-zA-Z0-9 ._-]/g, '')}"`;
       for (const k of ['content-type', 'content-length', 'content-range']) { const v = r.headers.get(k); if (v) out[k] = v; }
       if (!out['content-type'] || /octet-stream/.test(out['content-type'])) out['content-type'] = /\.mkv$/i.test(path) ? 'video/x-matroska' : 'video/mp4';
       return pipe(res, r, r.status, out);

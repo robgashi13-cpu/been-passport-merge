@@ -105,6 +105,14 @@ export function AppShell({
                   to={t.to}
                   aria-current={active ? "page" : undefined}
                   title={t.label}
+                  onPointerEnter={() => {
+                    if (t.to === "/cameras") void import("@/cameras/CamerasApp");
+                    if (t.to === "/tv") void import("@/tv/TvApp");
+                  }}
+                  onFocus={() => {
+                    if (t.to === "/cameras") void import("@/cameras/CamerasApp");
+                    if (t.to === "/tv") void import("@/tv/TvApp");
+                  }}
                   className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors ${
                     active
                       ? "bg-white text-black"

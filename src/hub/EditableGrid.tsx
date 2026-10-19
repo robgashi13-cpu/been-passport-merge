@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   DndContext,
   KeyboardSensor,
@@ -11,10 +11,13 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Check, GripVertical, Minus, Pencil, Plus, RotateCcw, X } from "lucide-react";
+import { Check, GripVertical, Minus, Pencil, Plus, RotateCcw } from "lucide-react";
 import { usePref } from "./prefs";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { normalizeLayout, shouldRevealEdit, type Layout, type Size } from "./layout";
+export type { Size } from "./layout";
 
-export type Size = "S" | "M" | "T" | "L";
 export const SIZES: { id: Size; label: string; hint: string; cls: string }[] = [
   { id: "S", label: "S", hint: "Small 1×1", cls: "col-span-1 row-span-1" },
   { id: "M", label: "M", hint: "Wide 2×1", cls: "col-span-2 row-span-1" },
@@ -23,20 +26,7 @@ export const SIZES: { id: Size; label: string; hint: string; cls: string }[] = [
 ];
 const sizeCls = (s: Size) => SIZES.find((x) => x.id === s)?.cls ?? SIZES[0].cls;
 
-export type CardDef = { id: string; label: string; icon: ReactNode; size: Size; render: () => ReactNode };
-type Layout = { v: 1; items: { id: string; size: Size }[]; hidden: string[] };
-
-function normalize(saved: Layout | null, defs: CardDef[]): Layout {
-  const known = new Map(defs.map((d) => [d.id, d]));
-  if (!saved || saved.v !== 1 || !Array.isArray(saved.items)) {
-    return { v: 1, items: defs.map((d) => ({ id: d.id, size: d.size })), hidden: [] };
-  }
-  const items = saved.items.filter((i) => known.has(i.id) && SIZES.some((s) => s.id === i.size));
-  const hidden = (saved.hidden || []).filter((h) => known.has(h) && !items.some((i) => i.id === h));
-  // cards added to the app after the layout was saved appear at the end
-  for (const d of defs) if (!items.some((i) => i.id === d.id) && !hidden.includes(d.id)) items.push({ id: d.id, size: d.size });
-  return { v: 1, items, hidden };
-}
+export type CardDef = { id: string; label: string; icon: ReactNode; size: Size; optional?: boolean; render: () => ReactNode };
 
 function Tile({
   id,
@@ -65,7 +55,7 @@ function Tile({
       ref={setNodeRef}
       style={style}
       data-card={id}
-      className={`relative min-h-0 ${sizeCls(size)} ${editing ? "hq-edit touch-none select-none" : ""} ${isDragging ? "hq-dragging" : ""}`}
+      className={`hq-tile relative min-h-0 min-w-0 ${sizeCls(size)} ${editing ? "hq-edit touch-none select-none" : ""} ${isDragging ? "hq-dragging" : ""}`}
       {...(editing ? { ...attributes, ...listeners, "aria-label": `${label}. Drag to reorder` } : {})}
     >
       <div
@@ -79,35 +69,35 @@ function Tile({
       {editing && (
         <>
           <div className="pointer-events-none absolute inset-0 rounded-3xl ring-2 ring-sky/50 ring-offset-0" />
-          <button
+          <Button variant="ghost"
             type="button"
             onPointerDown={stop}
             onClick={onRemove}
-            className="absolute -left-2 -top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-zinc-200 text-black shadow-lg ring-2 ring-black/60 active:scale-90"
+            className="absolute -left-2 -top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-2 ring-background/60 active:scale-90"
             aria-label={`Hide ${label}`}
           >
             <Minus className="h-4 w-4" strokeWidth={3} />
-          </button>
-          <span className="pointer-events-none absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white/80 backdrop-blur">
+          </Button>
+          <span className="pointer-events-none absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-background/80 text-foreground/80 backdrop-blur">
             <GripVertical className="h-4 w-4" />
           </span>
           <div
             onPointerDown={stop}
-            className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 gap-0.5 rounded-full bg-black/70 p-0.5 ring-1 ring-white/15 backdrop-blur"
+            className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 gap-0.5 rounded-full bg-background/90 p-0.5 ring-1 ring-border backdrop-blur"
             role="group"
             aria-label={`${label} size`}
           >
             {SIZES.map((s) => (
-              <button
+              <Button variant="ghost"
                 key={s.id}
                 type="button"
                 onClick={() => onSize(s.id)}
                 title={s.hint}
                 aria-pressed={size === s.id}
-                className={`h-7 min-w-7 rounded-full px-2 text-[11px] font-semibold transition ${size === s.id ? "bg-white text-black" : "text-white/70 hover:text-white"}`}
+                className={`h-7 min-w-7 rounded-full px-2 text-[11px] font-semibold transition ${size === s.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
               >
                 {s.label}
-              </button>
+              </Button>
             ))}
           </div>
         </>
@@ -118,9 +108,27 @@ function Tile({
 
 export function EditableGrid({ defs, prefKey, className }: { defs: CardDef[]; prefKey: string; className: string }) {
   const [saved, setSaved] = usePref<Layout | null>(prefKey, null);
-  const layout = useMemo(() => normalize(saved, defs), [saved, defs]);
+  const layout = useMemo(() => normalizeLayout(saved, defs), [saved, defs]);
   const [editing, setEditing] = useState(false);
   const [picker, setPicker] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+  const gesture = useRef<{ x: number; y: number } | null>(null);
+  useEffect(() => {
+    const start = (e: TouchEvent) => {
+      if (e.touches.length !== 1 || (e.target as Element)?.closest("input, textarea, select, [role=dialog]")) { gesture.current = null; return; }
+      gesture.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    };
+    const end = (e: TouchEvent) => {
+      const t = e.changedTouches[0];
+      if (gesture.current && t && shouldRevealEdit(gesture.current, { x: t.clientX, y: t.clientY })) setRevealed(true);
+      gesture.current = null;
+    };
+    const wheel = (e: WheelEvent) => { if (e.deltaY < -20) setRevealed(true); };
+    window.addEventListener("touchstart", start, { passive: true });
+    window.addEventListener("touchend", end, { passive: true });
+    window.addEventListener("wheel", wheel, { passive: true });
+    return () => { window.removeEventListener("touchstart", start); window.removeEventListener("touchend", end); window.removeEventListener("wheel", wheel); };
+  }, []);
   const byId = useMemo(() => new Map(defs.map((d) => [d.id, d])), [defs]);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -131,42 +139,44 @@ export function EditableGrid({ defs, prefKey, className }: { defs: CardDef[]; pr
   const onDragEnd = (e: DragEndEvent) => {
     if (!e.over || e.active.id === e.over.id) return;
     const from = layout.items.findIndex((i) => i.id === e.active.id);
-    const to = layout.items.findIndex((i) => i.id === e.over!.id);
+    const overId = e.over.id;
+    const to = layout.items.findIndex((i) => i.id === overId);
+    if (from < 0 || to < 0) return;
     commit({ ...layout, items: arrayMove(layout.items, from, to) });
   };
 
   return (
     <>
-      <div className="mb-3 flex min-h-9 items-center justify-end gap-2">
+      <div className={editing || revealed ? "hq-toolbar mb-3 flex min-h-9 flex-wrap items-center justify-end gap-2" : "sr-only focus-within:not-sr-only focus-within:mb-3"}>
         {editing ? (
           <>
-            <span className="mr-auto hidden text-xs text-muted-foreground sm:block">Drag to reorder. Long-press on iPhone. Tap a size or − to hide.</span>
-            <button
+            
+            <Button variant="ghost"
               onClick={() => setPicker(true)}
-              className="flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs text-white/80 hover:text-white"
+              className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-foreground/80 hover:text-foreground"
             >
               <Plus className="h-3.5 w-3.5" /> Add card{layout.hidden.length ? ` (${layout.hidden.length})` : ""}
-            </button>
-            <button
-              onClick={() => commit(normalize(null, defs))}
-              className="flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs text-white/80 hover:text-white"
+            </Button>
+            <Button variant="ghost"
+              onClick={() => commit(normalizeLayout(null, defs))}
+              className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-foreground/80 hover:text-foreground"
             >
               <RotateCcw className="h-3.5 w-3.5" /> Reset
-            </button>
-            <button
-              onClick={() => { setEditing(false); setPicker(false); }}
-              className="flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-black"
+            </Button>
+            <Button variant="ghost"
+              onClick={() => { setEditing(false); setPicker(false); setRevealed(false); }}
+              className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground"
             >
               <Check className="h-3.5 w-3.5" /> Done
-            </button>
+            </Button>
           </>
         ) : (
-          <button
+          <Button variant="ghost"
             onClick={() => setEditing(true)}
-            className="flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs text-white/60 transition hover:border-white/20 hover:text-white"
+            className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground transition hover:border-ring hover:text-foreground"
           >
             <Pencil className="h-3.5 w-3.5" /> Edit
-          </button>
+          </Button>
         )}
       </div>
 
@@ -174,7 +184,8 @@ export function EditableGrid({ defs, prefKey, className }: { defs: CardDef[]; pr
         <SortableContext items={layout.items.map((i) => i.id)} strategy={rectSortingStrategy}>
           <div className={className}>
             {layout.items.map((it, i) => {
-              const d = byId.get(it.id)!;
+              const d = byId.get(it.id);
+              if (!d) return null;
               return (
                 <Tile
                   key={it.id}
@@ -194,39 +205,28 @@ export function EditableGrid({ defs, prefKey, className }: { defs: CardDef[]; pr
         </SortableContext>
       </DndContext>
 
-      {picker && (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center" onClick={() => setPicker(false)}>
-          <div className="hq-card m-0 w-full max-w-md rounded-b-none p-4 sm:m-4 sm:rounded-b-3xl" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-3 flex items-center justify-between">
-              <div className="text-sm font-semibold">Add a card</div>
-              <button onClick={() => setPicker(false)} className="rounded-full p-1.5 hover:bg-white/10" aria-label="Close">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            {layout.hidden.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">All cards are on your dashboard.</p>
-            ) : (
-              <ul className="grid gap-2">
-                {layout.hidden.map((id) => {
-                  const d = byId.get(id)!;
-                  return (
-                    <li key={id}>
-                      <button
-                        onClick={() => { commit({ ...layout, hidden: layout.hidden.filter((h) => h !== id), items: [...layout.items, { id, size: d.size }] }); setPicker(false); }}
-                        className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5 text-left text-sm hover:bg-white/[0.07]"
-                      >
-                        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06]">{d.icon}</span>
-                        <span className="flex-1">{d.label}</span>
-                        <Plus className="h-4 w-4 text-white/50" />
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        </div>
-      )}
+      <Dialog open={picker} onOpenChange={setPicker}>
+        <DialogContent aria-describedby={undefined} className="z-[70] max-h-[80dvh] w-[calc(100%-24px)] overflow-y-auto rounded-lg sm:max-w-md">
+          <DialogTitle>Add a card</DialogTitle>
+          {layout.hidden.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">All cards are on your dashboard.</p>
+          ) : (
+            <ul className="grid gap-2">
+              {layout.hidden.map((id) => {
+                const d = byId.get(id);
+                if (!d) return null;
+                return <li key={id}>
+                  <Button variant="outline" className="h-auto w-full justify-start whitespace-normal px-3 py-3 text-left"
+                    onClick={() => { commit({ ...layout, hidden: layout.hidden.filter((h) => h !== id), items: [...layout.items, { id, size: d.size }] }); setPicker(false); }}>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted">{d.icon}</span>
+                    <span className="min-w-0 flex-1">{d.label}</span><Plus className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  </Button>
+                </li>;
+              })}
+            </ul>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

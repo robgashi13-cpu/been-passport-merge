@@ -145,7 +145,7 @@
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
   }
   input, textarea {
     font-size: 16px; /* no iOS zoom on focus */
@@ -163,7 +163,7 @@
     radial-gradient(900px 500px at 92% 0%, hsl(41 78% 60% / 0.08), transparent 60%),
     radial-gradient(1000px 700px at 50% 110%, hsl(270 60% 40% / 0.08), transparent 60%),
     hsl(var(--background));
-  background-attachment: fixed;
+  background-attachment: scroll;
 }
 
 /* Bento cards */
@@ -175,7 +175,7 @@
   background: linear-gradient(160deg, hsl(220 14% 10% / 0.92), hsl(220 14% 6% / 0.92));
   border: 1px solid hsl(0 0% 100% / 0.07);
   box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.05), 0 20px 40px -24px hsl(0 0% 0% / 0.8);
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease, box-shadow 0.35s ease;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease;
 }
 .hq-card::after {
   content: "";
@@ -209,8 +209,8 @@ a.hq-card:active, button.hq-card:active { transform: scale(0.99); }
 @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 @keyframes zoom-in { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
 @keyframes slide-in-up { 0% { transform: translateY(100%); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
-@keyframes hq-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-.hq-rise { animation: hq-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes hq-rise { 0% { opacity: 0; transform: translateY(8px); } 75% { opacity: 1; transform: translateY(-1px); } 100% { opacity: 1; transform: translateY(0); } }
+.hq-rise { animation: hq-rise 0.3s ease-out both; animation-delay: 0ms !important; }
 @keyframes hq-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 .hq-live-dot { animation: hq-pulse 1.6s ease-in-out infinite; }
 
@@ -238,3 +238,16 @@ a.hq-card:active, button.hq-card:active { transform: scale(0.99); }
 .hq-dragging.hq-edit { cursor: grabbing; }
 .hq-edit .hq-rise { animation: none !important; opacity: 1 !important; transform: none !important; }
 @media (prefers-reduced-motion: reduce) { .hq-jiggle { animation: none; } }
+
+/* Stable, bounded dashboard tracks and compositor-friendly feedback. */
+.hq-tile { contain: layout; }
+.hq-tile .hq-card { min-width: 0; max-width: 100%; }
+.hq-tile .hq-card > * { flex-shrink: 0; }
+.hq-tile .hq-card > ul { flex-shrink: 1; }
+.hq-toolbar { animation: hq-rise 0.24s ease-out; }
+@media (hover: none) { a.hq-card:hover { transform: none; } }
+@media (max-width: 639px) {
+  .hq-tile .hq-card { padding: 12px; }
+  .hq-tile .hq-card .text-4xl { font-size: 28px; }
+  .hq-tile .hq-card .text-2xl { font-size: 20px; }
+}
