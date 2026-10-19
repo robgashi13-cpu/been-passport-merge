@@ -231,7 +231,7 @@ export function AppShell({
           </div>
         </div>
       </header>
-      <div className="overflow-x-clip"><div ref={contentRef} style={{ paddingTop: "var(--hub-h)", touchAction: "pan-y", willChange: "transform" }}>{children}</div></div>
+      <div className="overflow-x-clip"><div ref={contentRef} style={{ paddingTop: "var(--hub-h)", touchAction: "pan-y" }}>{children}</div></div>
     </div>
   );
 }
