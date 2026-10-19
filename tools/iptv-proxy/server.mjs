@@ -63,13 +63,20 @@ function send(res, status, body, headers = {}) {
   res.writeHead(status, { ...CORS, ...headers });
   res.end(body);
 }
-async function pipe(res, r, status, headers) {
+async function pipe(res, r, status, headers, ac) {
   res.writeHead(status, { ...CORS, ...headers });
   if (!r.body) return res.end();
-  Readable.fromWeb(r.body).on('error', () => res.destroy()).pipe(res);
+  const src = Readable.fromWeb(r.body);
+  // Phones open/close many range requests; if the viewer goes away, drop the upstream connection
+  // immediately — the provider allows very few concurrent streams (HTTP 458/460 otherwise).
+  const stop = () => { ac?.abort(); src.destroy(); };
+  res.on('close', stop);
+  src.on('error', () => res.destroy()).pipe(res);
 }
 
 http.createServer(async (req, res) => {
+  const ac = new AbortController();
+  res.on('close', () => { if (!res.writableFinished) ac.abort(); });
   try {
     if (req.method === 'OPTIONS') return send(res, 204, '');
     const path = new URL(req.url, 'http://x').pathname.replace(/^\/iptv(?=\/)/, '').replace(/^\/+/, '');
@@ -77,27 +84,27 @@ http.createServer(async (req, res) => {
     const [kind, tok] = path.split('/');
     if (kind === 'p') {
       const t = unseal(tok, 'pl'); if (!t) return send(res, 403, 'expired');
-      const r = await fetch(t.u, { headers: { 'user-agent': UA }, signal: AbortSignal.timeout(15000) });
+      const r = await fetch(t.u, { headers: { 'user-agent': UA }, signal: AbortSignal.any([ac.signal, AbortSignal.timeout(15000)]) });
       if (!r.ok) return send(res, r.status === 404 ? 404 : 502, `upstream ${r.status}`);
       return send(res, 200, rewrite(await r.text(), r.url || t.u), { 'content-type': 'application/vnd.apple.mpegurl', 'cache-control': 'no-store' });
     }
     if (kind === 's') {
       const t = unseal(tok, 's'); if (!t) return send(res, 403, 'expired');
-      const r = await fetch(t.u, { headers: { 'user-agent': UA }, signal: AbortSignal.timeout(30000) });
+      const r = await fetch(t.u, { headers: { 'user-agent': UA }, signal: AbortSignal.any([ac.signal, AbortSignal.timeout(30000)]) });
       if (!r.ok) return send(res, 502, `upstream ${r.status}`);
-      return pipe(res, r, 200, { 'content-type': r.headers.get('content-type') || 'video/mp2t', 'cache-control': 'private, max-age=60' });
+      return pipe(res, r, 200, { 'content-type': r.headers.get('content-type') || 'video/mp2t', 'cache-control': 'private, max-age=60' }, ac);
     }
     if (kind === 'f') {
       const t = unseal(tok, 'f'); if (!t) return send(res, 403, 'expired');
       const h = { 'user-agent': UA };
       if (req.headers.range) h.range = req.headers.range;
-      const r = await fetch(t.u, { headers: h, method: req.method === 'HEAD' ? 'HEAD' : 'GET' });
+      const r = await fetch(t.u, { headers: h, method: req.method === 'HEAD' ? 'HEAD' : 'GET', signal: ac.signal });
       if (!r.ok && r.status !== 206) return send(res, 502, `upstream ${r.status}`);
       const out = { 'accept-ranges': 'bytes', 'cache-control': t.download ? 'no-store' : 'private, max-age=300' };
       if (t.download) out['content-disposition'] = `attachment; filename="${String(t.download).replace(/[^a-zA-Z0-9 ._-]/g, '')}"`;
       for (const k of ['content-type', 'content-length', 'content-range']) { const v = r.headers.get(k); if (v) out[k] = v; }
       if (!out['content-type'] || /octet-stream/.test(out['content-type'])) out['content-type'] = /\.mkv$/i.test(path) ? 'video/x-matroska' : 'video/mp4';
-      return pipe(res, r, r.status, out);
+      return pipe(res, r, r.status, out, ac);
     }
     send(res, 404, 'not found');
   } catch {

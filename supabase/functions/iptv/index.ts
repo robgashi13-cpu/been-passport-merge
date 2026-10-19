@@ -249,8 +249,8 @@ async function mediaRoute(req, path) {
     const h = { 'user-agent': UA };
     const range = req.headers.get('range');
     if (range) h['range'] = range;
-    const r = await fetch(t.u, { headers: h, method: req.method === 'HEAD' ? 'HEAD' : 'GET' });
-    if (!r.ok && r.status !== 206) return media(`upstream ${r.status}`, { status: 502 });
+    const r = await fetch(t.u, { headers: h, method: req.method === 'HEAD' ? 'HEAD' : 'GET', signal: req.signal });
+    if (!r.ok && r.status !== 206) return media(`upstream ${r.status}`, { status: r.status === 458 || r.status === 460 ? 429 : 502 });
     const out = { 'cache-control': t.download ? 'no-store' : 'private, max-age=300', 'accept-ranges': 'bytes' };
     if (t.download) out['content-disposition'] = `attachment; filename="${String(t.download).replace(/[^a-zA-Z0-9 ._-]/g, '')}"`;
     for (const k of ['content-type', 'content-length', 'content-range']) { const v = r.headers.get(k); if (v) out[k] = v; }

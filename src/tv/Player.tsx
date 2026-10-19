@@ -92,7 +92,7 @@ export function Player({ item, startAt = 0, onClose }: { item: PlayItem; startAt
     const onPlaying = () => setState("playing");
     const onError = () => {
       if (hls) return;
-      fail(item.kind === "live" ? "This channel can't be played right now." : "This title can't be played on this device right now. Try again in a moment.");
+      fail(item.kind === "live" ? "This channel can't be played right now." : "This title couldn't start. Your TV plan allows one stream at a time — close it on other devices and try again.");
     };
     v.addEventListener("playing", onPlaying);
     v.addEventListener("error", onError);
