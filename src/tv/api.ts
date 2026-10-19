@@ -31,6 +31,9 @@ const cache = new Map<string, { at: number; v: unknown }>();
 const pending = new Map<string, Promise<unknown>>();
 const cacheKey = (path: string, token: string | null) => `${token}:${path}`;
 
+/** Drop every cached response so the next load pulls fresh data. */
+export function clearTvCache() { cache.clear(); pending.clear(); }
+
 export async function tvGet<T>(path: string, token: string | null, ttl = 5 * 60e3): Promise<T> {
   if (!token) throw new Error("Sign in to view TV");
   const key = cacheKey(path, token);

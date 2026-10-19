@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Clapperboard, Film, Play, Search, Star, Tv, X, Loader2, History } from "lucide-react";
+import { Clapperboard, Film, Play, RefreshCw, Search, Star, Tv, X, Loader2, History } from "lucide-react";
 import { useAuth } from "@/hub/auth";
 import { usePref } from "@/hub/prefs";
 import { Player } from "./Player";
 import { DownloadButton } from "./DownloadButton";
 import {
-  cleanName, hhmm, tvGet, useFavs, useHistory, useTv,
+  cleanName, clearTvCache, hhmm, tvGet, useFavs, useHistory, useTv,
   type Cat, type Epg, type Hist, type Live, type PlayItem, type Series, type Status, type Vod,
 } from "./api";
 
