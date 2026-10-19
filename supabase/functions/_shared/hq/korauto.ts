@@ -13,19 +13,33 @@
  *   KORAUTO_READ_PASSWORD      its password
  * Without them the dashboard card shows a plain link to korautomanager.
  */
-import { getRow, putRow } from '../wi/cache.ts';
+import { getRow, putRow, db } from '../wi/cache.ts';
 
 const FEED_KEY = 'hq:korauto:feed';
 const FEED_TTL_MS = 5 * 60e3;
 const TZ = 'Europe/Belgrade';
 let session = null; // { token, exp }
 
-function cfg() {
-  const url = (Deno.env.get('KORAUTO_SUPABASE_URL') || '').replace(/\/+$/, '');
-  const anon = Deno.env.get('KORAUTO_SUPABASE_ANON_KEY') || '';
-  const email = Deno.env.get('KORAUTO_READ_EMAIL') || '';
-  const password = Deno.env.get('KORAUTO_READ_PASSWORD') || '';
-  return { url, anon, email, password, ok: !!(url && anon && email && password) };
+let dbCfg = null; // hq_secrets fallback for url + public anon key, cached 5 min
+async function cfg() {
+  if (!dbCfg || dbCfg.exp < Date.now()) {
+    const v = {};
+    try {
+      const s = await db();
+      const { data } = await s.from('hq_secrets').select('name,value').in('name', ['korauto_supabase_url', 'korauto_supabase_anon_key', 'korauto_read_email', 'korauto_read_password']);
+      for (const r of data || []) v[r.name] = r.value;
+    } catch { /* ignore */ }
+    dbCfg = { v, exp: Date.now() + 5 * 60e3 };
+  }
+  const url = (Deno.env.get('KORAUTO_SUPABASE_URL') || dbCfg.v.korauto_supabase_url || '').replace(/\/+$/, '');
+  const anon = Deno.env.get('KORAUTO_SUPABASE_ANON_KEY') || dbCfg.v.korauto_supabase_anon_key || '';
+  const email = Deno.env.get('KORAUTO_READ_EMAIL') || dbCfg.v.korauto_read_email || '';
+  const password = Deno.env.get('KORAUTO_READ_PASSWORD') || dbCfg.v.korauto_read_password || '';
+  const missing = [
+    !url && 'KORAUTO_SUPABASE_URL', !anon && 'KORAUTO_SUPABASE_ANON_KEY',
+    !email && 'KORAUTO_READ_EMAIL', !password && 'KORAUTO_READ_PASSWORD',
+  ].filter(Boolean);
+  return { url, anon, email, password, missing, ok: missing.length === 0 };
 }
 
 async function signIn(c) {
@@ -111,8 +125,8 @@ async function build(c) {
 }
 
 export async function getKorautoFeed({ force = false } = {}) {
-  const c = cfg();
-  if (!c.ok) return { configured: false };
+  const c = await cfg();
+  if (!c.ok) return { configured: false, missing: c.missing };
   if (!force) {
     const row = await getRow(FEED_KEY).catch(() => null);
     if (row?.payload && Date.now() - new Date(row.updated_at).getTime() < FEED_TTL_MS) return row.payload;

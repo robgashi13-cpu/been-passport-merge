@@ -33,19 +33,23 @@ function Stat({ label, value, icon: Icon, hot }: { label: string; value: number 
   );
 }
 
-function ConnectState() {
+function ConnectState({ missing }: { missing?: string[] }) {
   const names = ["KORAUTO_SUPABASE_URL", "KORAUTO_SUPABASE_ANON_KEY", "KORAUTO_READ_EMAIL", "KORAUTO_READ_PASSWORD"];
+  const miss = new Set(missing ?? names);
+  const loginOnly = !miss.has("KORAUTO_SUPABASE_URL") && !miss.has("KORAUTO_SUPABASE_ANON_KEY");
   return (
     <section className="hq-card mx-auto mt-6 max-w-2xl p-6" data-testid="korauto-connect">
-      <div className="flex items-center gap-2 text-white"><KeyRound className="h-5 w-5" /><h2 className="font-display text-xl font-semibold">Connect KORAUTO Manager</h2></div>
+      <div className="flex items-center gap-2 text-white"><KeyRound className="h-5 w-5" /><h2 className="font-display text-xl font-semibold" data-testid="korauto-connect-title">{loginOnly ? "KORAUTO Manager needs a login" : "Connect KORAUTO Manager"}</h2></div>
       <p className="mt-2 text-sm text-muted-foreground">
         This page reads KORAUTO Manager <b className="text-white">read-only</b> (stock, stages, shipping, activity — never buyer details or money).
-        Add these four secrets in Lovable → Project settings → Secrets for WanderPass. Values are never shown here.
+        {loginOnly
+          ? <>The connection is already set up. Add the KORAUTO login as two secrets in Lovable → WanderPass → Project settings → Secrets: <b className="text-white">KORAUTO_READ_EMAIL</b> and <b className="text-white">KORAUTO_READ_PASSWORD</b>. Values are never shown here.</>
+          : <>Add the secrets marked “not set” in Lovable → Project settings → Secrets for WanderPass. Values are never shown here.</>}
       </p>
       <ul className="mt-4 space-y-1.5">
         {names.map((n) => (
           <li key={n} className="flex items-center justify-between rounded-xl border border-white/[0.07] bg-white/[0.02] px-3 py-2 font-mono text-[12px] text-white/85">
-            {n} <span className="font-sans text-[11px] text-white/35">not set</span>
+            {n} {miss.has(n) ? <span className="font-sans text-[11px] text-amber-300/80">not set</span> : <span className="font-sans text-[11px] text-emerald-300/80">set</span>}
           </li>
         ))}
       </ul>
@@ -84,7 +88,7 @@ export default function KorautoPage() {
     return out.filter((e) => e.at).sort((a, b) => b.at.localeCompare(a.at)).filter((e) => (seen.has(e.text + e.at) ? false : (seen.add(e.text + e.at), true))).slice(0, 25);
   }, [feed]);
 
-  if (feed && !feed.configured) return <main className="mx-auto max-w-[1440px] px-3 pb-12 pt-4 sm:px-5"><ConnectState /></main>;
+  if (feed && !feed.configured) return <main className="mx-auto max-w-[1440px] px-3 pb-12 pt-4 sm:px-5"><ConnectState missing={feed.missing} /></main>;
 
   const st = feed?.stages ?? {};
   const ss = feed?.statuses ?? {};
