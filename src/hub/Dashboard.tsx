@@ -966,7 +966,7 @@ export function Dashboard() {
         className="grid grid-flow-row-dense auto-rows-[180px] grid-cols-2 gap-3 sm:auto-rows-[190px] sm:gap-4 md:grid-cols-4 lg:auto-rows-[210px]"
       />
       <p className="mt-6 text-center text-[11px] text-white/25">
-        WanderPass · private · data refreshes automatically
+        HQ · private · data refreshes automatically
       </p>
     </main>
   );

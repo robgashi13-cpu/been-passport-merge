@@ -87,11 +87,11 @@ export function AppShell({
           <Link
             to="/"
             className="flex shrink-0 items-center gap-2.5"
-            aria-label="WanderPass home"
+            aria-label="HQ home"
           >
             <Logo size={30} />
             <span className="hidden font-display text-[15px] font-semibold tracking-tight text-white md:inline">
-              WanderPass
+              HQ
             </span>
           </Link>
           <nav className="no-scrollbar -mx-1 flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-1 md:justify-center">

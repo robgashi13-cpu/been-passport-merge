@@ -80,7 +80,7 @@ export function LoginScreen() {
       <div className="hq-rise w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           <Logo size={56} />
-          <h1 className="mt-5 text-3xl font-semibold text-white">WanderPass</h1>
+          <h1 className="mt-5 text-3xl font-semibold text-white">HQ</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Private hub · Dashboard · World News · Travel
           </p>
@@ -191,10 +191,10 @@ export function AccessDenied({
           {email ? (
             <>
               <span className="text-white">{email}</span> is not allowed to open
-              WanderPass.
+              HQ.
             </>
           ) : (
-            "This account is not allowed to open WanderPass."
+            "This account is not allowed to open HQ."
           )}
         </p>
         <button

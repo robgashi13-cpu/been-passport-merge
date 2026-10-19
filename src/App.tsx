@@ -20,7 +20,7 @@ const TITLES: Record<string, string> = { "/": "Dashboard", "/world": "World News
 function TitleSync() {
   const { pathname } = useLocation();
   useEffect(() => {
-    document.title = `${TITLES[pathname] ?? "WanderPass"} · WanderPass`;
+    document.title = `${TITLES[pathname] ?? "HQ"} · HQ`;
   }, [pathname]);
   return null;
 }
@@ -121,7 +121,7 @@ export default function App() {
               />
               <Route path="/korauto" element={<Protected><AppShell><Suspense fallback={<Splash label="Loading KORAUTO" />}><KorautoPage /></Suspense></AppShell></Protected>} />
               <Route path="/korautoks" element={<Protected><AppShell><Suspense fallback={<Splash label="Loading korautoks.com" />}><KorautoksApp /></Suspense></AppShell></Protected>} />
-              {/* old WanderPass route */}
+              {/* old HQ route */}
               <Route path="/calendar" element={<Protected><AppShell><Suspense fallback={<Splash label="Loading Travel" />}><TravelApp /></Suspense></AppShell></Protected>} />
               <Route path="/reset" element={<ResetPassword />} />
               <Route path="*" element={<NotFound />} />
