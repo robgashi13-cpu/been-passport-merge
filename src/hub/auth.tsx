@@ -43,12 +43,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       setWiToken(s?.access_token ?? null);
     });
-    supabase.auth.getSession().then(({ data }) => {
+    // OAuth (Apple) redirects back with tokens in the URL hash; the client has
+    // detectSessionInUrl disabled, so store them here before hydrating.
+    const hydrate = async () => {
+      const h = new URLSearchParams(window.location.hash.slice(1));
+      const access_token = h.get("access_token");
+      const refresh_token = h.get("refresh_token");
+      if (access_token && refresh_token && window.location.pathname !== "/reset") {
+        await supabase.auth.setSession({ access_token, refresh_token }).catch(() => {});
+        history.replaceState(null, "", window.location.pathname + window.location.search);
+      }
+      const { data } = await supabase.auth.getSession();
       if (!alive) return;
       setSession(data.session);
       setWiToken(data.session?.access_token ?? null);
       setReady(true);
-    });
+    };
+    void hydrate();
     return () => {
       alive = false;
       sub.subscription.unsubscribe();
