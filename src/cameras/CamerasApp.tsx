@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Download, Car, Cctv, ChevronLeft, ChevronRight, Maximize2, PersonStanding, Play, RefreshCw, ScanFace, ShieldCheck, Video, WifiOff, X,
+  Camera, Download, Car, Cctv, ChevronLeft, ChevronRight, Maximize2, PersonStanding, Play, RefreshCw, ScanFace, ShieldCheck, Video, WifiOff, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AlfredOpen } from "@/lib/alfred";
 import { deliverFile, fileName } from "@/lib/download";
 import { useAuth } from "@/hub/auth";
 import { ago, Cam, camLabel, FEvent, fjson, fmtWhen, Status, useAuthedBlob, useFrigate } from "./frigate";
@@ -261,6 +262,24 @@ function Notice({ icon, title, children }: { icon: React.ReactNode; title: strin
   );
 }
 
+/* ---------- alfred ---------- */
+function AlfredCard() {
+  return (
+    <section className="hq-card p-4 sm:p-5">
+      <div className="mb-2 flex items-center gap-2">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-white/80">
+          <Camera className="h-4 w-4" />
+        </span>
+        <div className="hq-label">AlfredCamera</div>
+      </div>
+      <p className="text-sm text-muted-foreground">Log in with your Alfred account</p>
+      <div className="mt-3">
+        <AlfredOpen />
+      </div>
+    </section>
+  );
+}
+
 export default function CamerasApp() {
   const st = useFrigate<Status>("status", 10000);
   const [fs, setFs] = useState<number | null>(null);
@@ -321,6 +340,7 @@ export default function CamerasApp() {
           {fs != null && active[fs] && <Fullscreen cams={active} index={fs} setIndex={setFs} onClose={() => setFs(null)} />}
         </>
       )}
+      <AlfredCard />
     </div>
   );
 }

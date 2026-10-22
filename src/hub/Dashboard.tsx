@@ -24,6 +24,7 @@ import {
   CloudSnow,
   CloudLightning,
   CloudFog,
+  Camera,
   Cctv,
   Tv,
   Play,
@@ -35,6 +36,7 @@ import { EditableGrid, type CardDef } from "./EditableGrid";
 import { extraWidgets } from "./ExtraWidgets";
 import { useFavs, useHistory } from "@/tv/api";
 import { ago as camAgo, camLabel, type FEvent, type Status as CamStatus, useAuthedBlob, useFrigate } from "@/cameras/frigate";
+import { AlfredOpen } from "@/lib/alfred";
 import { usePoll } from "@/wi/api";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./auth";
@@ -859,6 +861,22 @@ function CamerasCard() {
   );
 }
 
+/* ---------------------------------------------------------------- alfred */
+
+function AlfredCard() {
+  return (
+    <div className="hq-card hq-rise flex h-full flex-col p-4 sm:p-5" data-testid="alfred-card">
+      <CardHead icon={<Camera className="h-4 w-4" />} label="AlfredCamera" right={<span className="h-4 w-4 shrink-0" />} />
+      <div className="mt-auto">
+        <div className="text-[11px] text-muted-foreground">Log in with your Alfred account</div>
+        <div className="mt-2">
+          <AlfredOpen />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 /* ---------------------------------------------------------------- tv */
 
@@ -954,6 +972,7 @@ export function Dashboard() {
     { id: "passport", label: "Passport", icon: <BookMarked className="h-4 w-4" />, size: "S", render: () => <PassportCard {...travel} /> },
     { id: "world", label: "World News", icon: <Globe2 className="h-4 w-4" />, size: "S", render: () => <WorldTileCard /> },
     { id: "cameras", label: "Cameras", icon: <Cctv className="h-4 w-4" />, size: "S", render: () => <CamerasCard /> },
+    { id: "alfred", label: "AlfredCamera", icon: <Camera className="h-4 w-4" />, size: "S", render: () => <AlfredCard /> },
     { id: "korautoks", label: "korautoks.com search", icon: <Search className="h-4 w-4" />, size: "S", render: () => <KorautoksCard /> },
     { id: "tv", label: "TV favorites", icon: <Tv className="h-4 w-4" />, size: "S", render: () => <TvCard /> },
     { id: "links", label: "Quick links", icon: <LinkIcon className="h-4 w-4" />, size: "S", render: () => <LinksCard /> },
