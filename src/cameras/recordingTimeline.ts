@@ -2,6 +2,22 @@ export const TIMELINE_CAMERAS = ["office_top", "office_bottom"];
 export const RECORDING_WINDOW = 48 * 3600;
 export type Recording = { start_time: number; end_time: number };
 export type Span = { start: number; end: number };
+export function coveredDownload(start: number, end: number, spans: Span[]) {
+  return Number.isFinite(start) && Number.isFinite(end) && end > start && end - start <= 3600
+    && spans.some((span) => start >= span.start && end <= span.end);
+}
+export function downloadTime(ts: number) {
+  const parts = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Belgrade", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).format(new Date(ts * 1000));
+  return parts.replace(" ", "T");
+}
+export function parseDownloadTime(value: string, reference: number) {
+  // Resolve local wall time against the selected recording's UTC offset, including DST.
+  const wall = Date.parse(`${value}Z`) / 1000;
+  if (!Number.isFinite(wall)) return NaN;
+  let result = wall - (Date.parse(`${downloadTime(reference)}Z`) / 1000 - reference);
+  for (let i = 0; i < 2; i++) result += wall - Date.parse(`${downloadTime(result)}Z`) / 1000;
+  return downloadTime(result).slice(0, value.length) === value ? result : NaN;
+}
 export function mergeRecordings(recordings: Recording[], start: number, end: number): Span[] {
   const spans = recordings.filter((r) => Number.isFinite(r.start_time) && Number.isFinite(r.end_time))
     .map((r) => ({ start: Math.max(start, r.start_time), end: Math.min(end, r.end_time) }))
