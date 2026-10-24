@@ -10,7 +10,9 @@
 // public.hq_secrets (RLS on, no policies, service-role only — same store as the cron key).
 // Without either, every route answers { configured: false }.
 import { guarded, subPath } from '../_shared/guard.ts';
+import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { db } from '../_shared/wi/cache.ts';
+import { signMedia, verifyMedia, safeMediaPath, rewritePlaylist, validWindow } from './hls.ts';
 
 const CAM_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const EVT_RE = /^[A-Za-z0-9._-]{1,80}$/;
@@ -59,12 +61,13 @@ async function login(c, force = false) {
   return session.token;
 }
 
-async function fget(c, path, { timeout = 12000, retry = true } = {}) {
+async function fget(c, path, { timeout = 12000, retry = true, range = null, signal = null } = {}) {
   const token = await login(c);
   const headers: Record<string, string> = {};
   if (token) { headers['cookie'] = `frigate_token=${token}`; headers['authorization'] = `Bearer ${token}`; }
-  const r = await fetch(`${c.url}${path}`, { headers, signal: AbortSignal.timeout(timeout) });
-  if (r.status === 401 && retry && c.user) { await login(c, true); return fget(c, path, { timeout, retry: false }); }
+  if (range) headers.range = range;
+  const r = await fetch(`${c.url}${path}`, { headers, redirect: 'error', signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(timeout)]) : AbortSignal.timeout(timeout) });
+  if (r.status === 401 && retry && c.user) { await r.body?.cancel(); await login(c, true); return fget(c, path, { timeout, retry: false, range, signal }); }
   return r;
 }
 
@@ -152,7 +155,43 @@ async function events(c, q) {
   });
 }
 
-Deno.serve(guarded(async (req) => {
+const signingSecret = (c) => c.password || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+const edgeBase = (req) => req.url.split('?')[0].split('/frigate')[0] + '/frigate';
+
+async function media(req, c, path, grant, token) {
+  if (!safeMediaPath(path, grant.camera)) return json({ error: 'Invalid playback path' }, 403);
+  const range = req.headers.get('range');
+  if (range && !/^bytes=(\d+-\d*|-\d+)$/.test(range)) return json({ error: 'Invalid range' }, 416);
+  const playlist = path.endsWith('.m3u8');
+  let resolvedPath = path;
+  let r = await fget(c, resolvedPath, { timeout: 60000, range: playlist ? null : range, signal: req.signal });
+  // Some Frigate versions serve HLS from nginx /vod/ while /api/vod/ is JSON mapping only.
+  if (path.startsWith('/api/vod/') && (!r.ok || r.headers.get('content-type')?.includes('application/json'))) {
+    await r.body?.cancel();
+    resolvedPath = path.replace(/^\/api\/vod\//, '/vod/');
+    r = await fget(c, resolvedPath, { timeout: 60000, range: playlist ? null : range, signal: req.signal });
+  }
+  if (!r.ok) {
+    const headers = new Headers({ 'cache-control': 'no-store' });
+    if (r.headers.has('content-range')) headers.set('content-range', r.headers.get('content-range'));
+    await r.body?.cancel();
+    return new Response('Recording unavailable', { status: r.status === 416 ? 416 : r.status === 404 ? 404 : 502, headers });
+  }
+  const headers = new Headers({ 'cache-control': 'private, no-store', 'referrer-policy': 'no-referrer' });
+  if (playlist) {
+    headers.set('content-type', 'application/vnd.apple.mpegurl');
+    const source = await r.text();
+    if (!source.trimStart().startsWith('#EXTM3U')) return json({ error: 'Recording playlist unavailable' }, 502);
+    const text = rewritePlaylist(source, resolvedPath, grant.camera, c.url, edgeBase(req), token);
+    return new Response(text, { headers });
+  }
+  for (const name of ['content-range', 'accept-ranges', 'content-length']) if (r.headers.has(name)) headers.set(name, r.headers.get(name));
+  headers.set('content-type', path.endsWith('.ts') ? 'video/MP2T' : path.match(/\.(mp4|m4s)$/) ? 'video/mp4' : r.headers.get('content-type') || 'video/mp4');
+  return new Response(r.body, { status: r.status, headers });
+}
+
+const authenticated = guarded(async (req) => {
+  if (req.method !== 'GET') return json({ error: 'Method not allowed' }, 405);
   const c = await cfg();
   const path = subPath(req, 'frigate');
   if (!c.ok) return json({ configured: false });
@@ -160,6 +199,24 @@ Deno.serve(guarded(async (req) => {
   try {
     if (path === '' || path === 'status') return await status(c);
     if (path === 'events') return await events(c, q);
+    let rec = path.match(/^api\/([^/]+)\/recordings(\/summary)?$/);
+    if (rec && CAM_RE.test(rec[1])) {
+      const p = new URLSearchParams();
+      if (!rec[2]) {
+        const after = Number(q.get('after')), before = Number(q.get('before'));
+        if (!q.has('after') || !q.has('before') || !Number.isFinite(after) || !Number.isFinite(before) || after < 0 || before <= after || before - after > 48 * 3600 + 60) return json({ error: 'Invalid recording window' }, 400);
+        p.set('after', String(after)); p.set('before', String(before));
+      }
+      const r = await fget(c, `/api/${rec[1]}/recordings${rec[2] || ''}${p.size ? '?' + p : ''}`);
+      if (!r.ok) return json({ error: 'Recordings unavailable' }, r.status === 404 ? 404 : 502);
+      return json(await r.json());
+    }
+    if (path === 'vod-url') {
+      const camera = q.get('camera') || '', start = Number(q.get('start')), end = Number(q.get('end'));
+      if (!CAM_RE.test(camera) || !q.has('start') || !q.has('end') || !validWindow(start, end)) return json({ error: 'Invalid playback window' }, 400);
+      const token = await signMedia(camera, signingSecret(c));
+      return json({ url: `${edgeBase(req)}/vod/${camera}/${start}/${end}/index.m3u8?t=${encodeURIComponent(token)}` });
+    }
     let m = path.match(/^snapshot\/([^/]+)$/);
     if (m && CAM_RE.test(m[1])) {
       const h = Math.min(1080, Math.max(120, Number(q.get('h') || 480)));
@@ -173,6 +230,35 @@ Deno.serve(guarded(async (req) => {
     }
     return json({ error: 'not found' }, 404);
   } catch (e) {
+    if (path === 'vod-url' || /^api\/[^/]+\/recordings/.test(path)) return json({ error: 'Recording service unavailable' }, 502);
     return json({ configured: true, reachable: false, error: String(e?.message || e).slice(0, 160) }, 200);
   }
-}));
+});
+
+// Only camera-scoped media capabilities bypass Bearer auth, for native iOS HLS.
+Deno.serve(async (req) => {
+  const cors = (r) => {
+    const headers = new Headers(r.headers);
+    for (const [name, value] of Object.entries(corsHeaders)) headers.set(name, value);
+    headers.set('Access-Control-Allow-Headers', `${corsHeaders['Access-Control-Allow-Headers']}, range`);
+    headers.set('Access-Control-Expose-Headers', 'Content-Range, Accept-Ranges, Content-Length');
+    return new Response(r.body, { status: r.status, headers });
+  };
+  if (req.method === 'OPTIONS') return cors(new Response(null));
+  const path = subPath(req, 'frigate');
+  if (path !== 'hls' && !path.startsWith('vod/')) return cors(await authenticated(req));
+  if (req.method !== 'GET') return cors(json({ error: 'Method not allowed' }, 405));
+  try {
+    const c = await cfg(), q = new URL(req.url).searchParams;
+    const token = q.get('t') || '';
+    const grant = await verifyMedia(token, signingSecret(c));
+    if (!grant) return cors(json({ error: 'Playback link expired or invalid' }, 401));
+    let upstream = q.get('p') || '';
+    if (path !== 'hls') {
+      const m = path.match(/^vod\/([A-Za-z0-9_-]+)\/(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)\/index\.m3u8$/);
+      if (!m || m[1] !== grant.camera || !validWindow(Number(m[2]), Number(m[3]), grant.exp - 7200)) return cors(json({ error: 'Invalid playback window' }, 403));
+      upstream = `/api/vod/${m[1]}/start/${m[2]}/end/${m[3]}/index.m3u8`;
+    }
+    return cors(await media(req, c, upstream, grant, token));
+  } catch { return cors(json({ error: 'Recording playback unavailable' }, 502)); }
+});
