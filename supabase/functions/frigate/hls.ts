@@ -1,6 +1,9 @@
 /** Camera-scoped, expiring media capabilities. Never contains upstream credentials. */
 export const MEDIA_TTL = 2 * 60 * 60;
 export const CAMERA_RE = /^[A-Za-z0-9_-]{1,64}$/;
+export function mediaEdgeBase(projectUrl: string) {
+  return `${projectUrl.replace(/\/+$/, '')}/functions/v1/frigate`;
+}
 const enc = new TextEncoder();
 const b64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 function un64(value: string) {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { mergeRecordings, playbackWindow, RECORDING_WINDOW, TIMELINE_CAMERAS } from "../src/cameras/recordingTimeline";
-import { MEDIA_TTL, rewritePlaylist, safeMediaPath, signMedia, validWindow, verifyMedia } from "../supabase/functions/frigate/hls";
+import { MEDIA_TTL, rewritePlaylist, safeMediaPath, signMedia, validWindow, verifyMedia, mediaEdgeBase } from "../supabase/functions/frigate/hls";
 
 describe("camera recording rules", () => {
   test("timeline covers 48 hours and only the two office cameras", () => {
@@ -19,6 +19,9 @@ describe("camera recording rules", () => {
 });
 
 describe("signed Frigate HLS", () => {
+  test("media URLs retain the public functions gateway prefix", () => {
+    expect(mediaEdgeBase("https://app.test/")).toBe("https://app.test/functions/v1/frigate");
+  });
   const secret = "test-only-server-signing-key";
   test("tokens are camera scoped, tamper resistant, and expire in two hours", async () => {
     const token = await signMedia("office_top", secret, 100000);
