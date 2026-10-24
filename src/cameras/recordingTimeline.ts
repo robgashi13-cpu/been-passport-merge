@@ -14,7 +14,8 @@ export function parseDownloadTime(value: string, reference: number) {
   // Resolve local wall time against the selected recording's UTC offset, including DST.
   const wall = Date.parse(`${value}Z`) / 1000;
   if (!Number.isFinite(wall)) return NaN;
-  let result = wall - (Date.parse(`${downloadTime(reference)}Z`) / 1000 - reference);
+  const ref = Number.isFinite(reference) ? reference : Math.floor(Date.now() / 1000);
+  let result = wall - (Date.parse(`${downloadTime(ref)}Z`) / 1000 - ref);
   for (let i = 0; i < 2; i++) result += wall - Date.parse(`${downloadTime(result)}Z`) / 1000;
   return downloadTime(result).slice(0, value.length) === value ? result : NaN;
 }
