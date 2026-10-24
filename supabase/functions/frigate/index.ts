@@ -12,7 +12,7 @@
 import { guarded, subPath } from '../_shared/guard.ts';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { db } from '../_shared/wi/cache.ts';
-import { signMedia, verifyMedia, safeMediaPath, rewritePlaylist, validWindow } from './hls.ts';
+import { signMedia, verifyMedia, safeMediaPath, rewritePlaylist, validWindow, mediaEdgeBase } from './hls.ts';
 
 const CAM_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const EVT_RE = /^[A-Za-z0-9._-]{1,80}$/;
@@ -156,7 +156,8 @@ async function events(c, q) {
 }
 
 const signingSecret = (c) => c.password || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-const edgeBase = (req) => req.url.split('?')[0].split('/frigate')[0] + '/frigate';
+// Gateway request URLs are internal and may omit /functions/v1; always use the public project base.
+const edgeBase = (_req) => mediaEdgeBase(Deno.env.get('SUPABASE_URL') || '');
 
 async function media(req, c, path, grant, token) {
   if (!safeMediaPath(path, grant.camera)) return json({ error: 'Invalid playback path' }, 403);
