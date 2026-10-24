@@ -1,4 +1,5 @@
 # App stability and media polish
+- [ ] Add covered-range timeline download selection, signed MP4 streaming, tests, and deployed one-minute clip verification.
 - [x] Add camera-only 48h recording timeline and secure signed HLS playback; focused tests and build passed, frigate deployed.
 - [ ] Verify actual timeline recording playback on iPhone: blocked until a signed-in camera session is available.
 - [x] Reveal dashboard Edit on downward swipe; retain accessible editing. Isolated desktop/touch interactions passed.
