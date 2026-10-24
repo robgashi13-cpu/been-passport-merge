@@ -163,7 +163,14 @@ async function media(req, c, path, grant, token) {
   const range = req.headers.get('range');
   if (range && !/^bytes=(\d+-\d*|-\d+)$/.test(range)) return json({ error: 'Invalid range' }, 416);
   const playlist = path.endsWith('.m3u8');
-  const r = await fget(c, path, { timeout: 60000, range: playlist ? null : range, signal: req.signal });
+  let resolvedPath = path;
+  let r = await fget(c, resolvedPath, { timeout: 60000, range: playlist ? null : range, signal: req.signal });
+  // Some Frigate versions serve HLS from nginx /vod/ while /api/vod/ is JSON mapping only.
+  if (path.startsWith('/api/vod/') && (!r.ok || r.headers.get('content-type')?.includes('application/json'))) {
+    await r.body?.cancel();
+    resolvedPath = path.replace(/^\/api\/vod\//, '/vod/');
+    r = await fget(c, resolvedPath, { timeout: 60000, range: playlist ? null : range, signal: req.signal });
+  }
   if (!r.ok) {
     const headers = new Headers({ 'cache-control': 'no-store' });
     if (r.headers.has('content-range')) headers.set('content-range', r.headers.get('content-range'));
@@ -173,7 +180,9 @@ async function media(req, c, path, grant, token) {
   const headers = new Headers({ 'cache-control': 'private, no-store', 'referrer-policy': 'no-referrer' });
   if (playlist) {
     headers.set('content-type', 'application/vnd.apple.mpegurl');
-    const text = rewritePlaylist(await r.text(), path, grant.camera, c.url, edgeBase(req), token);
+    const source = await r.text();
+    if (!source.trimStart().startsWith('#EXTM3U')) return json({ error: 'Recording playlist unavailable' }, 502);
+    const text = rewritePlaylist(source, resolvedPath, grant.camera, c.url, edgeBase(req), token);
     return new Response(text, { headers });
   }
   for (const name of ['content-range', 'accept-ranges', 'content-length']) if (r.headers.has(name)) headers.set(name, r.headers.get(name));
