@@ -1,4 +1,5 @@
 # App stability and media polish
+- [ ] Add camera-only 48h recording timeline and secure signed HLS playback; test and deploy frigate.
 - [x] Reveal dashboard Edit on downward swipe; retain accessible editing. Isolated desktop/touch interactions passed.
 - [x] Add eight opt-in widgets from existing tabs and bound card tracks.
 - [x] Reduce duplicate loading and add transform/opacity spring motion with reduced-motion support.
