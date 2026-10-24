@@ -7,6 +7,7 @@ import { AlfredOpen } from "@/lib/alfred";
 import { deliverFile, fileName } from "@/lib/download";
 import { useAuth } from "@/hub/auth";
 import { ago, Cam, camLabel, FEvent, fjson, fmtWhen, Status, useAuthedBlob, useFrigate } from "./frigate";
+import Timeline from "./Timeline";
 
 function useInView<T extends Element>() {
   const ref = useRef<T | null>(null);
@@ -284,7 +285,7 @@ export default function CamerasApp() {
   const st = useFrigate<Status>("status", 10000);
   const [fs, setFs] = useState<number | null>(null);
   const s = st.data;
-  const cams = s && s.configured && s.reachable ? s.cameras : [];
+  const cams = s && s.configured && s.reachable ? s.cameras.filter((c) => c.name !== "office") : [];
   const active = cams.filter((c) => c.enabled);
   const disabled = cams.filter((c) => !c.enabled);
   const online = active.filter((c) => c.online).length;
@@ -336,6 +337,7 @@ export default function CamerasApp() {
               <Video className="h-3.5 w-3.5" /> Disabled in Frigate: {disabled.map((c) => camLabel(c.name)).join(", ")}
             </div>
           )}
+          <Timeline cams={active} />
           <Events cams={active} />
           {fs != null && active[fs] && <Fullscreen cams={active} index={fs} setIndex={setFs} onClose={() => setFs(null)} />}
         </>
