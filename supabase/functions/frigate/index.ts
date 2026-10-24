@@ -230,6 +230,7 @@ const authenticated = guarded(async (req) => {
     }
     return json({ error: 'not found' }, 404);
   } catch (e) {
+    if (path === 'vod-url' || /^api\/[^/]+\/recordings/.test(path)) return json({ error: 'Recording service unavailable' }, 502);
     return json({ configured: true, reachable: false, error: String(e?.message || e).slice(0, 160) }, 200);
   }
 });

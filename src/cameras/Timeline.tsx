@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Clock, RefreshCw, X } from "lucide-react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
@@ -77,6 +77,7 @@ export default function Timeline({ cams }: { cams: Cam[] }) {
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
   const start = now - RECORDING_WINDOW;
   const [selection, setSelection] = useState<{ start: number; end: number } | null>(null);
+  const closePlayer = useCallback(() => setSelection(null), []);
   const recordings = useFrigate<Recording[]>(`api/${camera}/recordings?after=${start}&before=${now}`, 60000);
   const events = useFrigate<{ items: FEvent[] }>(`events?camera=${camera}&limit=100`, 30000);
   const spans = useMemo(() => mergeRecordings(Array.isArray(recordings.data) ? recordings.data : [], start, now), [recordings.data, start, now]);
@@ -128,7 +129,7 @@ export default function Timeline({ cams }: { cams: Cam[] }) {
         <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-foreground" />Detection</span>
         {recordings.loading ? <span role="status">Loading recordings…</span> : recordings.error ? <span role="alert" className="text-destructive">Couldn't load recordings.</span> : !spans.length ? <span>No recordings in the last 48 hours.</span> : null}
       </div>
-      {selection && <TimelinePlayer camera={camera} {...selection} onClose={() => setSelection(null)} />}
+      {selection && <TimelinePlayer camera={camera} {...selection} onClose={closePlayer} />}
     </section>
   );
 }
