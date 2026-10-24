@@ -1,8 +1,37 @@
 import { describe, expect, test } from "bun:test";
-import { mergeRecordings, playbackWindow, RECORDING_WINDOW, TIMELINE_CAMERAS } from "../src/cameras/recordingTimeline";
+import { coveredDownload, downloadTime, parseDownloadTime, mergeRecordings, playbackWindow, RECORDING_WINDOW, TIMELINE_CAMERAS } from "../src/cameras/recordingTimeline";
+import { coveredClip, clipFilename } from "../supabase/functions/frigate/clip";
 import { MEDIA_TTL, rewritePlaylist, safeMediaPath, signMedia, validWindow, verifyMedia, mediaEdgeBase } from "../supabase/functions/frigate/hls";
 
 describe("camera recording rules", () => {
+  test("downloads allow exactly 60 minutes, not longer or backwards", () => {
+    const spans = [{ start: 100000, end: 110000 }];
+    expect(coveredDownload(100000, 103600, spans)).toBe(true);
+    expect(coveredDownload(100000, 103601, spans)).toBe(false);
+    expect(coveredDownload(103600, 100000, spans)).toBe(false);
+    expect(coveredClip(100000, 103600, [{ start_time: 100000, end_time: 110000 }], 110000)).toBe(true);
+    expect(coveredClip(100000, 103601, [{ start_time: 100000, end_time: 110000 }], 110000)).toBe(false);
+    expect(coveredClip(103600, 100000, [{ start_time: 100000, end_time: 110000 }], 110000)).toBe(false);
+  });
+  test("download ranges cannot cross gaps or escape covered recordings", () => {
+    const recordings = [{ start_time: 100000, end_time: 100060 }, { start_time: 100070, end_time: 100120 }];
+    const spans = mergeRecordings(recordings, 100000, 100120);
+    expect(coveredDownload(100000, 100060, spans)).toBe(true);
+    expect(coveredDownload(100030, 100100, spans)).toBe(false);
+    expect(coveredDownload(99999, 100030, spans)).toBe(false);
+    expect(coveredClip(100030, 100100, recordings, 100120)).toBe(false);
+    expect(coveredClip(99999, 100030, recordings, 100120)).toBe(false);
+    expect(coveredClip(100000, 100120, [{ start_time: 100000, end_time: 100060 }, { start_time: 100060, end_time: 100120 }], 100120)).toBe(true);
+  });
+  test("download times and filenames use Belgrade rather than device timezone", () => {
+    const start = Date.parse("2026-10-24T12:00:00Z") / 1000;
+    expect(downloadTime(start)).toBe("2026-10-24T14:00:00");
+    expect(parseDownloadTime("2026-10-24T14:01:00", start)).toBe(start + 60);
+    expect(clipFilename("office_top", start, start + 60)).toBe("office_top_2026-10-24_1400-1401.mp4");
+    const winter = Date.parse("2026-12-01T12:00:00Z") / 1000;
+    expect(downloadTime(winter)).toBe("2026-12-01T13:00:00");
+    expect(parseDownloadTime("2026-12-01T13:00:00", winter)).toBe(winter);
+  });
   test("timeline covers 48 hours and only the two office cameras", () => {
     expect(RECORDING_WINDOW).toBe(172800);
     expect(TIMELINE_CAMERAS).toEqual(["office_top", "office_bottom"]);
