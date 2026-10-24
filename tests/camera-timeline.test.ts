@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mergeRecordings, playbackWindow, RECORDING_WINDOW, TIMELINE_CAMERAS } from "../src/cameras/timeline";
+import { mergeRecordings, playbackWindow, RECORDING_WINDOW, TIMELINE_CAMERAS } from "../src/cameras/recordingTimeline";
 import { MEDIA_TTL, rewritePlaylist, safeMediaPath, signMedia, validWindow, verifyMedia } from "../supabase/functions/frigate/hls";
 
 describe("camera recording rules", () => {

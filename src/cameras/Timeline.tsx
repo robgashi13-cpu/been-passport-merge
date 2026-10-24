@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hub/auth";
 import { camLabel, fjson, fmtWhen, useFrigate, type Cam, type FEvent } from "./frigate";
-import { mergeRecordings, playbackWindow, RECORDING_WINDOW, TIMELINE_CAMERAS, type Recording } from "./timeline";
+import { mergeRecordings, playbackWindow, RECORDING_WINDOW, TIMELINE_CAMERAS, type Recording } from "./recordingTimeline";
 
 function TimelinePlayer({ camera, start, end, onClose }: { camera: string; start: number; end: number; onClose: () => void }) {
   const { token } = useAuth();
@@ -61,7 +61,7 @@ function TimelinePlayer({ camera, start, end, onClose }: { camera: string; start
           <Button variant="ghost" size="icon" aria-label="Close recording" onClick={onClose}><X /></Button>
         </div>
         <div className="relative aspect-video bg-background">
-          <video ref={video} playsInline controls autoPlay muted referrerPolicy="no-referrer" className="h-full w-full"
+          <video ref={video} playsInline controls autoPlay muted className="h-full w-full"
             onLoadedData={() => setLoading(false)} onTimeUpdate={() => setPlayingTime(start + (video.current?.currentTime || 0))}
             onError={() => { setError("This recording couldn't play. Try another time."); setLoading(false); }} />
           {(loading || error) && <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-4 text-center text-sm text-muted-foreground" role={error ? "alert" : "status"}>{error || "Loading recording…"}</div>}

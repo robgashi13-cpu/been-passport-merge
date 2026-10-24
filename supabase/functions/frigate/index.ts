@@ -9,7 +9,7 @@
 // Fallback when those env secrets are not set: rows frigate_url / frigate_user / frigate_password in
 // public.hq_secrets (RLS on, no policies, service-role only — same store as the cron key).
 // Without either, every route answers { configured: false }.
-import { guarded, subPath, withCors } from '../_shared/guard.ts';
+import { guarded, subPath } from '../_shared/guard.ts';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { db } from '../_shared/wi/cache.ts';
 import { signMedia, verifyMedia, safeMediaPath, rewritePlaylist, validWindow } from './hls.ts';
