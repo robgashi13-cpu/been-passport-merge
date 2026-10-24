@@ -46,7 +46,7 @@ export default function TimelineDownload({ camera, range, spans, onChange }: { c
   };
   return <div className="mt-3 border-t border-border pt-3">
     <div className="flex flex-wrap items-end gap-3">
-      {(["start", "end"] as const).map((field) => <label key={field} className="min-w-0 flex-1 text-xs text-muted-foreground">
+      {(["start", "end"] as const).map((field) => <label key={field} className="min-w-0 flex-1 basis-[220px] text-xs text-muted-foreground">
         <span className="mb-1 block capitalize">{field} · Belgrade</span>
         <input type="datetime-local" step="1" aria-label={`Download ${field} time`} disabled={!range || busy}
           value={range && Number.isFinite(range[field]) ? downloadTime(range[field]) : ""}
