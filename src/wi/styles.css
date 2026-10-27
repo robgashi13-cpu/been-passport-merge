@@ -1,13 +1,13 @@
 /* World Intel — calm, minimal, mobile-first. Perf rules: animate only transform/opacity; no backdrop-filter or
    large shadows on anything that scrolls or sits over the WebGL canvas; scroll containers use contain + overscroll. */
 .wi-root{
-  --bg:#0a0c0f; --surface:rgba(16,19,24,.9); --surface2:#151a20; --surface3:#1b2129; --hair:rgba(255,255,255,.07); --hair2:rgba(255,255,255,.12);
-  --tx:#e8eaed; --tx2:#c3c8cf; --mut:#8a919b; --dim:#5b626c; --acc:#6cb8ff; --acc-bg:rgba(108,184,255,.14);
-  --ok:#4cc38a; --warn:#f5b83d; --bad:#ff5a5f;
-  --ui:'Inter Variable',Inter,-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
-  --r:14px; --r-sm:10px; --top-h:52px; --tab-h:56px;
-  --sat:0px; --sab:env(safe-area-inset-bottom,0px); --sal:env(safe-area-inset-left,0px); --sar:env(safe-area-inset-right,0px);
-  --spring:cubic-bezier(.2,.9,.25,1.05);
+  --bg:hsl(var(--background)); --surface:hsl(var(--card) / .9); --surface2:hsl(var(--card)); --surface3:hsl(var(--secondary)); --hair:hsl(var(--border) / .6); --hair2:hsl(var(--border));
+  --tx:hsl(var(--foreground)); --tx2:hsl(var(--foreground) / .8); --mut:hsl(var(--muted-foreground)); --dim:hsl(var(--muted-foreground)); --acc:hsl(var(--primary)); --acc-bg:hsl(var(--primary) / .12);
+  --ok:hsl(var(--success)); --warn:hsl(var(--warning)); --bad:hsl(var(--destructive)); --tx3:hsl(var(--muted-foreground));
+  --ui:var(--system-font); --mono:var(--system-font);
+  --r:24px; --r-sm:14px; --top-h:52px; --tab-h:56px;
+  --sat:0px; --sab:0px; --sal:env(safe-area-inset-left,0px); --sar:env(safe-area-inset-right,0px);
+  --spring:var(--ease-spring);
 }
 .wi-root *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 .wi-root{margin:0;background:var(--bg);color:var(--tx);font-family:var(--ui);font-size:14px;line-height:1.4;overflow:hidden;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;overscroll-behavior:none}
@@ -15,7 +15,7 @@
 .wi-root a{color:var(--acc);text-decoration:none}
 .wi-root button,.wi-root select,.wi-root input{font-family:var(--ui);font-size:13px;color:var(--tx);background:var(--surface3);border:0;border-radius:var(--r-sm);padding:7px 11px;outline:none}
 .wi-root button{cursor:pointer;touch-action:manipulation;transition:opacity .15s,transform .15s} .wi-root button:active{transform:scale(.96);opacity:.8}
-.wi-root button.ghost{background:transparent;color:var(--tx2)} .wi-root button.primary{background:var(--acc);color:#05121f;font-weight:600}
+.wi-root button.ghost{background:transparent;color:var(--tx2)} .wi-root button.primary{background:var(--acc);color:hsl(var(--primary-foreground));font-weight:600}
 .wi-root select{-webkit-appearance:none;appearance:none;padding-right:26px;background-image:linear-gradient(45deg,transparent 50%,var(--mut) 50%),linear-gradient(135deg,var(--mut) 50%,transparent 50%);background-position:calc(100% - 14px) 52%,calc(100% - 9px) 52%;background-size:5px 5px;background-repeat:no-repeat}
 .wi-root input:focus,.wi-root select:focus{box-shadow:0 0 0 2px var(--acc-bg)}
 .wi-root code{font-family:var(--mono);font-size:.9em;color:var(--tx);background:var(--surface3);padding:1px 5px;border-radius:5px}
@@ -69,7 +69,7 @@
 .wi-root .view{position:absolute;inset:0;contain:strict}
 
 /* bottom tab bar (mobile) */
-.wi-root .tabbar{flex:none;height:calc(var(--tab-h) + var(--sab));padding:0 var(--sar) var(--sab) var(--sal);display:flex;background:#0d1014;border-top:1px solid var(--hair);z-index:30}
+.wi-root .tabbar{flex:none;height:calc(var(--tab-h) + var(--sab));padding:0 var(--sar) var(--sab) var(--sal);display:flex;background:var(--surface2);border-top:1px solid var(--hair);z-index:30}
 .wi-root .tb{flex:1;background:none;border-radius:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--dim);font-size:10.5px;font-weight:550;padding:6px 0 0}
 .wi-root .tb svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;transition:transform .25s var(--spring)}
 .wi-root .tb.on{color:var(--acc)} .wi-root .tb.on svg{transform:translateY(-1px) scale(1.06)} .wi-root .tb:active{transform:none} .wi-root .tb:active svg{transform:scale(.88)}
@@ -77,12 +77,12 @@
 /* globe view */
 .wi-root .globe-view{position:absolute;inset:0;overflow:hidden;background:radial-gradient(90% 70% at 50% 45%,#0f1722 0%,#0a0c0f 70%)}
 .wi-root .globe-canvas{position:absolute;inset:0;touch-action:none}
-.wi-root .glass{background:rgba(16,19,24,.78);border:1px solid var(--hair)}
+.wi-root .glass{background:var(--surface);border:1px solid var(--hair)}
 .wi-root .chips{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:6;display:flex;gap:8px;align-items:center;white-space:nowrap}
 .wi-root .chip{font-size:12.5px;padding:7px 12px;border-radius:999px;color:var(--tx2);display:flex;gap:5px;align-items:center}
 .wi-root .chip.icon{padding:7px 11px}
 .wi-root .seg-mini{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:var(--surface3)}
-.wi-root .seg-mini.glass{background:rgba(16,19,24,.78)}
+.wi-root .seg-mini.glass{background:var(--surface)}
 .wi-root .seg-mini button{background:none;color:var(--mut);font-size:12px;font-weight:550;padding:5px 11px;border-radius:999px;transition:background-color .2s,color .2s}
 .wi-root .seg-mini button.on{background:var(--surface);color:var(--tx);box-shadow:0 1px 2px rgba(0,0,0,.3)}
 .wi-root .seg-mini.glass button.on{background:var(--acc-bg);color:var(--acc);box-shadow:none}
@@ -280,3 +280,5 @@
 .wi-root .ev-art-site{font-size:11px;color:var(--tx3,#8b96a3)}
 .wi-root .ev-art-desc{font-size:12.5px;line-height:1.45;color:var(--tx2,#b8c2cc)}
 .wi-root .ev-art-loading{font-size:12px;color:var(--tx3,#8b96a3)}
+
+.wi-root .globe-view { background:var(--bg); }

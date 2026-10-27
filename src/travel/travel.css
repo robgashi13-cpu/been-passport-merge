@@ -1,6 +1,6 @@
 /* Travel module styles, ported from Been Passport Merge index.css (Tailwind v3 layer and apply
    directives removed; risky global element rules scoped under .travel-root). */
-.travel-root { --gradient-shimmer: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent); --gradient-premium: linear-gradient(135deg, #1a1d29 0%, #0b0d12 100%); --shadow-card: 0 10px 30px -10px rgba(0,0,0,.6); }
+.travel-root { --gradient-shimmer: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent); --gradient-premium: linear-gradient(135deg,hsl(var(--card)),hsl(var(--background))); --shadow-card: var(--glass-shadow); }
 
 
   .font-numbers {
@@ -526,7 +526,7 @@ body.modal-open {
   animation: overlayIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 @keyframes overlayIn {
-  from { opacity: 0; backdrop-filter: blur(0) saturate(100%); }
+  from { opacity: 0;  }
   to   { opacity: 1; }
 }
 
@@ -537,8 +537,8 @@ body.modal-open {
   animation: liquidRise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 @keyframes liquidRise {
-  from { opacity: 0; transform: translateY(24px) scale(0.96); filter: blur(8px); }
-  to   { opacity: 1; transform: translateY(0)    scale(1);    filter: blur(0); }
+  from { opacity: 0; transform: translateY(24px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
 }
 
 /* Smoother card interiors inside modals — liquid glass tiles */
@@ -615,3 +615,5 @@ body.modal-open {
   width: 8px; height: 8px; border-radius: 50%;
   box-shadow: 0 0 8px currentColor;
 }
+
+.travel-root .transition-smooth,.travel-root .transition-fast,.travel-root .liquid-glass,.travel-root .glass-card,.travel-root .globe-chrome { transition-property:transform,opacity; }
