@@ -77,12 +77,11 @@ export const AIAssistant = ({ initialDestination }: AIAssistantProps = {}) => {
                 onClick={() => setOpen(true)}
                 aria-label="Open AI travel assistant"
                 className="fixed right-4 z-[90] flex items-center gap-2 rounded-full
-                           bg-gradient-to-br from-[hsl(var(--gold))] to-[hsl(45_85%_50%)]
-                           text-black font-semibold px-4 py-3 shadow-[0_8px_30px_-6px_hsl(var(--gold)/0.6)]
+                           glass-strong press text-white font-semibold px-4 py-3
                            hover:scale-[1.04] active:scale-95 transition-transform"
-                style={{ bottom: "calc(env(safe-area-inset-bottom) + 1.25rem)" }}
+                style={{ bottom: "calc(var(--tabbar-h) + 0.5rem)" }}
             >
-                <MessageCircle className="w-4 h-4" />
+                <MessageCircle className="w-4 h-4 text-primary" />
                 <span className="text-sm">Ask AI</span>
             </button>
 

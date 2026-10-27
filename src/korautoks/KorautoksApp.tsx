@@ -33,7 +33,7 @@ const title = (c: Partial<Item>) => c.name || [c.brand, c.model].filter(Boolean)
 
 function Chip({ tone = "zinc", children }: { tone?: "green" | "amber" | "red" | "zinc" | "sky"; children: ReactNode }) {
   const cls = { green: "bg-emerald-400/12 text-emerald-200", amber: "bg-amber-300/12 text-amber-200", red: "bg-red-400/12 text-red-200", zinc: "bg-white/[0.07] text-white/75", sky: "bg-sky-400/12 text-sky-200" }[tone];
-  return <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${cls}`}>{children}</span>;
+  return <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${cls}`}>{children}</span>;
 }
 
 function StatusChips({ c }: { c: Partial<Item> & Record<string, any> }) {
@@ -67,8 +67,8 @@ function Section({ title, children, open = true, testid }: { title: string; chil
   return (
     <section className="hq-card p-4" data-testid={testid}>
       <button onClick={() => setO(!o)} className="flex w-full items-center justify-between text-left">
-        <h3 className="hq-label">{title}</h3>
-        <ChevronDown className={`h-4 w-4 text-white/40 transition-transform ${o ? "rotate-180" : ""}`} />
+        <h3 className="t-headline">{title}</h3>
+        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${o ? "rotate-180" : ""}`} />
       </button>
       {o && <div className="mt-3">{children}</div>}
     </section>
@@ -82,16 +82,16 @@ function Tree({ v, depth = 0, name }: { v: any; depth?: number; name?: string })
   if (!isObj)
     return (
       <div className="flex gap-2 py-0.5 font-mono text-[11.5px]">
-        {name != null && <span className="shrink-0 text-sky-200/80">{name}:</span>}
+        {name != null && <span className="shrink-0 text-primary">{name}:</span>}
         <span className="min-w-0 break-all text-white/85">{v === null ? "null" : typeof v === "string" ? v : JSON.stringify(v)}</span>
       </div>
     );
   const entries = Array.isArray(v) ? v.map((x, i) => [String(i), x] as const) : Object.entries(v);
   return (
     <div className="font-mono text-[11.5px]">
-      <button onClick={() => setOpen(!open)} className="flex items-center gap-1 py-0.5 text-left text-sky-200/80">
+      <button onClick={() => setOpen(!open)} className="flex items-center gap-1 py-0.5 text-left text-primary">
         <ChevronDown className={`h-3 w-3 transition-transform ${open ? "" : "-rotate-90"}`} />
-        {name ?? "record"} <span className="text-white/35">{Array.isArray(v) ? `[${v.length}]` : `{${entries.length}}`}</span>
+        {name ?? "record"} <span className="text-muted-foreground">{Array.isArray(v) ? `[${v.length}]` : `{${entries.length}}`}</span>
       </button>
       {open && <div className="ml-3 border-l border-white/[0.07] pl-2">{entries.map(([k, x]) => <Tree key={k} name={k} v={x} depth={depth + 1} />)}</div>}
     </div>
@@ -101,16 +101,16 @@ function Tree({ v, depth = 0, name }: { v: any; depth?: number; name?: string })
 function Gallery({ images, alt }: { images: string[]; alt: string }) {
   const [i, setI] = useState(0);
   useEffect(() => setI(0), [images]);
-  if (!images.length) return <div className="flex aspect-[16/10] items-center justify-center rounded-2xl bg-white/[0.04]"><CarFront className="h-10 w-10 text-white/25" /></div>;
+  if (!images.length) return <div className="flex aspect-[16/10] items-center justify-center rounded-2xl bg-foreground/[0.05]"><CarFront className="h-10 w-10 text-white/55" /></div>;
   return (
     <div data-testid="kks-gallery" className="min-w-0">
-      <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-black">
+      <div className="on-media relative aspect-[16/10] overflow-hidden rounded-2xl bg-black">
         <img src={images[i]} alt={alt} referrerPolicy="no-referrer" className="h-full w-full object-contain" />
         <span className="absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-[11px] text-white">{i + 1} / {images.length}</span>
       </div>
       <div className="no-scrollbar mt-2 flex gap-1.5 overflow-x-auto">
         {images.map((src, k) => (
-          <button key={src + k} onClick={() => setI(k)} className={`h-12 w-16 shrink-0 overflow-hidden rounded-lg ring-2 ${k === i ? "ring-white" : "ring-transparent opacity-70"}`} aria-label={`Photo ${k + 1}`}>
+          <button key={src + k} onClick={() => setI(k)} className={`h-12 w-16 shrink-0 overflow-hidden rounded-xl ring-2 transition-opacity ${k === i ? "ring-primary" : "ring-transparent opacity-70"}`} aria-label={`Photo ${k + 1}`}>
             <img src={src} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
           </button>
         ))}
@@ -131,24 +131,24 @@ function CarDetail({ d, onBack }: { d: Detail; onBack: () => void }) {
   const desc = c.description || x.descriptionEn || x.description || "";
   return (
     <article className="space-y-3" data-testid="kks-detail">
-      <button onClick={onBack} className="flex items-center gap-1.5 text-[13px] text-white/70 hover:text-white lg:hidden"><ArrowLeft className="h-4 w-4" /> Results</button>
+      <button onClick={onBack} className="press flex items-center gap-1.5 text-[15px] text-primary lg:hidden"><ArrowLeft className="h-4 w-4" /> Results</button>
       <div className="hq-card p-4">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
           <Gallery images={images} alt={title(c)} />
           <div className="min-w-0">
-            <h2 className="font-display text-2xl font-semibold text-white" data-testid="kks-title">{title(c)} <span className="text-white/45">{c.year}</span></h2>
+            <h2 className="t-title2 text-white" data-testid="kks-title">{title(c)} <span className="text-white/45">{c.year}</span></h2>
             <div className="mt-1 text-[13px] text-muted-foreground">{[c.generation, c.version].filter(Boolean).join(" · ")}</div>
             <div className="mt-3 flex items-baseline gap-3">
-              <span className="hq-num text-3xl font-semibold text-white">{eur(c.price)}</span>
+              <span className="hq-num hq-big text-white">{eur(c.price)}</span>
               {x.original_price && x.discount_pct ? <span className="text-sm text-white/45 line-through">{eur(x.original_price)}</span> : null}
             </div>
             <div className="mt-2"><StatusChips c={c} /></div>
             <Rows rows={[["VIN", <span className="font-mono">{c.vin || "—"}</span>], ["Lot", <span className="font-mono">{c.lot || "—"}</span>], ["Plate", <span className="font-mono">{c.plate_number || "—"}</span>], ["Mileage", c.mileage || (c.mileage_num != null ? `${c.mileage_num} km` : "—")]]} />
             <div className="mt-3 flex flex-wrap gap-2">
-              <a href={d.publicUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[13px] font-medium text-black" data-testid="kks-public-link">
+              <a href={d.publicUrl} target="_blank" rel="noopener noreferrer" className="hq-btn" data-testid="kks-public-link">
                 View on korautoks.com <ArrowUpRight className="h-3.5 w-3.5" />
               </a>
-              {c.external_url && <a href={c.external_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1.5 text-[13px] text-white/85">Source listing <ExternalLink className="h-3.5 w-3.5" /></a>}
+              {c.external_url && <a href={c.external_url} target="_blank" rel="noopener noreferrer" className="hq-btn" data-tone="plain">Source listing <ExternalLink className="h-3.5 w-3.5" /></a>}
             </div>
           </div>
         </div>
@@ -168,7 +168,7 @@ function CarDetail({ d, onBack }: { d: Detail; onBack: () => void }) {
           <Rows rows={[
             ["Catalog id", <span className="font-mono text-[11.5px]">{c.id}</span>], ["VIN", c.vin || "—"], ["Lot", c.lot || "—"], ["Plate", c.plate_number || "—"], ["Plate last 4", c.plate_last4 || "—"],
             ["Source", c.source_label || c.external_source || "—"], ["External id", c.external_id || "—"], ["Encar vehicle id", x.encarVehicleId ?? "—"], ["API car id", x.apiCarId ?? "—"],
-            ["External URL", c.external_url ? <a className="text-sky-300 underline" href={c.external_url} target="_blank" rel="noopener noreferrer">open</a> : "—"], ["Origin", c.origin_country || "—"],
+            ["External URL", c.external_url ? <a className="text-primary underline" href={c.external_url} target="_blank" rel="noopener noreferrer">open</a> : "—"], ["Origin", c.origin_country || "—"],
             ["Location", [x.location?.city?.name, x.location?.country?.name].filter(Boolean).join(", ") || "—"],
           ]} />
         </Section>
@@ -197,9 +197,9 @@ function CarDetail({ d, onBack }: { d: Detail; onBack: () => void }) {
         <Section title={`Diagnosis (${diag.length})`} open={false}>
           <ul className="grid grid-cols-1 gap-1 sm:grid-cols-2">
             {diag.map((g, i) => (
-              <li key={i} className="flex justify-between gap-2 rounded-lg bg-white/[0.02] px-2.5 py-1.5 text-[12.5px]">
+              <li key={i} className="flex justify-between gap-2 rounded-xl bg-foreground/[0.045] px-3 py-2 text-[13px]">
                 <span className="text-white/80">{String(g.name || "").replace(/_/g, " ").toLowerCase()}</span>
-                <span className={g.resultCode === "NORMAL" ? "text-emerald-300" : "text-amber-200"}>{g.resultEn || g.result}</span>
+                <span className={g.resultCode === "NORMAL" ? "text-[hsl(var(--success))]" : "text-[hsl(var(--orange))]"}>{g.resultEn || g.result}</span>
               </li>
             ))}
           </ul>
@@ -209,16 +209,16 @@ function CarDetail({ d, onBack }: { d: Detail; onBack: () => void }) {
         <Section title="Inspection report" open={false}>
           <div className="flex flex-wrap gap-2">
             {inspImgs.map((p, i) => (
-              <a key={i} href={`https://ci.encar.com${p.path}`} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/15 px-3 py-1.5 text-[12px] text-white/85">{(p.title || `Page ${i + 1}`).split("\n")[0]} ↗</a>
+              <a key={i} href={`https://ci.encar.com${p.path}`} target="_blank" rel="noopener noreferrer" className="hq-btn !h-8" data-tone="plain">{(p.title || `Page ${i + 1}`).split("\n")[0]} ↗</a>
             ))}
-            {x.inspectionReport?.pageUrl && <a href={x.inspectionReport.pageUrl} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/15 px-3 py-1.5 text-[12px] text-white/85">Full report on Encar ↗</a>}
+            {x.inspectionReport?.pageUrl && <a href={x.inspectionReport.pageUrl} target="_blank" rel="noopener noreferrer" className="hq-btn !h-8" data-tone="plain">Full report on Encar ↗</a>}
           </div>
         </Section>
       )}
       {opts.length > 0 && (
         <Section title={`Options (${opts.length})`} open={false}>
           <ul className="flex flex-wrap gap-1.5">
-            {opts.map((o, i) => <li key={i} className="rounded-full bg-white/[0.05] px-2.5 py-1 text-[12px] text-white/80">{o.labelEn || o.labelKo}</li>)}
+            {opts.map((o, i) => <li key={i} className="rounded-full bg-foreground/[0.06] px-2.5 py-1 text-[13px] text-white/80">{o.labelEn || o.labelKo}</li>)}
           </ul>
         </Section>
       )}
@@ -281,19 +281,19 @@ export default function KorautoksApp() {
     <main className="mx-auto max-w-[1440px] px-3 pb-12 pt-4 sm:px-5" data-testid="korautoks-page">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h1 className="font-display text-2xl font-semibold text-white">korautoks.com</h1>
-          <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5" /> Search &amp; view only — nothing here can change the website.</p>
+          <h1 className="sr-only">korautoks.com</h1>
+          <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5" /> Search &amp; view only — nothing here can change the website.</p>
         </div>
-        <a href="https://korautoks.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[12px] text-white/60 hover:text-white">Open website <ArrowUpRight className="h-3 w-3" /></a>
+        <a href="https://korautoks.com" target="_blank" rel="noopener noreferrer" className="press flex items-center gap-1 text-[14px] text-primary">Open website <ArrowUpRight className="h-3 w-3" /></a>
       </div>
       <form onSubmit={submit} className="mt-3 flex gap-2">
         <label className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="VIN, lot ID or plate (e.g. 179가 3084)"
-            className="w-full rounded-full border border-white/10 bg-white/[0.04] py-2.5 pl-10 pr-4 text-[15px] text-white placeholder:text-white/35 focus:border-white/30 focus:outline-none"
+            className="w-full rounded-full bg-foreground/[0.07] py-2.5 pl-10 pr-4 text-[16px] text-white placeholder:text-white/55 focus:outline-none focus:ring-2 focus:ring-primary/40"
             aria-label="Search korautoks.com cars"
             autoCapitalize="characters"
             autoCorrect="off"
@@ -301,28 +301,28 @@ export default function KorautoksApp() {
             data-testid="kks-search"
           />
         </label>
-        <button className="shrink-0 rounded-full bg-white px-5 text-sm font-medium text-black">Search</button>
+        <button className="hq-btn !h-11 !px-5 shrink-0">Search</button>
       </form>
 
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[380px_minmax(0,1fr)]">
         <section className={`${carId ? "hidden lg:block" : ""} min-w-0`}>
-          <div className="mb-2 text-[12px] text-muted-foreground">
+          <div className="mb-2 text-[13px] text-muted-foreground">
             {res.loading ? "Searching…" : q.trim().length >= 3 ? `${res.items.length} result${res.items.length === 1 ? "" : "s"}${kindLabel ? ` · matched by ${kindLabel}` : ""}${res.mode === "public" ? " · published cars" : ""}` : "Search by VIN (17 chars), Encar lot number, or Korean plate (spaces/dashes ignored)."}
           </div>
-          {res.error && <div className="rounded-xl border border-red-400/20 bg-red-400/[0.06] p-3 text-sm text-red-200">{res.error}</div>}
-          <ul className="space-y-2" data-testid="kks-results">
+          {res.error && <div className="rounded-2xl bg-[hsl(var(--destructive)/.12)] p-3 text-sm text-[hsl(var(--destructive))]">{res.error}</div>}
+          <ul className="space-y-2.5" data-testid="kks-results">
             {res.items.map((c) => (
               <li key={c.id}>
-                <button onClick={() => open(c.id)} className={`flex w-full gap-3 rounded-2xl border p-2 text-left transition-colors ${carId === c.id ? "border-white/40 bg-white/[0.07]" : "border-white/[0.07] bg-white/[0.02] hover:bg-white/[0.05]"}`}>
-                  <div className="h-16 w-24 shrink-0 overflow-hidden rounded-xl bg-white/5">
-                    {c.primary_image_url ? <img src={c.primary_image_url} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-full w-full object-cover" /> : <CarFront className="m-auto mt-5 h-6 w-6 text-white/25" />}
+                <button onClick={() => open(c.id)} className={`press flex w-full gap-3 rounded-2xl p-2 text-left transition-colors ${carId === c.id ? "bg-primary/15 ring-2 ring-primary/50" : "bg-foreground/[0.045]"}`}>
+                  <div className="h-16 w-24 shrink-0 overflow-hidden rounded-xl bg-foreground/[0.06]">
+                    {c.primary_image_url ? <img src={c.primary_image_url} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-full w-full object-cover" /> : <CarFront className="m-auto mt-5 h-6 w-6 text-white/55" />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div className="truncate text-sm font-medium text-white">{title(c)} <span className="text-white/45">{c.year}</span></div>
                       <div className="hq-num shrink-0 text-sm text-white">{eur(c.price)}</div>
                     </div>
-                    <div className="truncate font-mono text-[11px] text-white/55">{[c.lot && `Lot ${c.lot}`, c.plate_number, c.vin].filter(Boolean).join(" · ")}</div>
+                    <div className="truncate font-mono text-[12px] text-white/55">{[c.lot && `Lot ${c.lot}`, c.plate_number, c.vin].filter(Boolean).join(" · ")}</div>
                     <div className="mt-1 flex flex-wrap items-center gap-1">
                       {c._match && <Chip tone="sky">{c._match.toUpperCase()} match</Chip>}
                       <StatusChips c={c} />
@@ -332,13 +332,13 @@ export default function KorautoksApp() {
               </li>
             ))}
             {!res.loading && q.trim().length >= 3 && !res.items.length && !res.error && (
-              <li className="rounded-2xl border border-white/[0.07] p-6 text-center text-sm text-muted-foreground">No car found for “{q}”.</li>
+              <li className="rounded-2xl bg-foreground/[0.045] p-6 text-center text-sm text-muted-foreground">No car found for “{q}”.</li>
             )}
           </ul>
         </section>
         <section className={`${carId ? "" : "hidden lg:block"} min-w-0`}>
           {detail.loading && <div className="hq-card h-80 animate-pulse" />}
-          {detail.error && <div className="rounded-xl border border-red-400/20 bg-red-400/[0.06] p-3 text-sm text-red-200">{detail.error}</div>}
+          {detail.error && <div className="rounded-2xl bg-[hsl(var(--destructive)/.12)] p-3 text-sm text-[hsl(var(--destructive))]">{detail.error}</div>}
           {detail.d && <CarDetail d={detail.d} onBack={back} />}
           {!carId && <div className="hq-card flex h-60 items-center justify-center text-sm text-muted-foreground">Select a car to see every field.</div>}
         </section>

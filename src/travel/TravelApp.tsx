@@ -159,11 +159,11 @@ function TravelInner() {
     <div className="travel-root hq-ambient min-h-[calc(100dvh-var(--hub-h))] text-white">
       {/* Sticky section switcher */}
       <div
-        className="sticky z-40 border-b border-white/[0.06] bg-[#07080a]/80 backdrop-blur-xl"
+        className="sticky z-40 glass-thin"
         style={{ top: "var(--hub-h)" }}
       >
         <div className="mx-auto flex h-12 max-w-6xl items-center gap-3 px-3 sm:px-5">
-          <div className="no-scrollbar flex flex-1 gap-1 overflow-x-auto rounded-full border border-white/[0.07] bg-white/[0.03] p-1 sm:flex-none">
+          <div className="hq-seg no-scrollbar flex-1 overflow-x-auto sm:flex-none">
             {SECTIONS.map((s) => {
               const Icon = s.icon;
               const on = active === s.id;
@@ -171,11 +171,8 @@ function TravelInner() {
                 <button
                   key={s.id}
                   onClick={() => go(s.id)}
-                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors sm:flex-none sm:px-4 ${
-                    on
-                      ? "bg-gradient-to-br from-[hsl(var(--gold-light))] to-[hsl(var(--gold-dark))] text-black shadow"
-                      : "text-white/60 hover:text-white"
-                  }`}
+                  aria-pressed={on}
+                  className="flex-1 sm:flex-none sm:px-4"
                 >
                   <Icon className="h-4 w-4" />
                   {s.label}
@@ -292,7 +289,7 @@ function TravelInner() {
                 />
               </CollapsibleCalendar>
               <Dialog open={showImport} onOpenChange={setShowImport}>
-                <DialogContent className="max-w-2xl overflow-hidden border-white/10 bg-[#0b0d11] p-0 text-white">
+                <DialogContent className="max-w-2xl overflow-hidden border-white/10 bg-card p-0 text-white">
                   <DialogHeader className="px-5 pt-5">
                     <DialogTitle className="font-display text-xl">
                       Import flight history
