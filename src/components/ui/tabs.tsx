@@ -5,19 +5,39 @@ import { cn } from "@/lib/utils";
 
 const Tabs = TabsPrimitive.Root;
 
+function useSegmentThumb(forwardedRef: React.ForwardedRef<HTMLDivElement>) {
+  const local = React.useRef<HTMLDivElement>(null);
+  React.useImperativeHandle(forwardedRef, () => local.current as HTMLDivElement);
+  React.useLayoutEffect(() => {
+    const list = local.current;
+    if (!list) return;
+    const thumb = document.createElement("span");
+    thumb.className = "hq-segment-thumb";
+    thumb.setAttribute("aria-hidden", "true");
+    list.appendChild(thumb);
+    const update = () => {
+      const active = list.querySelector<HTMLElement>('[data-state="active"]');
+      if (!active) { thumb.style.opacity = "0"; return; }
+      thumb.style.opacity = "1";
+      thumb.style.width = `${active.offsetWidth}px`;
+      thumb.style.transform = `translateX(${active.offsetLeft}px)`;
+    };
+    update();
+    const mutations = new MutationObserver(update);
+    mutations.observe(list, { subtree: true, attributes: true, attributeFilter: ["data-state"] });
+    const resize = new ResizeObserver(update); resize.observe(list);
+    return () => { mutations.disconnect(); resize.disconnect(); thumb.remove(); };
+  }, []);
+  return local;
+}
+
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.List
-    ref={ref}
-    className={cn(
-      "inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground",
-      className,
-    )}
-    {...props}
-  />
-));
+>(({ className, ...props }, ref) => {
+  const local = useSegmentThumb(ref);
+  return <TabsPrimitive.List ref={local} className={cn("hq-segmented inline-flex h-11 items-center justify-center p-1 text-muted-foreground", className)} {...props} />;
+});
 TabsList.displayName = TabsPrimitive.List.displayName;
 
 const TabsTrigger = React.forwardRef<
@@ -27,7 +47,7 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background cursor-pointer transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow",
+      "hq-segment inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
       className,
     )}
     {...props}

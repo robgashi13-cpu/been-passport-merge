@@ -2,6 +2,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Logo } from "./Logo";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Loader2, Lock } from "lucide-react";
 
 export function LoginScreen() {
@@ -81,31 +83,32 @@ export function LoginScreen() {
       <div className="hq-rise w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
           <Logo size={56} />
-          <h1 className="mt-5 text-3xl font-semibold text-white">HQ</h1>
+          <h1 className="mt-5 t-large-title text-foreground">HQ</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             Private hub · Dashboard · World News · Travel
           </p>
         </div>
-        <form onSubmit={submit} className="hq-card space-y-4 p-6">
-          <div className="space-y-1.5">
+        <form onSubmit={submit} className="hq-card space-y-5 p-6">
+          <div className="hq-login-fields">
+          <div className="hq-login-row">
             <label className="hq-label" htmlFor="em">
               Email
             </label>
-            <input
+            <Input
               id="em"
               type="email"
               autoComplete="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-sky/60 focus:bg-white/[0.06]"
+              className="hq-field w-full"
             />
           </div>
-          <div className="space-y-1.5">
+          <div className="hq-login-row">
             <label className="hq-label" htmlFor="pw">
               Password
             </label>
-            <input
+            <Input
               id="pw"
               type="password"
               autoComplete={mode === "in" ? "current-password" : "new-password"}
@@ -113,19 +116,20 @@ export function LoginScreen() {
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none transition focus:border-sky/60 focus:bg-white/[0.06]"
+              className="hq-field w-full"
             />
+          </div>
           </div>
           {msg && (
             <p
-              className={`rounded-lg px-3 py-2 text-sm ${msg.kind === "err" ? "bg-destructive/10 text-red-300" : "bg-emerald-500/10 text-emerald-300"}`}
+              className={`rounded-lg px-3 py-2 text-sm ${msg.kind === "err" ? "bg-destructive/10 text-destructive" : "bg-emerald-500/10 text-success"}`}
             >
               {msg.text}
             </p>
           )}
-          <button
+          <Button
             disabled={busy}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-white font-medium text-black transition hover:bg-white/90 disabled:opacity-60"
+            className="h-12 w-full"
           >
             {busy ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -133,40 +137,40 @@ export function LoginScreen() {
               <Lock className="h-4 w-4" />
             )}
             {mode === "in" ? "Sign in" : "Create account"}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={() => {
               setMode(mode === "in" ? "up" : "in");
               setMsg(null);
             }}
-            className="w-full text-center text-xs text-muted-foreground transition hover:text-white"
+            variant="plain" className="h-auto w-full whitespace-normal text-center text-xs text-primary"
           >
             {mode === "in"
               ? "First time here? Create your account"
               : "Already have an account? Sign in"}
-          </button>
+          </Button>
           {mode === "in" && (
-            <button
+            <Button
               type="button"
               onClick={() => void forgot()}
-              className="w-full text-center text-xs text-muted-foreground transition hover:text-white"
+              variant="plain" className="h-auto w-full whitespace-normal text-center text-xs text-primary"
             >
               Forgot password?
-            </button>
+            </Button>
           )}
-          <div className="flex items-center gap-3 py-1 text-[11px] uppercase tracking-[0.14em] text-white/30">
+          <div className="flex items-center gap-3 py-1 text-[11px] text-white/30">
             <span className="h-px flex-1 bg-white/10" />or<span className="h-px flex-1 bg-white/10" />
           </div>
-          <button
+          <Button
             type="button"
             disabled={busy}
             onClick={() => void apple()}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-black font-medium text-white transition hover:bg-white/[0.06] disabled:opacity-60"
+            variant="ghost" className="hq-apple h-12 w-full"
           >
             <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor" aria-hidden="true"><path d="M16.37 1.43c0 1.14-.42 2.2-1.25 3.03-.9.9-1.98 1.42-3.15 1.33-.15-1.1.4-2.24 1.2-3.05.88-.9 2.12-1.43 3.2-1.31ZM20.5 17.1c-.55 1.27-.82 1.84-1.53 2.96-.99 1.56-2.39 3.5-4.12 3.51-1.54.02-1.93-1-4.02-.99-2.09.01-2.52 1.01-4.06.99-1.73-.02-3.05-1.77-4.04-3.33C-.04 15.88-.33 10.8 1.42 8.1c1.24-1.92 3.2-3.05 5.04-3.05 1.88 0 3.06 1.03 4.61 1.03 1.51 0 2.43-1.03 4.6-1.03 1.64 0 3.38.9 4.62 2.44-4.06 2.22-3.4 8.02.21 9.61Z"/></svg>
             Continue with Apple
-          </button>
+          </Button>
         </form>
         <p className="mt-6 text-center text-[11px] text-muted-foreground/70">
           Only allowlisted accounts can open this hub.
@@ -187,7 +191,7 @@ export function AccessDenied({
     <div className="hq-ambient fixed inset-0 flex items-center justify-center px-5">
       <div className="hq-card hq-rise max-w-sm p-8 text-center">
         <Logo size={44} className="mx-auto" />
-        <h1 className="mt-5 text-xl font-semibold text-white">Access denied</h1>
+        <h1 className="mt-5 t-title2 text-foreground">Access denied</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {email ? (
             <>
@@ -198,12 +202,12 @@ export function AccessDenied({
             "This account is not allowed to open HQ."
           )}
         </p>
-        <button
+        <Button
           onClick={onSignOut}
-          className="mt-6 h-11 w-full rounded-xl bg-white font-medium text-black hover:bg-white/90"
+          className="mt-6 h-11 w-full"
         >
           Sign out
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -238,14 +242,14 @@ export function ResetPassword() {
   }
   return (
     <div className="hq-ambient fixed inset-0 flex items-center justify-center px-5">
-      <form onSubmit={save} className="hq-card hq-rise w-full max-w-sm space-y-4 p-6">
+      <form onSubmit={save} className="hq-card hq-rise w-full max-w-sm space-y-5 p-6">
         <Logo size={44} className="mx-auto" />
-        <h1 className="text-center text-xl font-semibold text-white">Set a new password</h1>
+        <h1 className="text-center t-title2 text-foreground">Set a new password</h1>
         {ready === false ? (
           <p className="text-center text-sm text-muted-foreground">This reset link is invalid or expired. Request a new one from the login screen.</p>
         ) : (
           <>
-            <input
+            <Input
               type="password"
               required
               minLength={8}
@@ -253,12 +257,12 @@ export function ResetPassword() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="New password (min 8 characters)"
-              className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-white outline-none focus:border-sky/60"
+              className="hq-field w-full"
             />
-            {msg && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-red-300">{msg.text}</p>}
-            <button disabled={busy || !ready} className="flex h-12 w-full items-center justify-center rounded-xl bg-white font-medium text-black disabled:opacity-60">
+            {msg && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{msg.text}</p>}
+            <Button disabled={busy || !ready} className="h-12 w-full">
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save password"}
-            </button>
+            </Button>
           </>
         )}
         <a href="/" className="block text-center text-xs text-muted-foreground hover:text-white">Back to sign in</a>
