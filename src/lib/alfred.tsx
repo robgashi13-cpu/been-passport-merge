@@ -19,7 +19,7 @@ function isIOSStandalone() {
 }
 
 const BTN =
-  "inline-flex items-center justify-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-[12px] font-medium text-black transition hover:bg-white/85 active:scale-[0.98]";
+  "hq-btn !h-8 !px-3.5 !text-[13px]";
 
 /** Opens the Alfred web viewer in a new tab. Never stores credentials or calls the API. */
 export function AlfredOpen({ className = "", label = "Open Alfred" }: { className?: string; label?: string }) {
