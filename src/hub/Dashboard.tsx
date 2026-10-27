@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { FN_BASE } from "@/lib/fn";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  ArrowUpRight,
+  ChevronRight,
   CarFront,
   Globe2,
   Activity,
@@ -48,7 +48,7 @@ import { ago, fmtDate, fmtTime, greeting, useNow } from "./clock";
 
 type CardProps = {
   className?: string | undefined;
-  glow?: string | undefined;
+  tint?: keyof typeof TINTS | undefined;
   children: ReactNode;
   to?: "/world" | "/travel" | "/cameras" | "/" | "/korauto" | "/korautoks" | "/tv" | undefined;
   hash?: string | undefined;
@@ -56,9 +56,14 @@ type CardProps = {
   delay?: number | undefined;
 };
 
+const TINTS = {
+  blue: "--primary", orange: "--orange", red: "--destructive", indigo: "--indigo", teal: "--teal",
+  purple: "--purple", cyan: "--cyan", green: "--success", pink: "--pink", slate: "--slate", amber: "--warning",
+} as const;
+
 function Card({
   className = "",
-  glow,
+  tint = "blue",
   children,
   to,
   hash,
@@ -66,7 +71,7 @@ function Card({
   delay = 0,
 }: CardProps) {
   const style = {
-    ...(glow ? { ["--glow" as any]: glow } : {}),
+    ["--tint-c" as any]: `var(${TINTS[tint]})`,
     animationDelay: `${delay}ms`,
   };
   const cls = `hq-card hq-rise flex h-full flex-col p-4 sm:p-5 ${className}`;
@@ -107,21 +112,19 @@ function CardHead({
   return (
     <div className="flex items-center justify-between gap-2">
       <div className="flex min-w-0 items-center gap-2">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-white/80">
-          {icon}
-        </span>
-        <span className="hq-label truncate">{label}</span>
+        <span className="hq-ico">{icon}</span>
+        <span className="t-footnote truncate font-semibold">{label}</span>
       </div>
-      {right ?? <ArrowUpRight className="h-4 w-4 shrink-0 text-white/30" />}
+      {right ?? <ChevronRight className="hq-chev h-4 w-4 shrink-0" />}
     </div>
   );
 }
 
 const LEVEL_COLOR: Record<string, string> = {
-  CRITICAL: "#ff5a5f",
-  HIGH: "#ff8a3d",
-  ELEVATED: "#f5b83d",
-  GUARDED: "#4cc38a",
+  CRITICAL: "hsl(var(--destructive))",
+  HIGH: "hsl(var(--orange))",
+  ELEVATED: "hsl(var(--warning))",
+  GUARDED: "hsl(var(--success))",
 };
 const levelOf = (i: number) =>
   i >= 75 ? "CRITICAL" : i >= 50 ? "HIGH" : i >= 25 ? "ELEVATED" : "GUARDED";
@@ -183,25 +186,25 @@ function HeroCard() {
   return (
     <Card
       className="col-span-2 justify-between"
-      glow="hsl(211 100% 70% / 0.16)"
+      tint="blue"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="hq-label">{greeting(now)}</p>
-          <h1 className="mt-1 truncate font-display text-2xl font-semibold text-white sm:text-3xl">
+          <p className="t-subhead text-muted-foreground">{greeting(now)}</p>
+          <h1 className="mt-0.5 truncate text-[28px] font-bold leading-8 tracking-tight text-white sm:text-3xl">
             {name}
           </h1>
           <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
             {fmtDate(now)}
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-2xl border border-white/[0.07] bg-white/[0.03] px-3 py-2">
-          <WIcon className="h-5 w-5 text-amber-200" />
+        <div className="hq-stat flex items-center gap-2">
+          <WIcon className="h-5 w-5 text-[hsl(var(--orange))]" />
           <div className="leading-tight">
             <div className="hq-num text-sm text-white">
               {w ? `${Math.round(w.t)}°` : "—"}
             </div>
-            <div className="text-[10px] text-muted-foreground">
+            <div className="text-[11px] text-muted-foreground">
               Prishtina
               {w?.hi != null
                 ? ` · ${Math.round(w.hi)}°/${Math.round(w.lo)}°`
@@ -214,7 +217,7 @@ function HeroCard() {
         <div>
           <div className="hq-num text-4xl font-medium leading-none tracking-tight text-white sm:text-5xl">
             {fmtTime(now, "Europe/Belgrade", false)}
-            <span className="ml-1 text-lg text-white/35 sm:text-xl">
+            <span className="ml-1 text-lg text-white/55 sm:text-xl">
               {String(now.getSeconds()).padStart(2, "0")}
             </span>
           </div>
@@ -280,18 +283,18 @@ function KorautoCard() {
     <Card
       to="/korauto"
       className="col-span-2 row-span-2"
-      glow="hsl(41 90% 60% / 0.14)"
+      tint="orange"
       delay={60}
     >
       <CardHead
         icon={<CarFront className="h-4 w-4" />}
         label="KORAUTO Manager"
         right={
-          <span className="flex items-center gap-2 text-[11px] text-white/50">
+          <span className="flex items-center gap-1 text-[13px] text-muted-foreground">
             {configured && !feed?.error && (
-              <span className="hq-live-dot h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              <span className="hq-live-dot h-1.5 w-1.5 rounded-full bg-[hsl(var(--success))]" />
             )}
-            Open <ArrowUpRight className="h-3.5 w-3.5" />
+            Open <ChevronRight className="h-4 w-4" />
           </span>
         }
       />
@@ -299,7 +302,7 @@ function KorautoCard() {
       {feed && !configured ? (
         <div className="flex flex-1 flex-col justify-between">
           <div className="mt-4">
-            <h3 className="font-display text-2xl font-semibold text-white">
+            <h3 className="t-title2 text-white">
               Your car business, one tap away
             </h3>
             <p className="mt-2 max-w-md text-sm text-muted-foreground">
@@ -308,8 +311,8 @@ function KorautoCard() {
               Lovable Secrets.
             </p>
           </div>
-          <div className="mt-4 inline-flex w-fit items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-black">
-            Connect KORAUTO <ArrowUpRight className="h-4 w-4" />
+          <div className="mt-4 hq-btn w-fit">
+            Connect KORAUTO <ChevronRight className="h-4 w-4" />
           </div>
         </div>
       ) : (
@@ -318,21 +321,21 @@ function KorautoCard() {
             {stats.map((s) => (
               <div
                 key={s.k}
-                className={`rounded-2xl border px-2.5 py-2.5 ${s.hot ? "border-amber-300/25 bg-amber-300/[0.06]" : "border-white/[0.06] bg-white/[0.02]"}`}
+                className="hq-stat" data-hot={s.hot}
               >
                 <div
-                  className={`hq-num text-xl font-semibold sm:text-2xl ${s.hot ? "text-amber-200" : "text-white"}`}
+                  className="hq-num text-[22px] font-bold leading-7 text-white sm:text-2xl"
                 >
                   {loading && !feed ? "–" : s.v}
                 </div>
-                <div className="mt-0.5 line-clamp-2 text-[10px] leading-tight text-muted-foreground sm:text-[11px]">
+                <div className="mt-0.5 line-clamp-2 text-[11px] leading-tight text-muted-foreground sm:text-[11px]">
                   {s.k}
                 </div>
               </div>
             ))}
           </div>
           <div className="mt-3 flex items-center justify-between">
-            <span className="hq-label">
+            <span className="t-footnote font-medium text-muted-foreground">
               {added.length ? "New today" : "Latest cars"}
             </span>
             <button
@@ -341,7 +344,7 @@ function KorautoCard() {
                 e.stopPropagation();
                 refresh();
               }}
-              className="flex items-center gap-1 rounded-full px-2 py-1 text-[11px] text-white/40 hover:bg-white/5 hover:text-white"
+              className="flex items-center gap-1 rounded-full px-2 py-1 text-[11px] text-white/55 hover:bg-white/5 hover:text-white"
               aria-label="Refresh KORAUTO feed"
             >
               <RefreshCw
@@ -350,7 +353,7 @@ function KorautoCard() {
               {feed?.generatedAt ? ago(feed.generatedAt, now) : ""}
             </button>
           </div>
-          <ul className="no-scrollbar mt-2 min-h-0 flex-1 space-y-1.5 overflow-y-auto">
+          <ul className="no-scrollbar hq-group mt-2 min-h-0 flex-1 overflow-y-auto">
             {(added.length ? added : latest).slice(0, 5).map((c) => {
               const isNew = !!(
                 todayStart &&
@@ -360,9 +363,9 @@ function KorautoCard() {
               return (
                 <li
                   key={c.id}
-                  className="flex items-center gap-3 rounded-xl border border-white/[0.05] bg-white/[0.02] p-1.5 pr-3"
+                  className="hq-row !min-h-[56px] !py-1.5"
                 >
-                  <div className="h-10 w-14 shrink-0 overflow-hidden rounded-lg bg-white/5">
+                  <div className="h-10 w-14 shrink-0 overflow-hidden rounded-[10px] bg-white/5">
                     {c.image_url ? (
                       <img
                         src={c.image_url}
@@ -372,7 +375,7 @@ function KorautoCard() {
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <CarFront className="m-auto mt-2.5 h-5 w-5 text-white/30" />
+                      <CarFront className="m-auto mt-2.5 h-5 w-5 text-white/55" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -388,11 +391,11 @@ function KorautoCard() {
                   </div>
                   <div className="shrink-0 text-right">
                     {isNew && (
-                      <div className="mb-0.5 rounded-full bg-emerald-400/15 px-1.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-300">
+                      <div className="hq-pill-new mb-0.5">
                         New
                       </div>
                     )}
-                    <div className="text-[10px] text-white/40">
+                    <div className="text-[11px] text-white/55">
                       {ago(c.created_at, now)}
                     </div>
                   </div>
@@ -405,7 +408,7 @@ function KorautoCard() {
               </li>
             )}
             {feed?.error && !latest.length && (
-              <li className="rounded-xl border border-red-400/15 bg-red-400/[0.05] p-3 text-xs text-red-200">
+              <li className="p-3 text-xs text-[hsl(var(--destructive))]">
                 Couldn’t read KORAUTO right now ({feed.error}). Tap for details.
               </li>
             )}
@@ -414,7 +417,7 @@ function KorautoCard() {
               [0, 1, 2].map((i) => (
                 <li
                   key={i}
-                  className="h-[52px] animate-pulse rounded-xl bg-white/[0.03]"
+                  className="hq-shimmer h-[56px]"
                 />
               ))}
           </ul>
@@ -446,29 +449,29 @@ function ThreatCard() {
     <Card
       to="/world"
       className="col-span-1"
-      glow={lvl ? `${LEVEL_COLOR[lvl]}26` : undefined}
+      tint={lvl === "CRITICAL" ? "red" : lvl === "HIGH" ? "orange" : lvl === "ELEVATED" ? "amber" : "green"}
       delay={120}
     >
       <CardHead icon={<Activity className="h-4 w-4" />} label="World threat" />
       <div className="mt-auto flex items-end justify-between gap-2">
         <div>
-          <div className="hq-num text-4xl font-semibold leading-none text-white">
+          <div className="hq-big text-white">
             {g ?? "—"}
           </div>
           <div
-            className="mt-1 text-[11px] font-semibold tracking-wider"
+            className="mt-1 text-[12px] font-semibold"
             style={{ color: lvl ? LEVEL_COLOR[lvl] : undefined }}
           >
             {lvl ?? (threat.loading ? "Loading…" : "No data yet")}
           </div>
         </div>
-        <svg viewBox="0 0 36 36" className="h-12 w-12 -rotate-90">
+        <svg viewBox="0 0 36 36" className="hq-ring h-14 w-14 -rotate-90">
           <circle
             cx="18"
             cy="18"
             r="15"
             fill="none"
-            stroke="rgba(255,255,255,.08)"
+            stroke="hsl(var(--foreground) / .1)"
             strokeWidth="4"
           />
           <circle
@@ -476,7 +479,7 @@ function ThreatCard() {
             cy="18"
             r="15"
             fill="none"
-            stroke={lvl ? LEVEL_COLOR[lvl] : "#6cb8ff"}
+            stroke={lvl ? LEVEL_COLOR[lvl] : "hsl(var(--primary))"}
             strokeWidth="4"
             strokeLinecap="round"
             strokeDasharray={`${(pct / 100) * 94.2} 94.2`}
@@ -501,25 +504,25 @@ function HazardsCard() {
     <Card
       to="/world"
       className="col-span-1"
-      glow="hsl(25 100% 60% / 0.14)"
+      tint="orange"
       delay={160}
     >
       <CardHead
         icon={<ShieldAlert className="h-4 w-4" />}
-        label="Earthquakes 24h"
+        label="Earthquakes"
       />
       <div className="mt-auto">
-        <div className="hq-num text-4xl font-semibold leading-none text-white">
+        <div className="hq-big text-white">
           {q.data ? strong.length : "—"}
         </div>
         <div className="mt-1 text-[11px] text-muted-foreground">
-          M4.5+ worldwide
+          M4.5+ in 24h
         </div>
       </div>
       <div className="mt-2 line-clamp-2 text-[11px] text-white/70">
         {biggest ? (
           <>
-            <span className="hq-num text-orange-300">
+            <span className="hq-num font-semibold text-[hsl(var(--orange))]">
               M{Number(biggest.mag).toFixed(1)}
             </span>{" "}
             {String(biggest.title || "").replace(/^M\s?[\d.]+\s*-\s*/, "")}
@@ -541,7 +544,7 @@ function HeadlinesCard() {
   return (
     <Card
       className="col-span-2 row-span-2"
-      glow="hsl(211 100% 70% / 0.12)"
+      tint="indigo"
       delay={200}
     >
       <CardHead
@@ -550,29 +553,29 @@ function HeadlinesCard() {
         right={
           <Link
             to={{ pathname: "/world", hash: "#news" }}
-            className="flex items-center gap-1 rounded-full px-2 py-1 text-[11px] text-white/50 hover:bg-white/5 hover:text-white"
+            className="flex items-center gap-0.5 rounded-full px-2 py-1 text-[13px] text-muted-foreground"
           >
-            All news <ArrowUpRight className="h-3.5 w-3.5" />
+            All news <ChevronRight className="h-4 w-4" />
           </Link>
         }
       />
-      <ul className="no-scrollbar mt-3 min-h-0 flex-1 divide-y divide-white/[0.05] overflow-y-auto">
+      <ul className="no-scrollbar mt-3 min-h-0 flex-1 hq-group overflow-y-auto">
         {items.map((it, i) => (
           <li key={it.url || i}>
             <a
               href={it.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="group block py-2.5"
+              className="group hq-row !block !py-2.5"
             >
-              <div className="line-clamp-2 text-[13px] font-medium leading-snug text-white/90 group-hover:text-white">
+              <div className="line-clamp-2 text-[14px] font-medium leading-snug text-white">
                 {it.title}
               </div>
-              <div className="mt-1 flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+              <div className="mt-1 flex items-center gap-2 text-[12px] text-muted-foreground">
                 <span className="truncate">
                   {it.source || it.feed || it.domain || "News"}
                 </span>
-                <span className="text-white/20">•</span>
+                <span className="opacity-50">·</span>
                 <span className="shrink-0">{ago(it.time, now)}</span>
               </div>
             </a>
@@ -583,7 +586,7 @@ function HeadlinesCard() {
             [0, 1, 2, 3].map((i) => (
               <li
                 key={i}
-                className="my-2 h-10 animate-pulse rounded-lg bg-white/[0.03]"
+                className="hq-shimmer h-12"
               />
             ))
           ) : (
@@ -666,24 +669,21 @@ function TravelCard({ s, meta }: ReturnType<typeof useTravelSummary>) {
     <Card
       to="/travel"
       className="col-span-1"
-      glow="hsl(41 90% 60% / 0.14)"
+      tint="teal"
       delay={240}
     >
       <CardHead icon={<Plane className="h-4 w-4" />} label="Travel" />
       <div className="mt-auto">
         <div className="flex items-baseline gap-1">
-          <span className="hq-num text-4xl font-semibold leading-none text-white">
+          <span className="hq-big text-white">
             {s ? count : "—"}
           </span>
-          <span className="text-xs text-muted-foreground">
+          <span className="t-footnote text-muted-foreground">
             / {TOTAL_COUNTRIES}
           </span>
         </div>
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.07]">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-[hsl(var(--gold-dark))] to-[hsl(var(--gold-light))]"
-            style={{ width: `${Math.max(2, pct)}%` }}
-          />
+        <div className="hq-bar mt-2.5">
+          <i style={{ transform: `scaleX(${Math.max(0.02, pct / 100)})` }} />
         </div>
       </div>
       <div className="mt-2 truncate text-[11px] text-muted-foreground">
@@ -701,13 +701,13 @@ function PassportCard({ s, meta }: ReturnType<typeof useTravelSummary>) {
       to="/travel"
       hash="passport"
       className="col-span-1"
-      glow="hsl(270 70% 70% / 0.12)"
+      tint="purple"
       delay={280}
     >
       <CardHead icon={<BookMarked className="h-4 w-4" />} label="Passport" />
       <div className="mt-auto flex items-end justify-between gap-2">
         <div className="min-w-0">
-          <div className="hq-num text-4xl font-semibold leading-none text-white">
+          <div className="hq-big text-white">
             {meta?.vf ?? "—"}
           </div>
           <div className="mt-1 text-[11px] text-muted-foreground">
@@ -718,7 +718,7 @@ function PassportCard({ s, meta }: ReturnType<typeof useTravelSummary>) {
           <img
             src={`https://flagcdn.com/w160/${(s?.passport || "XK").toLowerCase()}.png`}
             alt=""
-            className="h-9 w-auto rounded-md ring-1 ring-white/15"
+            className="h-9 w-auto rounded-md ring-1 ring-black/10 dark:ring-white/15"
           />
         )}
       </div>
@@ -745,23 +745,23 @@ const LINKS = [
 
 function LinksCard() {
   return (
-    <Card className="col-span-1" delay={320}>
+    <Card className="col-span-1" tint="slate" delay={320}>
       <CardHead
         icon={<Link2 className="h-4 w-4" />}
         label="Quick links"
         right={<span />}
       />
-      <ul className="mt-3 flex min-h-0 flex-1 flex-col justify-end gap-1">
+      <ul className="hq-links mt-2 flex min-h-0 flex-1 flex-col justify-end">
         {LINKS.map((l) => (
           <li key={l.href}>
             <a
               href={l.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-[13px] text-white/85 transition hover:bg-white/[0.06] hover:text-white"
+              className="press text-white"
             >
               <span className="truncate">{l.label}</span>
-              <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-white/30" />
+              <ChevronRight className="hq-chev h-3.5 w-3.5 shrink-0" />
             </a>
           </li>
         ))}
@@ -773,14 +773,14 @@ function LinksCard() {
 function FutureSlot({ delay = 0 }: { delay?: number }) {
   return (
     <div
-      className="hq-rise col-span-1 flex h-full flex-col items-center justify-center gap-2 rounded-3xl border border-dashed border-white/10 p-4 text-center"
+      className="hq-rise col-span-1 flex h-full flex-col items-center justify-center gap-2 rounded-[26px] border border-dashed border-white/20 p-4 text-center"
       style={{ animationDelay: `${delay}ms` }}
     >
-      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.04] text-white/40">
+      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.04] text-white/55">
         <Plus className="h-4 w-4" />
       </span>
       <div className="text-[13px] font-medium text-white/60">Next project</div>
-      <div className="text-[11px] text-white/30">Reserved slot</div>
+      <div className="text-[11px] text-white/55">Reserved slot</div>
     </div>
   );
 }
@@ -790,18 +790,18 @@ function WorldTileCard() {
     <Card
       to="/world"
       className="col-span-1"
-      glow="hsl(190 100% 60% / 0.14)"
+      tint="cyan"
       delay={340}
     >
       <CardHead icon={<Globe2 className="h-4 w-4" />} label="World News" />
       <div className="relative mt-auto">
-        <div className="pointer-events-none absolute -bottom-8 -right-6 h-28 w-28 rounded-full border border-sky/30 bg-[radial-gradient(circle_at_35%_35%,hsl(211_100%_70%/0.35),transparent_60%)]" />
-        <div className="relative font-display text-lg font-semibold leading-tight text-white">
-          Live globe, TV, cams & markets
+        <div className="pointer-events-none absolute -bottom-8 -right-6 h-28 w-28 rounded-full bg-[radial-gradient(circle_at_35%_35%,hsl(var(--cyan)/0.4),transparent_62%)]" />
+        <div className="relative text-[17px] font-semibold leading-snug tracking-tight text-white">
+          Globe, news, TV & markets
         </div>
       </div>
       <div className="relative mt-2 text-[11px] text-muted-foreground">
-        Open WORLD // INTEL
+        World Intel
       </div>
     </Card>
   );
@@ -820,23 +820,23 @@ function CamerasCard() {
   const active = ok ? s.cameras.filter((c) => c.enabled) : [];
   const online = active.filter((c) => c.online).length;
   return (
-    <Card to="/cameras" className="col-span-1" glow="hsl(150 70% 55% / 0.12)" delay={380}>
+    <Card to="/cameras" className="col-span-1" tint="green" delay={380}>
       <CardHead
         icon={<Cctv className="h-4 w-4" />}
         label="Cameras"
         right={
           ok ? (
-            <span className={`h-2 w-2 rounded-full ${online ? "hq-live-dot bg-emerald-400" : "bg-rose-500/80"}`} />
+            <span className={`h-2 w-2 rounded-full ${online ? "hq-live-dot bg-[hsl(var(--success))]" : "bg-[hsl(var(--destructive))]"}`} />
           ) : undefined
         }
       />
       <div className="mt-auto flex items-end justify-between gap-2">
         <div className="min-w-0">
-          <div className="hq-num text-4xl font-semibold leading-none text-white">
+          <div className="hq-big text-white">
             {ok ? (
               <>
                 {online}
-                <span className="text-xl text-white/40">/{active.length}</span>
+                <span className="text-xl font-medium text-white/55">/{active.length}</span>
               </>
             ) : (
               "—"
@@ -847,7 +847,7 @@ function CamerasCard() {
           </div>
         </div>
         {thumb.url && (
-          <img src={thumb.url} alt="" className="h-12 w-16 rounded-md object-cover ring-1 ring-white/15" />
+          <img src={thumb.url} alt="" className="h-12 w-16 rounded-lg object-cover" />
         )}
       </div>
       <div className="mt-2 truncate text-[11px] text-muted-foreground">
@@ -865,10 +865,10 @@ function CamerasCard() {
 
 function AlfredCard() {
   return (
-    <div className="hq-card hq-rise flex h-full flex-col p-4 sm:p-5" data-testid="alfred-card">
+    <div className="hq-card hq-rise flex h-full flex-col p-4 sm:p-5" style={{ ["--tint-c" as any]: "var(--slate)" }} data-testid="alfred-card">
       <CardHead icon={<Camera className="h-4 w-4" />} label="AlfredCamera" right={<span className="h-4 w-4 shrink-0" />} />
       <div className="mt-auto">
-        <div className="text-[11px] text-muted-foreground">Log in with your Alfred account</div>
+        <div className="t-footnote text-muted-foreground">Log in with your Alfred account</div>
         <div className="mt-2">
           <AlfredOpen />
         </div>
@@ -886,7 +886,7 @@ function TvCard() {
   const live = favs.filter((f) => f.kind === "live");
   const quick = (live.length ? live : hist.filter((h) => h.kind === "live")).slice(0, 6);
   return (
-    <Card className="col-span-1" glow="hsl(330 80% 60% / 0.12)" delay={400}>
+    <Card className="col-span-1" tint="pink" delay={400}>
       <Link to="/tv" className="block">
         <CardHead icon={<Tv className="h-4 w-4" />} label="TV" />
       </Link>
@@ -897,12 +897,12 @@ function TvCard() {
               <Link
                 to={`/tv?play=live:${f.id}`}
                 title={`Play ${f.name}`}
-                className="group relative flex aspect-video items-center justify-center overflow-hidden rounded-lg bg-white/[0.05] ring-1 ring-white/5 transition hover:ring-white/30"
+                className="group press relative flex aspect-video items-center justify-center overflow-hidden rounded-xl bg-white/[0.07]"
               >
                 {f.logo ? (
                   <img src={f.logo} alt={f.name} loading="lazy" referrerPolicy="no-referrer" className="h-full w-full object-contain p-1" />
                 ) : (
-                  <span className="truncate px-1 text-[10px] text-white/70">{f.name}</span>
+                  <span className="truncate px-1 text-[11px] text-white/70">{f.name}</span>
                 )}
                 <Play className="absolute h-4 w-4 fill-white text-white opacity-0 drop-shadow transition group-hover:opacity-100" />
               </Link>
@@ -911,7 +911,7 @@ function TvCard() {
         </ul>
       ) : (
         <div className="mt-auto">
-          <div className="font-display text-lg font-semibold leading-tight text-white">Live TV, movies & series</div>
+          <div className="text-[17px] font-semibold leading-snug tracking-tight text-white">Live TV, movies & series</div>
           <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
             <Star className="h-3 w-3" /> Star channels to quick-play here
           </div>
@@ -935,7 +935,7 @@ function KorautoksCard() {
         <CardHead icon={<Search className="h-4 w-4" />} label="korautoks.com" />
       </Link>
       <div className="mt-auto">
-        <div className="font-display text-lg font-semibold leading-tight text-white">Find a car</div>
+        <div className="text-[17px] font-semibold leading-snug tracking-tight text-white">Find a car</div>
         <form
           className="mt-2 flex gap-1.5"
           onSubmit={(e) => {
@@ -949,9 +949,9 @@ function KorautoksCard() {
             onChange={(e) => setQ(e.target.value)}
             placeholder="VIN, lot or plate"
             aria-label="Search korautoks.com"
-            className="min-w-0 flex-1 rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-[13px] text-white placeholder:text-white/35 focus:outline-none"
+            className="h-9 min-w-0 flex-1 rounded-full bg-white/[0.07] px-3.5 text-[16px] text-white placeholder:text-white/55 focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/.4)]"
           />
-          <button className="shrink-0 rounded-full bg-white px-3 text-[12px] font-medium text-black" aria-label="Search">Go</button>
+          <button className="hq-btn shrink-0" aria-label="Search">Go</button>
         </form>
       </div>
     </div>
@@ -979,13 +979,13 @@ export function Dashboard() {
     ...extraWidgets(travel),
   ];
   return (
-    <main className="mx-auto max-w-[1440px] px-3 pb-12 pt-3 sm:px-5 sm:pt-4">
+    <main className="mx-auto max-w-[1440px] px-4 pb-12 pt-2 sm:px-6 sm:pt-4">
       <EditableGrid
         defs={defs}
         prefKey="dashboard_layout"
         className="grid grid-flow-row-dense auto-rows-[180px] grid-cols-2 gap-3 sm:auto-rows-[190px] sm:gap-4 md:grid-cols-4 lg:auto-rows-[210px]"
       />
-      <p className="mt-6 text-center text-[11px] text-white/25">
+      <p className="mt-8 text-center text-[12px] text-muted-foreground">
         HQ · private · data refreshes automatically
       </p>
     </main>

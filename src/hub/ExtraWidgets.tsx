@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Cctv, Film, Ship, CheckCircle2, FileWarning, Plane, Heart, Newspaper, Radio } from "lucide-react";
+import { ChevronRight, Cctv, Film, Ship, CheckCircle2, FileWarning, Plane, Heart, Newspaper, Radio } from "lucide-react";
 import { useHistory } from "@/tv/api";
 import { useKorauto, carName } from "@/korauto/feed";
 import { useFrigate, camLabel, fmtWhen, type FEvent } from "@/cameras/frigate";
@@ -7,9 +7,11 @@ import { usePoll } from "@/wi/api";
 import type { CardDef } from "./EditableGrid";
 import type { ReactNode } from "react";
 
+const WIDGET_TINT: Record<string, string> = { "/korauto": "--orange", "/tv": "--pink", "/cameras": "--success", "/travel": "--teal", "/world": "--cyan" };
 function Widget({ label, icon, to, children }: { label: string; icon: ReactNode; to: string; children: ReactNode }) {
-  return <Link to={to} className="hq-card hq-rise flex h-full min-w-0 flex-col gap-3 p-4 sm:p-5">
-    <div className="flex items-center gap-2"><span className="text-muted-foreground">{icon}</span><span className="hq-label min-w-0 flex-1 truncate">{label}</span><ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground" /></div>
+  const tint = WIDGET_TINT[to.split("#")[0]] ?? "--primary";
+  return <Link to={to} className="hq-card hq-rise flex h-full min-w-0 flex-col gap-3 p-4 sm:p-5" style={{ ["--tint-c" as any]: `var(${tint})` }}>
+    <div className="flex items-center gap-2"><span className="hq-ico">{icon}</span><span className="t-subhead min-w-0 flex-1 truncate font-semibold">{label}</span><ChevronRight className="hq-chev h-4 w-4 shrink-0" /></div>
     <div className="min-h-0 flex-1 overflow-auto text-sm">{children}</div>
   </Link>;
 }
@@ -18,7 +20,7 @@ function BusinessWidget({ kind }: { kind: "shipping" | "approvals" | "complaints
   const list = kind === "shipping" ? feed?.arrivingThisWeek : kind === "approvals" ? feed?.pendingApprovals : feed?.openComplaints;
   const title = kind === "shipping" ? "Arriving this week" : kind === "approvals" ? "Pending approvals" : "Open complaints";
   return <Widget label={title} icon={kind === "shipping" ? <Ship /> : kind === "approvals" ? <CheckCircle2 /> : <FileWarning />} to="/korauto">
-    <div className="hq-num text-3xl font-semibold">{!feed ? "—" : list?.length ?? 0}</div>
+    <div className="hq-big">{!feed ? "—" : list?.length ?? 0}</div>
     <div className="mt-2 space-y-1 text-xs text-muted-foreground">{!feed ? loading ? "Loading…" : "Unavailable" : !feed.configured ? "Connection needed" : feed.error ? "Feed unavailable" : list?.length ? list.slice(0, 3).map((c) => <p key={c.id} className="truncate">{"car_label" in c ? String(c.car_label || c.status || "Complaint") : carName(c)}</p>) : "Nothing pending"}</div>
   </Widget>;
 }
@@ -50,7 +52,7 @@ function SourceWidget() {
   const { data, loading, error } = usePoll("/api/status", 300000);
   const sources = data?.sources ?? [];
   return <Widget label="News source health" icon={<Radio />} to="/world">
-    <div className="hq-num text-3xl font-semibold">{data ? `${sources.filter((s: { state: string }) => s.state === "ok").length}/${sources.length}` : "—"}</div>
+    <div className="hq-big">{data ? `${sources.filter((s: { state: string }) => s.state === "ok").length}/${sources.length}` : "—"}</div>
     <p className="mt-2 text-xs text-muted-foreground">{loading ? "Checking sources…" : error ? "Status unavailable" : "Sources reporting normally"}</p>
   </Widget>;
 }
@@ -64,7 +66,7 @@ export function extraWidgets(travel: { s: { trips: any[]; bucket: string[] } | n
     make("continue", "Continue watching", <Film />, () => <ContinueWidget />),
     make("recordings", "Recent camera recordings", <Cctv />, () => <RecordingsWidget />),
     make("next-trip", "Next trip", <Plane />, () => <Widget label="Next trip" icon={<Plane />} to="/travel#calendar"><p className="text-lg font-semibold">{next ? next.countryName || next.countryCode : "No upcoming trips"}</p>{next && <p className="mt-2 text-xs text-muted-foreground">{new Date(next.startDate).toLocaleDateString("en-GB")}</p>}</Widget>),
-    make("bucket", "Travel wish list", <Heart />, () => <Widget label="Travel wish list" icon={<Heart />} to="/travel#map"><p className="hq-num text-3xl font-semibold">{travel.s?.bucket.length ?? "—"}</p><p className="mt-2 text-xs text-muted-foreground">{travel.s?.bucket.length ? travel.s.bucket.join(" · ") : "No saved destinations"}</p></Widget>),
+    make("bucket", "Travel wish list", <Heart />, () => <Widget label="Travel wish list" icon={<Heart />} to="/travel#map"><p className="hq-big">{travel.s?.bucket.length ?? "—"}</p><p className="mt-2 text-xs text-muted-foreground">{travel.s?.bucket.length ? travel.s.bucket.join(" · ") : "No saved destinations"}</p></Widget>),
     make("source-health", "News source health", <Radio />, () => <SourceWidget />),
   ];
 }

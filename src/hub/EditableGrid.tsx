@@ -13,8 +13,7 @@ import { SortableContext, arrayMove, rectSortingStrategy, sortableKeyboardCoordi
 import { CSS } from "@dnd-kit/utilities";
 import { Check, GripVertical, Minus, Pencil, Plus, RotateCcw } from "lucide-react";
 import { usePref } from "./prefs";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { normalizeLayout, shouldRevealEdit, type Layout, type Size } from "./layout";
 export type { Size } from "./layout";
 
@@ -68,36 +67,36 @@ function Tile({
       </div>
       {editing && (
         <>
-          <div className="pointer-events-none absolute inset-0 rounded-3xl ring-2 ring-sky/50 ring-offset-0" />
-          <Button variant="ghost"
+          <div className="hq-edit-outline" />
+          <button
             type="button"
             onPointerDown={stop}
             onClick={onRemove}
-            className="absolute -left-2 -top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-2 ring-background/60 active:scale-90"
+            className="hq-minus"
             aria-label={`Hide ${label}`}
           >
             <Minus className="h-4 w-4" strokeWidth={3} />
-          </Button>
-          <span className="pointer-events-none absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-background/80 text-foreground/80 backdrop-blur">
+          </button>
+          <span className="pointer-events-none absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center text-muted-foreground">
             <GripVertical className="h-4 w-4" />
           </span>
           <div
             onPointerDown={stop}
-            className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 gap-0.5 rounded-full bg-background/90 p-0.5 ring-1 ring-border backdrop-blur"
+            className="hq-sizes glass-thin"
             role="group"
             aria-label={`${label} size`}
           >
             {SIZES.map((s) => (
-              <Button variant="ghost"
+              <button
                 key={s.id}
                 type="button"
                 onClick={() => onSize(s.id)}
                 title={s.hint}
                 aria-pressed={size === s.id}
-                className={`h-7 min-w-7 rounded-full px-2 text-[11px] font-semibold transition ${size === s.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                className="hq-size press"
               >
                 {s.label}
-              </Button>
+              </button>
             ))}
           </div>
         </>
@@ -112,6 +111,8 @@ export function EditableGrid({ defs, prefKey, className }: { defs: CardDef[]; pr
   const [editing, setEditing] = useState(false);
   const [picker, setPicker] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [entered, setEntered] = useState(false);
+  useEffect(() => { const t = window.setTimeout(() => setEntered(true), 1300); return () => window.clearTimeout(t); }, []);
   const gesture = useRef<{ x: number; y: number } | null>(null);
   useEffect(() => {
     const start = (e: TouchEvent) => {
@@ -147,42 +148,34 @@ export function EditableGrid({ defs, prefKey, className }: { defs: CardDef[]; pr
 
   return (
     <>
-      <div className={editing || revealed ? "hq-toolbar mb-3 flex min-h-9 flex-wrap items-center justify-end gap-2" : "sr-only focus-within:not-sr-only focus-within:mb-3"}>
+      <div className={editing || revealed ? "hq-toolbar hq-edit-bar glass-strong" : "sr-only focus-within:not-sr-only focus-within:mb-3"}>
         {editing ? (
           <>
-            
-            <Button variant="ghost"
-              onClick={() => setPicker(true)}
-              className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-foreground/80 hover:text-foreground"
-            >
-              <Plus className="h-3.5 w-3.5" /> Add card{layout.hidden.length ? ` (${layout.hidden.length})` : ""}
-            </Button>
-            <Button variant="ghost"
-              onClick={() => commit(normalizeLayout(null, defs))}
-              className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-foreground/80 hover:text-foreground"
-            >
-              <RotateCcw className="h-3.5 w-3.5" /> Reset
-            </Button>
-            <Button variant="ghost"
+            <button type="button" onClick={() => setPicker(true)} className="hq-edit-btn">
+              <Plus className="h-4 w-4" /> Add{layout.hidden.length ? ` (${layout.hidden.length})` : ""}
+            </button>
+            <button type="button" onClick={() => commit(normalizeLayout(null, defs))} className="hq-edit-btn">
+              <RotateCcw className="h-4 w-4" /> Reset
+            </button>
+            <button
+              type="button"
+              data-primary="true"
               onClick={() => { setEditing(false); setPicker(false); setRevealed(false); }}
-              className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground"
+              className="hq-edit-btn"
             >
-              <Check className="h-3.5 w-3.5" /> Done
-            </Button>
+              <Check className="h-4 w-4" /> Done
+            </button>
           </>
         ) : (
-          <Button variant="ghost"
-            onClick={() => setEditing(true)}
-            className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground transition hover:border-ring hover:text-foreground"
-          >
-            <Pencil className="h-3.5 w-3.5" /> Edit
-          </Button>
+          <button type="button" onClick={() => setEditing(true)} className="hq-edit-btn">
+            <Pencil className="h-4 w-4" /> Edit
+          </button>
         )}
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={layout.items.map((i) => i.id)} strategy={rectSortingStrategy}>
-          <div className={className}>
+          <div className={`${className} ${entered ? "hq-entered" : ""}`}>
             {layout.items.map((it, i) => {
               const d = byId.get(it.id);
               if (!d) return null;
@@ -205,28 +198,29 @@ export function EditableGrid({ defs, prefKey, className }: { defs: CardDef[]; pr
         </SortableContext>
       </DndContext>
 
-      <Dialog open={picker} onOpenChange={setPicker}>
-        <DialogContent aria-describedby={undefined} className="z-[70] max-h-[80dvh] w-[calc(100%-24px)] overflow-y-auto rounded-lg sm:max-w-md">
-          <DialogTitle>Add a card</DialogTitle>
+      <Sheet open={picker} onOpenChange={setPicker}>
+        <SheetContent side="bottom" aria-describedby={undefined} className="z-[70] max-h-[80dvh] overflow-y-auto sm:mx-auto sm:max-w-md">
+          <SheetTitle className="t-title3">Add a card</SheetTitle>
           {layout.hidden.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">All cards are on your dashboard.</p>
           ) : (
-            <ul className="grid gap-2">
+            <ul className="mt-4 grid gap-2">
               {layout.hidden.map((id) => {
                 const d = byId.get(id);
                 if (!d) return null;
                 return <li key={id}>
-                  <Button variant="outline" className="h-auto w-full justify-start whitespace-normal px-3 py-3 text-left"
+                  <button type="button" className="hq-picker-row"
                     onClick={() => { commit({ ...layout, hidden: layout.hidden.filter((h) => h !== id), items: [...layout.items, { id, size: d.size }] }); setPicker(false); }}>
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted">{d.icon}</span>
-                    <span className="min-w-0 flex-1">{d.label}</span><Plus className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  </Button>
+                    <span className="hq-ico">{d.icon}</span>
+                    <span className="t-body min-w-0 flex-1 font-medium">{d.label}</span>
+                    <span className="hq-plus"><Plus className="h-4 w-4" /></span>
+                  </button>
                 </li>;
               })}
             </ul>
           )}
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
