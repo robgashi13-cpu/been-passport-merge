@@ -2,10 +2,12 @@ import { Component, lazy, Suspense, useEffect, type ReactNode } from "react";
 import { BrowserRouter, Link, Route, Routes, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/hub/auth";
-import { AppShell, Protected } from "@/hub/AppShell";
+import { AppShell, Protected, TITLES } from "@/hub/AppShell";
 import { Dashboard } from "@/hub/Dashboard";
 import { ResetPassword } from "@/hub/Login";
 import { Splash } from "@/hub/Splash";
+import { Button } from "@/components/ui/button";
+import { Logo } from "@/hub/Logo";
 import { Toaster } from "@/components/ui/sonner";
 
 const WorldApp = lazy(() => import("@/wi/App"));
@@ -16,7 +18,6 @@ const KorautoPage = lazy(() => import("@/korauto/KorautoPage"));
 const KorautoksApp = lazy(() => import("@/korautoks/KorautoksApp"));
 const queryClient = new QueryClient();
 
-const TITLES: Record<string, string> = { "/": "Dashboard", "/world": "World News", "/travel": "Travel", "/cameras": "Cameras", "/tv": "TV", "/korauto": "KORAUTO", "/korautoks": "korautoks.com" };
 function TitleSync() {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -37,12 +38,12 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
     if (!this.state.error) return this.props.children;
     return (
       <div className="hq-ambient flex min-h-screen items-center justify-center px-4">
-        <div className="max-w-md text-center">
-          <h1 className="text-xl font-semibold text-foreground">This page didn't load</h1>
+        <div className="glass hq-card fade-scale-in max-w-md p-8 text-center">
+          <Logo size={48} className="mx-auto mb-6" /><h1 className="t-title2 text-foreground">This page didn't load</h1>
           <p className="mt-2 text-sm text-muted-foreground">Something went wrong. Try again or head back to the dashboard.</p>
           <div className="mt-6 flex justify-center gap-2">
-            <button onClick={() => location.reload()} className="rounded-full bg-white px-5 py-2 text-sm font-medium text-black">Try again</button>
-            <a href="/" className="rounded-full border border-white/15 px-5 py-2 text-sm font-medium text-foreground">Dashboard</a>
+            <Button onClick={() => location.reload()}>Try again</Button>
+            <Button variant="secondary" asChild><a href="/">Dashboard</a></Button>
           </div>
         </div>
       </div>
@@ -53,10 +54,10 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 function NotFound() {
   return (
     <div className="hq-ambient flex min-h-screen items-center justify-center px-4">
-      <div className="max-w-md text-center">
+      <div className="glass hq-card fade-scale-in max-w-md p-8 text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
         <p className="mt-2 text-sm text-muted-foreground">This page doesn't exist.</p>
-        <Link to="/" className="mt-6 inline-flex rounded-full bg-white px-5 py-2 text-sm font-medium text-black">Back to dashboard</Link>
+        <Button className="mt-6" asChild><Link to="/">Back to dashboard</Link></Button>
       </div>
     </div>
   );
@@ -129,7 +130,7 @@ export default function App() {
           </ErrorBoundary>
         </BrowserRouter>
       </AuthProvider>
-      <Toaster theme="dark" position="top-center" />
+      <Toaster theme="system" position="top-center" />
     </QueryClientProvider>
   );
 }
