@@ -1,4 +1,5 @@
 # App stability and media polish
+- [ ] Redesign pass 1: system themes, Liquid Glass primitives, floating seven-tab shell, login and fallback screens; verify both schemes and widths.
 - [x] Add covered-range timeline download selection and signed MP4 streaming; 11 tests and isolated desktop/mobile controls passed; deployed 60-second clip returned 200 video/mp4, 2,923,323 bytes.
 - [ ] Verify Save Video to Photos on a physical iPhone: requires the user's device; browser download fallback and deployed clip verified.
 - [x] Add camera-only 48h recording timeline and secure signed HLS playback; focused tests and build passed, frigate deployed.
