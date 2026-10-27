@@ -61,7 +61,7 @@ function TimelinePlayer({ camera, start, end, onClose }: { camera: string; start
           </div>
           <Button variant="ghost" size="icon" aria-label="Close recording" onClick={onClose}><X /></Button>
         </div>
-        <div className="relative aspect-video bg-background">
+        <div className="on-media relative aspect-video bg-black">
           <video ref={video} playsInline controls autoPlay muted className="h-full w-full"
             onLoadedData={() => setLoading(false)} onTimeUpdate={() => setPlayingTime(start + (video.current?.currentTime || 0))}
             onError={() => { setError("This recording couldn't play. Try another time."); setLoading(false); }} />
@@ -98,7 +98,7 @@ export default function Timeline({ cams }: { cams: Cam[] }) {
   return (
     <section className="hq-card min-w-0 p-4 sm:p-5" aria-label="48-hour recording timeline">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="hq-label flex items-center gap-2"><Clock className="h-3.5 w-3.5" /> Timeline <span className="hq-num text-muted-foreground">48h</span></div>
+        <div className="t-subhead flex items-center gap-2 font-semibold"><Clock className="h-4 w-4" /> Timeline <span className="hq-num text-muted-foreground">48h</span></div>
         <div className="flex items-center gap-1">
           {cameras.map((c) => <Button key={c.name} size="sm" variant={camera === c.name ? "secondary" : "ghost"} aria-pressed={camera === c.name}
             onClick={() => { setCamera(c.name); setSelection(null); setRange(null); anchor.current = null; }}>{camLabel(c.name)}</Button>)}
@@ -114,7 +114,7 @@ export default function Timeline({ cams }: { cams: Cam[] }) {
       </div>
       <div className="overflow-x-auto pb-2">
         <div className="relative min-w-[960px] pt-6 pb-8">
-          <Button variant="ghost" className="relative block h-10 w-full overflow-hidden rounded-md border border-border bg-muted p-0 hover:bg-muted"
+          <Button variant="ghost" className="relative block h-10 w-full overflow-hidden rounded-xl border border-border bg-muted p-0 hover:bg-muted"
             style={{ touchAction: downloadMode ? "pan-y" : "auto" }}
             onPointerDown={(e) => {
               if (!downloadMode) return;
@@ -150,7 +150,7 @@ export default function Timeline({ cams }: { cams: Cam[] }) {
             {ticks.map((ts) => <span key={ts} className="pointer-events-none absolute inset-y-0 border-l border-border/50" style={{ left: position(ts) }} />)}
             {downloadMode && range && Number.isFinite(range.start) && Number.isFinite(range.end) && <span className="pointer-events-none absolute inset-y-0 border-x-2 border-foreground bg-foreground/25" style={{ left: position(range.start), width: `${Math.max(0, range.end - range.start) / RECORDING_WINDOW * 100}%` }} />}
           </Button>
-          {ticks.map((ts, i) => <span key={ts} className="pointer-events-none absolute top-16 text-[10px] text-muted-foreground" style={{ left: position(ts) }}>
+          {ticks.map((ts, i) => <span key={ts} className="pointer-events-none absolute top-16 text-[11px] text-muted-foreground" style={{ left: position(ts) }}>
             {i % 3 === 0 ? new Date(ts * 1000).toLocaleTimeString("en-GB", { timeZone: "Europe/Belgrade", hour: "2-digit", minute: "2-digit" }) : ""}
           </span>)}
           {(events.data?.items || []).filter((ev) => ev.start >= start && ev.start <= now && ev.camera === camera).map((ev) =>
@@ -160,7 +160,7 @@ export default function Timeline({ cams }: { cams: Cam[] }) {
             </Button>)}
         </div>
       </div>
-      <div className="flex flex-wrap items-center gap-4 text-[11px] text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-4 text-[12px] text-muted-foreground">
         <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm bg-sky/50" />Recorded</span>
         <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-sm border border-border bg-muted" />Gap</span>
         <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-foreground" />Detection</span>

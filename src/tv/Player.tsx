@@ -148,7 +148,7 @@ export function Player({ item, startAt = 0, onClose }: { item: PlayItem; startAt
 
   const ctl = "flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white/80 backdrop-blur-md transition hover:bg-white/15 hover:text-white active:scale-95";
   return (
-    <div className="fixed inset-0 z-[90] flex flex-col bg-black/95 backdrop-blur-xl" role="dialog" aria-modal="true" aria-label={`Playing ${item.name}`}>
+    <div className="on-media fixed inset-0 z-[90] flex flex-col bg-black/95 backdrop-blur-xl" role="dialog" aria-modal="true" aria-label={`Playing ${item.name}`}>
       {/* ambient glow from the poster */}
       {item.logo && <img src={item.logo} alt="" aria-hidden className="pointer-events-none absolute inset-0 h-full w-full scale-125 object-cover opacity-[0.07] blur-3xl" referrerPolicy="no-referrer" />}
 

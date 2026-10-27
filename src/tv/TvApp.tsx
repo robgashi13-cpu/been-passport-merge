@@ -41,7 +41,7 @@ const Logo = ({ src, className = "" }: { src: string | null; className?: string 
 
 function SearchBox({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
   return (
-    <label className="flex flex-1 items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-sm focus-within:border-sky/50">
+    <label className="flex flex-1 items-center gap-2 rounded-full bg-foreground/[0.07] px-4 py-2.5 text-[16px] focus-within:ring-2 focus-within:ring-primary/40">
       <Search className="h-4 w-4 text-white/40" />
       <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-white/30" />
       {value && <button onClick={() => onChange("")} aria-label="Clear"><X className="h-4 w-4 text-white/40" /></button>}
@@ -54,11 +54,11 @@ function CatPicker({ cats, value, onChange }: { cats: Cat[]; value: string; onCh
   const list = useMemo(() => (f ? cats.filter((c) => c.name.toLowerCase().includes(f.toLowerCase())) : cats), [cats, f]);
   return (
     <>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-full border border-white/10 bg-zinc-900 px-3 py-2 text-sm md:hidden" aria-label="Category">
+      <select value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-full bg-foreground/[0.07] px-4 py-2.5 text-[16px] md:hidden" aria-label="Category">
         {cats.map((c) => <option key={c.id} value={c.id}>{cleanName(c.name)}</option>)}
       </select>
       <div className="hidden md:block">
-        <input value={f} onChange={(e) => setF(e.target.value)} placeholder={`Filter ${cats.length} categories`} className="mb-2 w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs outline-none placeholder:text-white/30" />
+        <input value={f} onChange={(e) => setF(e.target.value)} placeholder={`Filter ${cats.length} categories`} className="mb-2 w-full rounded-xl bg-foreground/[0.07] px-3 py-2 text-[13px] outline-none placeholder:text-white/55" />
         <ul className="max-h-[62vh] space-y-0.5 overflow-y-auto pr-1">
           {list.slice(0, 400).map((c) => (
             <li key={c.id}>
@@ -127,15 +127,15 @@ function LiveSection({ onPlay, refreshKey }: { onPlay: (i: PlayItem) => void; re
               const fav = isFav("live", c.id);
               return (
                 <li key={c.id} className="min-w-0">
-                  <div className="group flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-2 transition hover:border-white/15 hover:bg-white/[0.05]">
+                  <div className="group flex items-center gap-3 rounded-2xl bg-foreground/[0.045] p-2">
                     <button onClick={() => onPlay({ kind: "live", id: c.id, name: cleanName(c.name), logo: c.logo, sub: cur?.title })} className="flex min-w-0 flex-1 items-center gap-3 text-left" aria-label={`Play ${cleanName(c.name)}`}>
-                      <Logo src={c.logo} className="h-10 w-14 shrink-0 rounded-md bg-white/[0.04] p-1" />
+                      <Logo src={c.logo} className="h-10 w-14 shrink-0 rounded-lg bg-foreground/[0.06] p-1" />
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-sm font-medium">{cleanName(c.name)}</div>
                         {cur ? (
                           <>
                             <div className="truncate text-xs text-white/70"><span className="text-rose-300">Now</span> {cur.title}</div>
-                            <div className="mt-1 h-0.5 overflow-hidden rounded bg-white/10"><div className="h-full bg-sky" style={{ width: `${pct}%` }} /></div>
+                            <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/10"><div className="h-full bg-sky" style={{ width: `${pct}%` }} /></div>
                           </>
                         ) : null}
                         {next && <div className="truncate text-[11px] text-white/40">{hhmm(next.start)} {next.title}</div>}
@@ -152,7 +152,7 @@ function LiveSection({ onPlay, refreshKey }: { onPlay: (i: PlayItem) => void; re
           </ul>
         )}
         {(list.data?.length || 0) > limit && (
-          <div className="mt-3 text-center"><button onClick={() => setLimit((l) => l + 60)} className="rounded-full border border-white/10 px-4 py-1.5 text-xs text-white/70 hover:text-white">Show more ({(list.data?.length || 0) - limit})</button></div>
+          <div className="mt-3 text-center"><button onClick={() => setLimit((l) => l + 60)} className="hq-btn" data-tone="plain">Show more ({(list.data?.length || 0) - limit})</button></div>
         )}
       </section>
     </div>
@@ -166,9 +166,9 @@ function PosterGrid<T extends { id: number; name: string; logo: string | null; r
       {items.slice(0, limit).map((m) => (
         <li key={m.id}>
           <button onClick={() => onOpen(m)} className="group block w-full text-left">
-            <div className="relative aspect-[2/3] overflow-hidden rounded-xl bg-white/[0.04] ring-1 ring-white/5 transition group-hover:ring-white/25">
+            <div className="press relative aspect-[2/3] overflow-hidden rounded-2xl bg-foreground/[0.06]">
               {m.logo ? <img src={m.logo} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-full w-full object-cover" onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} /> : null}
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-2 pt-8">
+              <div className="on-media absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-2 pt-8">
                 <div className="line-clamp-2 text-[12px] font-medium leading-tight">{cleanName(m.name)}</div>
                 {m.rating ? <div className="text-[10px] text-amber-300">★ {m.rating.toFixed(1)}</div> : null}
               </div>
@@ -182,7 +182,7 @@ function PosterGrid<T extends { id: number; name: string; logo: string | null; r
 
 function Sheet({ children, onClose }: { children: ReactNode; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center" onClick={onClose}>
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/55 backdrop-blur-sm sm:items-center" onClick={onClose}>
       <div className="hq-card max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-b-none p-0 sm:m-4 sm:rounded-b-3xl" onClick={(e) => e.stopPropagation()}>{children}</div>
     </div>
   );
@@ -288,7 +288,7 @@ function CatalogSection({ kind, onPlay, refreshKey }: { kind: "vod" | "series"; 
         ) : (
           <PosterGrid items={(list.data || []) as any[]} limit={limit} onOpen={setOpen} />
         )}
-        {(list.data?.length || 0) > limit && <div className="mt-3 text-center"><button onClick={() => setLimit((l) => l + 48)} className="rounded-full border border-white/10 px-4 py-1.5 text-xs text-white/70 hover:text-white">Show more</button></div>}
+        {(list.data?.length || 0) > limit && <div className="mt-3 text-center"><button onClick={() => setLimit((l) => l + 48)} className="hq-btn" data-tone="plain">Show more</button></div>}
       </section>
       {open && kind === "vod" && <MovieDetail m={open as Vod} resumeAt={hist.find((h) => h.kind === "movie" && h.id === open.id)?.pos} onPlay={(i, at) => { setOpen(null); onPlay(i, at); }} onClose={() => setOpen(null)} />}
       {open && kind === "series" && <SeriesDetail s={open as Series} onPlay={(i, at) => { setOpen(null); onPlay(i, at); }} onClose={() => setOpen(null)} />}
@@ -359,25 +359,25 @@ export default function TvApp() {
     <div className="mx-auto w-full max-w-7xl space-y-5 px-3 pb-24 pt-4 sm:px-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="hq-label flex items-center gap-2"><Tv className="h-3.5 w-3.5" /> IPTV</div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">TV</h1>
+          <div className="t-footnote flex items-center gap-2 font-medium text-muted-foreground"><Tv className="h-3.5 w-3.5" /> IPTV</div>
+          <h1 className="sr-only">TV</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button onClick={refresh} disabled={refreshing} className="flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1 text-xs text-white/70 transition hover:border-white/25 hover:text-white disabled:opacity-50" title="Pull new movies and channels from the provider">
+          <button onClick={refresh} disabled={refreshing} className="flex items-center gap-1.5 hq-chip press disabled:opacity-50" title="Pull new movies and channels from the provider">
             <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} /> {refreshing ? "Updating…" : "Update"}
           </button>
           {s && s.configured && !s.error && (
             <>
-              <span className="flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1 text-xs text-muted-foreground"><span className={`h-2 w-2 rounded-full ${s.ok ? "bg-emerald-400" : "bg-rose-500"}`} />{s.status}</span>
-              {s.exp && <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-muted-foreground">until {new Date(s.exp * 1000).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>}
-              {s.maxConnections && <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-muted-foreground">{s.activeCons}/{s.maxConnections} stream{s.maxConnections > 1 ? "s" : ""}</span>}
+              <span className="hq-chip text-muted-foreground"><span className={`h-2 w-2 rounded-full ${s.ok ? "bg-[hsl(var(--success))]" : "bg-[hsl(var(--destructive))]"}`} />{s.status}</span>
+              {s.exp && <span className="hq-chip text-muted-foreground">until {new Date(s.exp * 1000).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>}
+              {s.maxConnections && <span className="hq-chip text-muted-foreground">{s.activeCons}/{s.maxConnections} stream{s.maxConnections > 1 ? "s" : ""}</span>}
             </>
           )}
         </div>
       </header>
 
       {status.loading && !s ? (
-        <div className="h-40 animate-pulse rounded-3xl bg-white/[0.03]" />
+        <div className="h-40 animate-pulse rounded-[26px] bg-foreground/[0.04]" />
       ) : !s || (s.configured && s.error) ? (
         <div className="hq-card p-6 text-sm text-muted-foreground">The TV service didn't respond{s?.error ? ` (${s.error})` : ""}. Try again in a moment.</div>
       ) : !s.configured ? (
@@ -385,7 +385,7 @@ export default function TvApp() {
       ) : (
         <>
           {s.mediaProxy === "cloud" && (
-            <div className="rounded-2xl border border-amber-400/20 bg-amber-400/[0.06] px-4 py-3 text-xs leading-relaxed text-amber-100/80">
+            <div className="rounded-2xl bg-[hsl(var(--warning)/.13)] px-4 py-3 text-[13px] leading-relaxed text-foreground/80">
               Channel lists come from your provider. Video playback needs the home media proxy, because your provider blocks streams relayed through cloud servers. Until that's on, channels may not start.
             </div>
           )}
@@ -394,14 +394,14 @@ export default function TvApp() {
               {cont.map((h: Hist) => (
                 <div key={`${h.kind}${h.id}`} className="relative w-40 shrink-0">
                   <button onClick={() => play(h, h.pos)} className="block w-full text-left">
-                    <div className="relative aspect-video overflow-hidden rounded-xl bg-white/[0.05]">
+                    <div className="on-media relative aspect-video overflow-hidden rounded-xl bg-foreground/[0.06]">
                       {h.logo && <img src={h.logo} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />}
                       <div className="absolute inset-x-0 bottom-0 h-1 bg-white/15"><div className="h-full bg-sky" style={{ width: `${(h.pos / h.dur) * 100}%` }} /></div>
                     </div>
                     <div className="mt-1 truncate text-xs">{h.name}</div>
                     {h.sub && <div className="truncate text-[11px] text-white/40">{h.sub}</div>}
                   </button>
-                  <button onClick={() => remove(h)} className="absolute right-1 top-1 rounded-full bg-black/60 p-1" aria-label="Remove"><X className="h-3 w-3" /></button>
+                  <button onClick={() => remove(h)} className="on-media absolute right-1 top-1 rounded-full bg-black/60 p-1" aria-label="Remove"><X className="h-3 w-3" /></button>
                 </div>
               ))}
             </Row>
@@ -411,17 +411,17 @@ export default function TvApp() {
               {(favs.length ? favs : recentLive).map((f) => (
                 <div key={`${f.kind}${f.id}`} className="group relative w-28 shrink-0">
                   <button onClick={() => play(f)} className="block w-full text-left">
-                    <Logo src={f.logo} className="aspect-video w-full rounded-xl bg-white/[0.05] p-2 ring-1 ring-white/5 group-hover:ring-white/25" />
+                    <Logo src={f.logo} className="aspect-video w-full press rounded-xl bg-foreground/[0.06] p-2" />
                     <div className="mt-1 truncate text-xs text-white/80">{f.name}</div>
                   </button>
-                  {favs.length > 0 && <button onClick={() => toggle(f)} className="absolute right-1 top-1 hidden rounded-full bg-black/60 p-1 group-hover:block" aria-label="Remove favorite"><X className="h-3 w-3" /></button>}
+                  {favs.length > 0 && <button onClick={() => toggle(f)} className="on-media absolute right-1 top-1 hidden rounded-full bg-black/60 p-1 group-hover:block" aria-label="Remove favorite"><X className="h-3 w-3" /></button>}
                 </div>
               ))}
             </Row>
           )}
-          <div className="flex gap-1 rounded-full border border-white/10 bg-white/[0.02] p-1 sm:w-fit" role="tablist">
+          <div className="flex gap-1 rounded-full bg-foreground/[0.07] p-1 sm:w-fit" role="tablist">
             {TABS.map((t) => (
-              <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)} className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-1.5 text-sm transition sm:flex-none ${tab === t.id ? "bg-white text-black" : "text-white/60 hover:text-white"}`}>
+              <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)} className={`flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-1.5 text-[14px] transition-[background-color,box-shadow] duration-300 sm:flex-none ${tab === t.id ? "bg-card font-semibold text-foreground shadow-[0_2px_8px_hsl(0_0%_0%/.18)]" : "text-foreground/65"}`}>
                 {t.icon} {t.label}
               </button>
             ))}

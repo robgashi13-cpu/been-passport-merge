@@ -26,7 +26,7 @@ const LabelIcon = ({ label, className = "h-3.5 w-3.5" }: { label: string; classN
   label === "car" ? <Car className={className} /> : label === "person" ? <PersonStanding className={className} /> : <ScanFace className={className} />;
 
 function Dot({ on }: { on: boolean }) {
-  return <span className={`inline-block h-2 w-2 rounded-full ${on ? "hq-live-dot bg-emerald-400" : "bg-rose-500/80"}`} />;
+  return <span className={`inline-block h-2 w-2 rounded-full ${on ? "hq-live-dot bg-[hsl(var(--success))]" : "bg-[hsl(var(--destructive))]"}`} />;
 }
 
 /* ---------- live tile ---------- */
@@ -35,7 +35,7 @@ function CamTile({ cam, onOpen }: { cam: Cam; onOpen: () => void }) {
   const { url, err, at } = useAuthedBlob(cam.enabled ? `snapshot/${cam.name}?h=360` : null, 1000, inView);
   return (
     <button ref={ref} onClick={onOpen} className="hq-card group relative block overflow-hidden p-0 text-left" aria-label={`Open ${camLabel(cam.name)}`}>
-      <div className="relative aspect-video w-full bg-black/60">
+      <div className="on-media relative aspect-video w-full bg-black/60">
         {url ? (
           <img src={url} alt={cam.label} className="absolute inset-0 h-full w-full object-cover" draggable={false} />
         ) : (
@@ -47,7 +47,7 @@ function CamTile({ cam, onOpen }: { cam: Cam; onOpen: () => void }) {
           <span className="flex items-center gap-2 text-sm font-medium text-white">
             <Dot on={cam.online} /> {camLabel(cam.name)}
           </span>
-          <span className="rounded bg-black/50 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-white/80">
+          <span className="rounded bg-black/50 px-1.5 py-0.5 text-[11px] font-medium text-white/80">
             {cam.online ? "Preview" : "Offline"}
           </span>
         </div>
@@ -82,7 +82,7 @@ function Fullscreen({ cams, index, setIndex, onClose }: { cams: Cam[]; index: nu
     else (el.requestFullscreen || el.webkitRequestFullscreen)?.call(el);
   };
   return (
-    <div className="fixed inset-0 z-[80] flex flex-col bg-black/95 backdrop-blur" role="dialog" aria-modal="true">
+    <div className="on-media fixed inset-0 z-[80] flex flex-col bg-black/95 backdrop-blur" role="dialog" aria-modal="true">
       <div className="flex items-center justify-between px-4 py-3 text-white">
         <div className="flex items-center gap-2 text-sm font-medium">
           <Dot on={cam.online} /> {camLabel(cam.name)}
@@ -118,9 +118,9 @@ function EventThumb({ ev }: { ev: FEvent }) {
   const [ref, inView] = useInView<HTMLDivElement>();
   const { url } = useAuthedBlob(`event/${ev.id}/thumb`, 0, inView);
   return (
-    <div ref={ref} className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-black/50">
+    <div ref={ref} className="on-media relative h-16 w-24 shrink-0 overflow-hidden rounded-xl bg-black/50">
       {url ? <img src={url} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-muted-foreground"><LabelIcon label={ev.label} /></div>}
-      {ev.hasClip && <Play className="absolute bottom-1 right-1 h-3.5 w-3.5 text-white drop-shadow" />}
+      {ev.hasClip && <Play className="absolute bottom-1 right-1 h-3.5 w-3.5 fill-white text-white drop-shadow" />}
     </div>
   );
 }
@@ -160,7 +160,7 @@ function EventPlayer({ ev, onClose }: { ev: FEvent; onClose: () => void }) {
           </div>
         </div>
         {saveError && <p role="alert" className="px-4 py-2 text-sm text-destructive">{saveError}</p>}
-        <div className="flex aspect-video items-center justify-center bg-black">
+        <div className="on-media flex aspect-video items-center justify-center bg-black">
           {mode === "clip" ? (
             clip.url ? <video src={clip.url} controls autoPlay playsInline className="h-full w-full" /> : <span className="text-sm text-white/60">{clip.err ? "Clip unavailable" : "Loading clip…"}</span>
           ) : snap.url ? (
@@ -205,7 +205,7 @@ function Events({ cams }: { cams: Cam[] }) {
     } catch { setMore(false); } finally { setBusy(false); }
   }, [items, q, token]);
   const labels = Array.from(new Set(["person", "car", ...cams.flatMap((c) => c.objects)]));
-  const chip = (on: boolean) => `rounded-full border px-3 py-1 text-xs capitalize transition ${on ? "border-sky/60 bg-sky/15 text-foreground" : "border-white/10 text-muted-foreground hover:text-foreground"}`;
+  const chip = (on: boolean) => `press rounded-full px-3 py-1 text-[13px] capitalize ${on ? "bg-primary text-primary-foreground font-medium" : "bg-foreground/[0.06] text-foreground/80"}`;
   return (
     <section className="hq-card p-4 sm:p-5">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -213,7 +213,7 @@ function Events({ cams }: { cams: Cam[] }) {
         <div className="flex flex-wrap gap-1.5">
           <button className={chip(!label)} onClick={() => setLabel("")}>All</button>
           {labels.map((l) => <button key={l} className={chip(label === l)} onClick={() => setLabel(l)}>{l}</button>)}
-          <select value={camera} onChange={(e) => setCamera(e.target.value)} className="rounded-full border border-white/10 bg-transparent px-3 py-1 text-xs text-muted-foreground" aria-label="Camera filter">
+          <select value={camera} onChange={(e) => setCamera(e.target.value)} className="rounded-full bg-foreground/[0.06] px-3 py-1 text-[13px] text-foreground/80" aria-label="Camera filter">
             <option value="">All cameras</option>
             {cams.map((c) => <option key={c.name} value={c.name}>{camLabel(c.name)}</option>)}
           </select>
@@ -227,15 +227,15 @@ function Events({ cams }: { cams: Cam[] }) {
         <ul className="grid gap-2 md:grid-cols-2">
           {items.map((ev) => (
             <li key={ev.id} className="min-w-0">
-              <button onClick={() => setOpen(ev)} className="flex w-full items-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-2 text-left transition hover:border-white/15 hover:bg-white/[0.05]">
+              <button onClick={() => setOpen(ev)} className="press flex w-full items-center gap-3 rounded-2xl bg-foreground/[0.045] p-2 text-left">
                 <EventThumb ev={ev} />
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 items-center gap-1.5 text-sm font-medium capitalize">
                     <LabelIcon label={ev.label} /> {ev.label}
                     {ev.subLabel && <span className="truncate rounded bg-white/10 px-1.5 text-[11px] normal-case">{ev.subLabel}</span>}
-                    {!ev.end && <span className="rounded bg-rose-500/20 px-1.5 text-[10px] uppercase text-rose-300">live</span>}
+                    {!ev.end && <span className="rounded-full bg-[hsl(var(--destructive)/.15)] px-1.5 text-[11px] font-semibold uppercase text-[hsl(var(--destructive))]">live</span>}
                   </div>
-                  <div className="truncate text-xs text-muted-foreground">{camLabel(ev.camera)} · {fmtWhen(ev.start)} · {ago(ev.start)}</div>
+                  <div className="truncate text-[13px] text-muted-foreground">{camLabel(ev.camera)} · {fmtWhen(ev.start)} · {ago(ev.start)}</div>
                 </div>
                 {ev.score != null && <span className="hq-num shrink-0 text-xs text-muted-foreground">{Math.round(ev.score * 100)}%</span>}
               </button>
@@ -245,7 +245,7 @@ function Events({ cams }: { cams: Cam[] }) {
       )}
       {items.length >= 30 && more && (
         <div className="mt-3 text-center">
-          <button onClick={loadMore} disabled={busy} className="rounded-full border border-white/10 px-4 py-1.5 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50">{busy ? "Loading…" : "Load older"}</button>
+          <button onClick={loadMore} disabled={busy} className="hq-btn" data-tone="plain">{busy ? "Loading…" : "Load older"}</button>
         </div>
       )}
       {open && <EventPlayer ev={open} onClose={() => setOpen(null)} />}
@@ -268,10 +268,8 @@ function AlfredCard() {
   return (
     <section className="hq-card p-4 sm:p-5">
       <div className="mb-2 flex items-center gap-2">
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-white/80">
-          <Camera className="h-4 w-4" />
-        </span>
-        <div className="hq-label">AlfredCamera</div>
+        <span className="hq-ico" style={{ ["--tint-c" as any]: "var(--slate)" }}><Camera className="h-4 w-4" /></span>
+        <div className="t-subhead font-semibold">AlfredCamera</div>
       </div>
       <p className="text-sm text-muted-foreground">Log in with your Alfred account</p>
       <div className="mt-3">
@@ -294,15 +292,15 @@ export default function CamerasApp() {
     <div className="mx-auto w-full max-w-7xl space-y-4 px-3 pb-24 pt-4 sm:px-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <div className="hq-label flex items-center gap-2"><Cctv className="h-3.5 w-3.5" /> Frigate NVR</div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Cameras</h1>
+          <div className="t-footnote flex items-center gap-2 font-medium text-muted-foreground"><Cctv className="h-3.5 w-3.5" /> Frigate NVR</div>
+          <h1 className="sr-only">Cameras</h1>
         </div>
         {s && s.configured && s.reachable && (
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1"><Dot on={online > 0} /><span className="hq-num">{online}/{active.length}</span> online</span>
-            {s.version && <span className="rounded-full border border-white/10 px-3 py-1">v{s.version.split("-")[0]}</span>}
-            <span className="hq-num rounded-full border border-white/10 px-3 py-1">{s.latencyMs} ms</span>
-            <button onClick={st.reload} className="rounded-full border border-white/10 p-1.5 hover:text-foreground" aria-label="Refresh"><RefreshCw className="h-3.5 w-3.5" /></button>
+            <span className="flex items-center gap-1.5 hq-chip"><Dot on={online > 0} /><span className="hq-num">{online}/{active.length}</span> online</span>
+            {s.version && <span className="hq-chip">v{s.version.split("-")[0]}</span>}
+            <span className="hq-num hq-chip">{s.latencyMs} ms</span>
+            <button onClick={st.reload} className="hq-chip !p-1.5 press" aria-label="Refresh"><RefreshCw className="h-3.5 w-3.5" /></button>
           </div>
         )}
       </header>
@@ -325,7 +323,7 @@ export default function CamerasApp() {
       ) : !s.reachable ? (
         <Notice icon={<WifiOff className="h-5 w-5 text-rose-400" />} title="Frigate is offline or unreachable">
           <p>The proxy is configured, but it can't reach Frigate right now{s.error ? ` (${s.error})` : ""}. Check that the Mac mini is on and that the public tunnel is running. This page retries every 10 seconds.</p>
-          <button onClick={st.reload} className="rounded-full border border-white/10 px-4 py-1.5 text-xs hover:text-foreground">Retry now</button>
+          <button onClick={st.reload} className="hq-btn"  data-tone="plain">Retry now</button>
         </Notice>
       ) : (
         <>
