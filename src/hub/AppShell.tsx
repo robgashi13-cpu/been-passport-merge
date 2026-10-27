@@ -15,8 +15,11 @@ import { Logo } from "./Logo";
 import { LoginScreen, AccessDenied } from "./Login";
 import { Splash } from "./Splash";
 import { fmtTime, useNow } from "./clock";
+import { Button } from "@/components/ui/button";
 
 export const KORAUTO_URL = "https://korautomanager.biz";
+
+export const TITLES: Record<string, string> = { "/": "Dashboard", "/world": "World News", "/travel": "Travel", "/cameras": "Cameras", "/tv": "TV", "/korauto": "KORAUTO", "/korautoks": "korautoks.com" };
 
 const TABS = [
   { to: "/", label: "Dashboard", icon: LayoutGrid },
@@ -50,13 +53,13 @@ function TopClock() {
   const now = useNow(15000);
   return (
     <div
-      className="hidden items-center gap-2 rounded-full border border-white/[0.07] bg-white/[0.03] px-3 py-1.5 sm:flex"
+      className="glass-thin hidden items-center gap-2 rounded-full px-3 py-1 sm:flex"
       title="Kosovo time (Europe/Belgrade)"
     >
-      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+      <span className="text-[10px] font-semibold text-muted-foreground">
         PRN
       </span>
-      <span className="hq-num text-[13px] text-white">{fmtTime(now)}</span>
+      <span className="hq-num text-[13px] text-foreground">{fmtTime(now)}</span>
     </div>
   );
 }
@@ -72,6 +75,11 @@ export function AppShell({
   const navigate = useNavigate();
   const contentRef = useRef<HTMLDivElement>(null);
   const { user, signOut } = useAuth();
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const indicatorRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLDivElement>(null);
+  const shellRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const tabIndex = TABS.findIndex((t) => (t.to === "/" ? path === "/" : path === t.to || path.startsWith(t.to + "/")));
 
   // Apple-style horizontal swipe between tabs: content follows the finger, then springs.
@@ -90,10 +98,13 @@ export function AppShell({
       return false;
     };
     const set = (x: number, anim: boolean) => {
-      el.style.transition = anim ? "transform .38s cubic-bezier(.22,1,.36,1), opacity .38s" : "none";
+      if (reducedMotion) { el.style.transform = ""; el.style.opacity = ""; return; }
+      el.style.transition = anim ? "transform 420ms var(--ease-spring), opacity 280ms" : "none";
       el.style.transform = x ? `translate3d(${x}px,0,0)` : "";
       el.style.opacity = x ? String(1 - Math.min(Math.abs(x) / window.innerWidth, 1) * 0.35) : "";
     };
+    let navigationTimer: number | undefined;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const start = (e: TouchEvent) => {
       if (e.touches.length !== 1 || blocked(e.target)) { active = false; return; }
       active = true; mode = "none"; dx = 0; t0 = performance.now();
@@ -121,7 +132,7 @@ export function AppShell({
       if ((Math.abs(dx) > w * 0.28 || fast) && next >= 0 && next < TABS.length) {
         const dir = dx < 0 ? -1 : 1;
         set(dir * w * 0.6, true);
-        window.setTimeout(() => {
+        navigationTimer = window.setTimeout(() => {
           navigate(TABS[next].to);
           set(-dir * w * 0.35, false);
           requestAnimationFrame(() => requestAnimationFrame(() => set(0, true)));
@@ -133,6 +144,8 @@ export function AppShell({
     el.addEventListener("touchend", end);
     el.addEventListener("touchcancel", end);
     return () => {
+      window.clearTimeout(navigationTimer);
+      el.style.transform = ""; el.style.opacity = "";
       el.removeEventListener("touchstart", start);
       el.removeEventListener("touchmove", move);
       el.removeEventListener("touchend", end);
@@ -141,97 +154,81 @@ export function AppShell({
   }, [tabIndex, navigate]);
   const [menu, setMenu] = useState(false);
   const initial = (user?.email || "R").charAt(0).toUpperCase();
-  // On narrow screens the tab row scrolls; keep the active tab in view.
+  const title = TITLES[path] ?? "Travel";
   useEffect(() => {
-    document.querySelector('header nav a[aria-current="page"]')?.scrollIntoView({ inline: "center", block: "nearest" });
+    const track = tabsRef.current;
+    const active = track?.querySelector<HTMLElement>('a[aria-current="page"]');
+    const indicator = indicatorRef.current;
+    if (!track || !active || !indicator) return;
+    const position = () => {
+      indicator.style.width = `${active.offsetWidth}px`;
+      indicator.style.transform = `translateX(${active.offsetLeft}px)`;
+    };
+    position();
+    active.scrollIntoView({ inline: "center", block: "nearest", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+    const observer = new ResizeObserver(position);
+    observer.observe(track);
+    return () => observer.disconnect();
   }, [path]);
+  useEffect(() => {
+    const element = titleRef.current;
+    if (!element) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      shellRef.current?.style.setProperty("--collapsed", entry.isIntersecting ? "0" : "1");
+    }, { rootMargin: "-44px 0px 0px 0px", threshold: .15 });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [path]);
+  useEffect(() => {
+    if (!menu) return;
+    const close = (event: PointerEvent) => {
+      if (event.target instanceof Node && !menuRef.current?.contains(event.target)) setMenu(false);
+    };
+    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") setMenu(false); };
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", escape);
+    return () => { document.removeEventListener("pointerdown", close); document.removeEventListener("keydown", escape); };
+  }, [menu]);
 
   return (
-    <div className={flush ? "" : "hq-ambient min-h-[100dvh]"}>
-      <header
-        className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.06] bg-[#07080a]/85 backdrop-blur-xl"
-        style={{ paddingTop: "env(safe-area-inset-top)" }}
-      >
-        <div className="mx-auto flex h-14 max-w-[1440px] items-center gap-2 px-3 sm:gap-4 sm:px-5">
-          <Link
-            to="/"
-            className="flex shrink-0 items-center gap-2.5"
-            aria-label="HQ home"
-          >
-            <Logo size={30} />
-            <span className="hidden font-display text-[15px] font-semibold tracking-tight text-white md:inline">
-              HQ
-            </span>
-          </Link>
-          <nav className="no-scrollbar -mx-1 flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-1 md:justify-center">
-            {TABS.map((t) => {
-              const active =
-                t.to === "/" ? path === "/" : path === t.to || path.startsWith(t.to + "/");
-              const Icon = t.icon;
-              return (
-                <Link
-                  key={t.to}
-                  to={t.to}
-                  aria-current={active ? "page" : undefined}
-                  title={t.label}
-                  onPointerEnter={() => {
-                    if (t.to === "/cameras") void import("@/cameras/CamerasApp");
-                    if (t.to === "/tv") void import("@/tv/TvApp");
-                  }}
-                  onFocus={() => {
-                    if (t.to === "/cameras") void import("@/cameras/CamerasApp");
-                    if (t.to === "/tv") void import("@/tv/TvApp");
-                  }}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition-colors ${
-                    active
-                      ? "bg-white text-black"
-                      : "text-white/60 hover:bg-white/[0.06] hover:text-white"
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span className={active ? "" : "hidden min-[420px]:inline"}>
-                    {t.label}
-                  </span>
-                </Link>
-              );
-            })}
-          </nav>
-          <TopClock />
-          <div className="relative shrink-0">
-            <button
-              onClick={() => setMenu((m) => !m)}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-sky to-blue-600 text-[13px] font-semibold text-white ring-1 ring-white/20"
-              aria-label="Account"
-            >
-              {initial}
-            </button>
-            {menu && (
-              <>
-                <button
-                  className="fixed inset-0 z-40 cursor-default"
-                  aria-hidden
-                  onClick={() => setMenu(false)}
-                />
-                <div className="absolute right-0 top-10 z-50 w-60 rounded-2xl border border-white/10 bg-[#0e1116] p-2 shadow-2xl">
-                  <div className="truncate px-3 py-2 text-xs text-muted-foreground">
-                    {user?.email}
-                  </div>
-                  <button
-                    onClick={() => {
-                      setMenu(false);
-                      signOut();
-                    }}
-                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-white hover:bg-white/[0.06]"
-                  >
-                    <LogOut className="h-4 w-4" /> Sign out
-                  </button>
+    <div ref={shellRef} className={`hq-ambient min-h-[100dvh] ${flush ? "hq-flush" : ""}`}>
+      <header className="hq-navigation glass-strong">
+        <div className="hq-navigation-inner">
+          <Link to="/" className="press shrink-0" aria-label="HQ home"><Logo size={28} /></Link>
+          <span className="hq-compact-title t-headline">{title}</span>
+          <div className="flex items-center gap-3">
+            <TopClock />
+            <div ref={menuRef} className="relative">
+              <Button onClick={() => setMenu((m) => !m)} className="hq-avatar" aria-label="Account" aria-expanded={menu} aria-controls="hq-account-menu" variant="secondary">{initial}</Button>
+              {menu && (
+                <div id="hq-account-menu" className="hq-account-menu glass-strong fade-scale-in">
+                  <div className="truncate px-3 py-3 text-xs text-muted-foreground">{user?.email}</div>
+                  <Button variant="ghost" className="w-full justify-start" onClick={() => { setMenu(false); void signOut(); }}><LogOut className="h-4 w-4" /> Sign out</Button>
                 </div>
-              </>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </header>
-      <div className="overflow-x-clip"><div ref={contentRef} style={{ paddingTop: "var(--hub-h)", touchAction: "pan-y" }}>{children}</div></div>
+      <div className="overflow-x-clip">
+        <div ref={contentRef} className="hq-shell-content">
+          <div ref={titleRef} className="hq-large-header"><h1 className="t-large-title transition-[transform,opacity] duration-300">{title}</h1></div>
+          <div key={path} className="page-in">{children}</div>
+        </div>
+      </div>
+      <nav className="hq-tabbar glass-strong" aria-label="Main navigation" data-no-swipe>
+        <div className="hq-tab-scroll no-scrollbar">
+          <div ref={tabsRef} className="hq-tab-track">
+            <div ref={indicatorRef} className="hq-tab-indicator" aria-hidden="true" />
+            {TABS.map((t) => {
+              const active = t.to === "/" ? path === "/" : path === t.to || path.startsWith(t.to + "/");
+              const Icon = t.icon;
+              const prefetch = () => { if (t.to === "/cameras") void import("@/cameras/CamerasApp"); if (t.to === "/tv") void import("@/tv/TvApp"); };
+              return <Link key={t.to} to={t.to} aria-label={t.label} aria-current={active ? "page" : undefined} title={t.label} onPointerEnter={prefetch} onFocus={prefetch} className="hq-tab-link"><Icon /><span className="hq-tab-label">{t.label}</span></Link>;
+            })}
+          </div>
+        </div>
+      </nav>
     </div>
   );
 }

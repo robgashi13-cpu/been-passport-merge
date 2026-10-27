@@ -6,7 +6,7 @@ export function Logo({ size = 28, className = "" }: { size?: number; className?:
       height={size}
       alt=""
       aria-hidden="true"
-      className={`rounded-[22%] ring-1 ring-white/10 ${className}`}
+      className={`rounded-[22%] ring-1 ring-border/30 ${className}`}
       draggable={false}
     />
   );
