@@ -245,3 +245,19 @@ img, video, canvas { max-width: 100%; }
 .hq-flush .wi-root .app.mobile .tabbar { order: -1; height: 44px; padding: 0; margin: 6px 14px; border-radius: 999px; }
 .hq-flush .wi-root .app.mobile .tabbar .tb { flex-direction: row; gap: 6px; padding: 0; font-size: 12px; min-height: 0; }
 .hq-flush .wi-root .app.mobile .tabbar .tb svg { width: 17px; height: 17px; }
+
+/* ── Wide / unfolded (iPhone Fold) + landscape: tab bar becomes a right-hand vertical rail ── */
+@media (min-width: 700px) {
+  :root { --rail-w: calc(92px + env(safe-area-inset-right, 0px)); --tabbar-h: calc(16px + env(safe-area-inset-bottom, 0px)); }
+  .hq-tabbar { top: calc(var(--hub-h) + 8px); bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); right: calc(env(safe-area-inset-right, 0px) + 10px); left: auto; transform: none; width: 76px; max-width: none; border-radius: 30px; padding: 6px; display: flex; }
+  .hq-tab-scroll { flex: 1; overflow-x: hidden; overflow-y: auto; scroll-snap-type: y proximity; border-radius: 24px; mask-image: linear-gradient(to bottom, transparent, #000 8px, #000 calc(100% - 8px), transparent); }
+  .hq-tab-track { flex-direction: column; width: 100%; min-width: 0; min-height: 100%; justify-content: flex-start; gap: 4px; }
+  .hq-tab-link { flex: 0 0 60px; width: 100%; height: 60px; flex-direction: column; gap: 3px; border-radius: 22px; }
+  .hq-tab-label, .hq-tab-link[aria-current="page"] .hq-tab-label { display: block; font-size: 10px; line-height: 12px; max-width: 64px; overflow: hidden; text-overflow: ellipsis; }
+  .hq-tab-indicator { border-radius: 22px; }
+  .hq-shell-content { padding-right: var(--rail-w); }
+  .hq-navigation-inner { padding-right: calc(20px + env(safe-area-inset-right, 0px)); }
+  .hq-flush .wi-root { right: var(--rail-w); }
+  .hq-sheet { right: var(--rail-w) !important; }
+  [aria-label="Open AI travel assistant"] { right: calc(var(--rail-w) + 8px) !important; }
+}

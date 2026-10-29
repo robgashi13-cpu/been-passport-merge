@@ -162,10 +162,11 @@ export function AppShell({
     if (!track || !active || !indicator) return;
     const position = () => {
       indicator.style.width = `${active.offsetWidth}px`;
-      indicator.style.transform = `translateX(${active.offsetLeft}px)`;
+      indicator.style.height = `${active.offsetHeight}px`;
+      indicator.style.transform = `translate(${active.offsetLeft}px, ${active.offsetTop}px)`;
     };
     position();
-    active.scrollIntoView({ inline: "center", block: "nearest", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+    active.scrollIntoView({ inline: "center", block: "center", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
     const observer = new ResizeObserver(position);
     observer.observe(track);
     return () => observer.disconnect();
