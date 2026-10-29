@@ -119,7 +119,7 @@ function EventThumb({ ev }: { ev: FEvent }) {
   const { url } = useAuthedBlob(`event/${ev.id}/thumb`, 0, inView);
   return (
     <div ref={ref} className="on-media relative h-16 w-24 shrink-0 overflow-hidden rounded-xl bg-black/50">
-      {url ? <img src={url} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-muted-foreground"><LabelIcon label={ev.label} /></div>}
+      {url ? <img src={url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-muted-foreground"><LabelIcon label={ev.label} /></div>}
       {ev.hasClip && <Play className="absolute bottom-1 right-1 h-3.5 w-3.5 fill-white text-white drop-shadow" />}
     </div>
   );

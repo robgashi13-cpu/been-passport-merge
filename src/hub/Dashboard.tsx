@@ -847,7 +847,7 @@ function CamerasCard() {
           </div>
         </div>
         {thumb.url && (
-          <img src={thumb.url} alt="" className="h-12 w-16 rounded-lg object-cover" />
+          <img loading="lazy" decoding="async" src={thumb.url} alt="" className="h-12 w-16 rounded-lg object-cover" />
         )}
       </div>
       <div className="mt-2 truncate text-[11px] text-muted-foreground">

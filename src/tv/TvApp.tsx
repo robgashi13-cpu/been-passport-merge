@@ -196,7 +196,7 @@ function MovieDetail({ m, onPlay, onClose, resumeAt }: { m: Vod; onPlay: (i: Pla
   return (
     <Sheet onClose={onClose}>
       <div className="flex gap-4 p-4">
-        <div className="w-28 shrink-0 overflow-hidden rounded-xl bg-white/5 sm:w-36">{(info.data?.cover || m.logo) && <img src={info.data?.cover || m.logo!} alt="" className="aspect-[2/3] w-full object-cover" referrerPolicy="no-referrer" />}</div>
+        <div className="w-28 shrink-0 overflow-hidden rounded-xl bg-white/5 sm:w-36">{(info.data?.cover || m.logo) && <img loading="lazy" decoding="async" src={info.data?.cover || m.logo!} alt="" className="aspect-[2/3] w-full object-cover" referrerPolicy="no-referrer" />}</div>
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2"><h2 className="text-lg font-semibold leading-tight">{cleanName(m.name)}</h2><button onClick={onClose} className="rounded-full p-1 hover:bg-white/10" aria-label="Close"><X className="h-4 w-4" /></button></div>
           <div className="mt-1 text-xs text-white/50">{[info.data?.year, info.data?.genre, info.data?.duration, m.ext.toUpperCase()].filter(Boolean).join(" · ")}</div>
@@ -225,7 +225,7 @@ function SeriesDetail({ s, onPlay, onClose }: { s: Series; onPlay: (i: PlayItem,
     <Sheet onClose={onClose}>
       <div className="p-4">
         <div className="flex items-start gap-4">
-          {(info.data?.info.cover || s.logo) && <img src={info.data?.info.cover || s.logo!} alt="" className="w-24 shrink-0 rounded-xl object-cover sm:w-32" referrerPolicy="no-referrer" />}
+          {(info.data?.info.cover || s.logo) && <img loading="lazy" decoding="async" src={info.data?.info.cover || s.logo!} alt="" className="w-24 shrink-0 rounded-xl object-cover sm:w-32" referrerPolicy="no-referrer" />}
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2"><h2 className="text-lg font-semibold leading-tight">{cleanName(s.name)}</h2><button onClick={onClose} className="rounded-full p-1 hover:bg-white/10" aria-label="Close"><X className="h-4 w-4" /></button></div>
             <div className="mt-1 text-xs text-white/50">{[info.data?.info.year || s.year, info.data?.info.genre].filter(Boolean).join(" · ")}</div>
@@ -395,7 +395,7 @@ export default function TvApp() {
                 <div key={`${h.kind}${h.id}`} className="relative w-40 shrink-0">
                   <button onClick={() => play(h, h.pos)} className="block w-full text-left">
                     <div className="on-media relative aspect-video overflow-hidden rounded-xl bg-foreground/[0.06]">
-                      {h.logo && <img src={h.logo} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />}
+                      {h.logo && <img loading="lazy" decoding="async" src={h.logo} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />}
                       <div className="absolute inset-x-0 bottom-0 h-1 bg-white/15"><div className="h-full bg-sky" style={{ width: `${(h.pos / h.dur) * 100}%` }} /></div>
                     </div>
                     <div className="mt-1 truncate text-xs">{h.name}</div>
