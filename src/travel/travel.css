@@ -320,7 +320,7 @@
   padding: 1rem;
   /* Use dvh for mobile browsers that have dynamic toolbars */
   height: 100dvh;
-  height: 100vh;
+  height: 100vh; height: 100dvh;
   /* Fallback */
   z-index: 9999;
 }

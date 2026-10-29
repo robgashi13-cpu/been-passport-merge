@@ -37,7 +37,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
   override render() {
     if (!this.state.error) return this.props.children;
     return (
-      <div className="hq-ambient flex min-h-screen items-center justify-center px-4">
+      <div className="hq-ambient flex min-h-dvh items-center justify-center px-4">
         <div className="glass hq-card fade-scale-in max-w-md p-8 text-center">
           <Logo size={48} className="mx-auto mb-6" /><h1 className="t-title2 text-foreground">This page didn't load</h1>
           <p className="mt-2 text-sm text-muted-foreground">Something went wrong. Try again or head back to the dashboard.</p>
@@ -53,7 +53,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 
 function NotFound() {
   return (
-    <div className="hq-ambient flex min-h-screen items-center justify-center px-4">
+    <div className="hq-ambient flex min-h-dvh items-center justify-center px-4">
       <div className="glass hq-card fade-scale-in max-w-md p-8 text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
         <p className="mt-2 text-sm text-muted-foreground">This page doesn't exist.</p>
