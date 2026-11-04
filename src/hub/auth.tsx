@@ -21,6 +21,16 @@ type AuthState = {
   token: string | null;
 };
 
+/** Resolve to `fallback` if `p` hasn't settled within `ms` (never blocks first render on the network). */
+export function withTimeout<T>(p: PromiseLike<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    Promise.resolve(p).catch(() => fallback),
+    new Promise<T>((r) => setTimeout(() => r(fallback), ms)),
+  ]);
+}
+const ALLOW_KEY = "hq-allowed:";
+const NET_MS = 5000;
+
 const Ctx = createContext<AuthState>({
   ready: false,
   session: null,
@@ -50,10 +60,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const access_token = h.get("access_token");
       const refresh_token = h.get("refresh_token");
       if (access_token && refresh_token && window.location.pathname !== "/reset") {
-        await supabase.auth.setSession({ access_token, refresh_token }).catch(() => {});
+        await withTimeout(supabase.auth.setSession({ access_token, refresh_token }), NET_MS, null);
         history.replaceState(null, "", window.location.pathname + window.location.search);
       }
-      const { data } = await supabase.auth.getSession();
+      const { data } = await withTimeout(
+        supabase.auth.getSession(),
+        NET_MS,
+        { data: { session: null }, error: null } as Awaited<ReturnType<typeof supabase.auth.getSession>>,
+      );
       if (!alive) return;
       setSession(data.session);
       setWiToken(data.session?.access_token ?? null);
@@ -73,15 +87,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAllowed(null);
       return;
     }
-    setAllowed(null);
-    // Server-side allowlist check (security definer function on public.allowed_emails).
-    (supabase.rpc as any)("is_allowed").then(
-      ({ data, error }: { data: boolean | null; error: unknown }) => {
-        if (alive) setAllowed(!error && data === true);
-      },
-    );
+    // Last known allowlist result renders instantly; the server check re-validates in
+    // the background (RLS still guards all data). A hung check retries instead of
+    // leaving the app on the splash forever.
+    let cached: string | null = null;
+    try { cached = localStorage.getItem(ALLOW_KEY + uid); } catch { /* private mode */ }
+    setAllowed(cached === "1" ? true : null);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    // Slow/unreachable backend: don't hold the shell hostage. Render provisionally
+    // (data is still RLS-protected); an explicit "not allowed" answer flips to AccessDenied.
+    const provisional = setTimeout(() => alive && setAllowed((a) => (a === null ? true : a)), 2500);
+    const check = () => {
+      void withTimeout(
+        (supabase.rpc as any)("is_allowed") as PromiseLike<{ data: boolean | null; error: unknown }>,
+        NET_MS,
+        null,
+      ).then((res) => {
+        if (!alive) return;
+        if (!res || res.error) {
+          // Network/timeout: keep the cached answer, try again shortly.
+          timer = setTimeout(check, NET_MS);
+          return;
+        }
+        clearTimeout(provisional);
+        const ok = res.data === true;
+        try { localStorage.setItem(ALLOW_KEY + uid, ok ? "1" : "0"); } catch { /* ignore */ }
+        setAllowed(ok);
+      });
+    };
+    check();
     return () => {
       alive = false;
+      if (timer) clearTimeout(timer);
+      clearTimeout(provisional);
     };
   }, [uid]);
 

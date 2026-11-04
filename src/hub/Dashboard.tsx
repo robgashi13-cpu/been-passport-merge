@@ -154,6 +154,7 @@ function useWeather() {
     const load = () =>
       fetch(
         "https://api.open-meteo.com/v1/forecast?latitude=42.6629&longitude=21.1655&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=Europe%2FBelgrade&forecast_days=1",
+        { signal: AbortSignal.timeout(5000) },
       )
         .then((r) => (r.ok ? r.json() : null))
         .then((j) => {
