@@ -246,35 +246,76 @@ img, video, canvas { max-width: 100%; }
 .hq-flush .wi-root .app.mobile .tabbar .tb { flex-direction: row; gap: 6px; padding: 0; font-size: 12px; min-height: 0; }
 .hq-flush .wi-root .app.mobile .tabbar .tb svg { width: 17px; height: 17px; }
 
-/* ── Navigation: edge-attached glass rail merged with the header (iOS / iPhone Fold) ──
-   One L-shaped surface: the header's status-bar strip runs into a full-height rail on the right edge.
+/* ── Navigation: bottom frosted tab bar on all widths; header stays top glass only ──
    Insets go through --sat/--sar/--sab so they can be simulated in tests. */
-:root { --sat: env(safe-area-inset-top, 0px); --sar: env(safe-area-inset-right, 0px); --sab: env(safe-area-inset-bottom, 0px); --rail-in: 80px; --rail-w: calc(var(--rail-in) + var(--sar)); --hair: hsl(var(--border) / .9); }
-@media (max-width: 699px) { :root { --rail-in: 60px; } }
-.hq-navigation, .hq-tabbar { background: var(--glass-strong-bg); -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%); box-shadow: none; border: 0; border-radius: 0; }
-.hq-navigation { right: var(--rail-w); padding-top: var(--sat); box-shadow: inset 0 -.5px 0 var(--hair); }
-.hq-navigation-inner { padding-right: 16px; }
-.hq-tabbar { top: 0; right: 0; bottom: 0; left: auto; transform: none; width: var(--rail-w); max-width: none; margin: 0; display: flex; flex-direction: column;
-  padding: calc(var(--sat) + 6px) calc(var(--sar) + 6px) calc(var(--sab) + 8px) 6px; z-index: 50; }
-.hq-tabbar::before { content: ""; position: absolute; left: 0; top: var(--hub-h); bottom: 0; width: .5px; background: var(--hair); pointer-events: none; }
-.hq-tab-scroll { flex: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scroll-snap-type: y proximity; scrollbar-width: none; }
+:root { --sat: env(safe-area-inset-top, 0px); --sar: env(safe-area-inset-right, 0px); --sab: env(safe-area-inset-bottom, 0px); --sal: env(safe-area-inset-left, 0px);
+  --tabbar-h: calc(64px + var(--sab)); --hair: hsl(var(--border) / .9); }
+.hq-navigation { padding-top: var(--sat); box-shadow: inset 0 -.5px 0 var(--hair); }
+.hq-tabbar { left: 0; right: 0; bottom: 0; top: auto; border-radius: 0; border: 0;
+  padding: 6px calc(var(--sar) + 8px) calc(var(--sab) + 6px) calc(var(--sal) + 8px);
+  box-shadow: inset 0 .5px 0 var(--hair); z-index: 50; }
+.hq-tab-scroll { overflow-x: auto; overflow-y: hidden; overscroll-behavior: contain; scroll-snap-type: x proximity; scrollbar-width: none; }
 .hq-tab-scroll::-webkit-scrollbar { display: none; }
-.hq-tab-track { flex-direction: column; width: 100%; min-width: 0; justify-content: flex-start; gap: 4px; }
-.hq-tab-link { flex: 0 0 60px; width: 100%; height: 60px; min-height: 48px; flex-direction: column; gap: 3px; border-radius: 16px; }
-.hq-tab-label, .hq-tab-link[aria-current="page"] .hq-tab-label { display: block; font-size: 10px; line-height: 12px; max-width: 64px; overflow: hidden; text-overflow: ellipsis; }
-.hq-tab-indicator { border-radius: 16px; box-shadow: none; }
-@media (max-width: 699px) {
-  .hq-tab-link { flex-basis: 48px; height: 48px; gap: 0; border-radius: 14px; }
-  .hq-tab-link svg { width: 21px; height: 21px; }
-  .hq-tab-label, .hq-tab-link[aria-current="page"] .hq-tab-label { display: none; }
-  .hq-tab-indicator { border-radius: 14px; }
-  .hq-large-header { padding-right: 12px; }
-}
-.hq-shell-content { padding-right: var(--rail-w); padding-bottom: calc(var(--sab) + 16px); }
-.hq-flush .wi-root { right: var(--rail-w); bottom: var(--sab); --sar: 0px; }
-.hq-sheet { right: var(--rail-w) !important; }
-[aria-label="Open AI travel assistant"] { right: calc(var(--rail-w) + 12px) !important; bottom: calc(var(--sab) + 16px) !important; }
-/* World News inner tabs: scroll sideways instead of squashing next to the rail */
-.hq-flush .wi-root .app.mobile .tabbar { overflow-x: auto; scrollbar-width: none; }
+.hq-tab-track { width: 100%; min-width: 0; margin-inline: auto; max-width: 720px; justify-content: space-between; gap: 0; }
+.hq-tab-link { flex: 1 1 0; min-width: 44px; height: 52px; min-height: 44px; }
+.hq-tab-label { display: block; font-size: 10px; font-weight: 500; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.hq-shell-content { padding-bottom: calc(var(--tabbar-h) + 16px); }
+.hq-flush .wi-root { bottom: var(--tabbar-h); }
+[aria-label="Open AI travel assistant"] { bottom: calc(var(--tabbar-h) + 12px) !important; }
+/* World News inner tabs stay a top row that scrolls sideways (never a second bottom bar) */
+.hq-flush .wi-root .app.mobile .tabbar { position: static; overflow-x: auto; scrollbar-width: none; }
 .hq-flush .wi-root .app.mobile .tabbar::-webkit-scrollbar { display: none; }
 .hq-flush .wi-root .app.mobile .tabbar .tb { flex: 1 0 auto; padding: 0 12px; white-space: nowrap; }
+
+/* ── Minimal monochrome: black/white, gray hairlines, neutral frosted glass ──
+   Accent tokens collapse to grays; only destructive red stays for live/error status. */
+:root, .light {
+  --background: 0 0% 100%; --foreground: 0 0% 4%; --card: 0 0% 96%; --popover: 0 0% 100%;
+  --card-foreground: 0 0% 4%; --popover-foreground: 0 0% 4%; --secondary-foreground: 0 0% 4%; --accent-foreground: 0 0% 4%;
+  --muted-foreground: 0 0% 42%; --primary: 0 0% 4%; --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 93%; --muted: 0 0% 93%; --accent: 0 0% 93%; --input: 0 0% 93%; --border: 0 0% 87%; --ring: 0 0% 30%;
+  --gold: 0 0% 20%; --gold-light: 0 0% 35%; --gold-dark: 0 0% 10%; --sky: 0 0% 20%; --teal: 0 0% 25%; --teal-light: 0 0% 35%;
+  --navy: 0 0% 100%; --navy-deep: 0 0% 100%; --navy-light: 0 0% 93%;
+  --success: 0 0% 15%; --warning: 0 0% 30%; --orange: 0 0% 25%; --indigo: 0 0% 20%; --pink: 0 0% 25%; --purple: 0 0% 25%; --cyan: 0 0% 25%; --slate: 0 0% 42%;
+  --chart-1: 0 0% 10%; --chart-2: 0 0% 30%; --chart-3: 0 0% 50%; --chart-4: 0 0% 65%; --chart-5: 0 0% 80%;
+  --glass-bg: hsl(0 0% 97% / .72); --glass-strong-bg: hsl(0 0% 100% / .8); --glass-border: hsl(0 0% 0% / .07); --glass-highlight: hsl(0 0% 100% / .9);
+  --glass-shadow: 0 1px 2px hsl(0 0% 0% / .04); --ambient-alpha: 0;
+  --gradient-gold: linear-gradient(hsl(var(--foreground)), hsl(var(--foreground)));
+}
+@media (prefers-color-scheme: dark) { :root:not(.light) {
+  --background: 0 0% 0%; --foreground: 0 0% 98%; --card: 0 0% 9%; --popover: 0 0% 9%;
+  --card-foreground: 0 0% 98%; --popover-foreground: 0 0% 98%; --secondary-foreground: 0 0% 98%; --accent-foreground: 0 0% 98%;
+  --muted-foreground: 0 0% 62%; --primary: 0 0% 98%; --primary-foreground: 0 0% 0%;
+  --secondary: 0 0% 14%; --muted: 0 0% 14%; --accent: 0 0% 14%; --input: 0 0% 14%; --border: 0 0% 18%; --ring: 0 0% 70%;
+  --gold: 0 0% 85%; --gold-light: 0 0% 92%; --gold-dark: 0 0% 70%; --sky: 0 0% 85%; --teal: 0 0% 80%; --teal-light: 0 0% 88%;
+  --navy: 0 0% 0%; --navy-deep: 0 0% 0%; --navy-light: 0 0% 14%;
+  --success: 0 0% 88%; --warning: 0 0% 75%; --orange: 0 0% 80%; --indigo: 0 0% 85%; --pink: 0 0% 80%; --purple: 0 0% 80%; --cyan: 0 0% 80%; --slate: 0 0% 62%;
+  --chart-1: 0 0% 95%; --chart-2: 0 0% 75%; --chart-3: 0 0% 55%; --chart-4: 0 0% 40%; --chart-5: 0 0% 28%;
+  --glass-bg: hsl(0 0% 100% / .06); --glass-strong-bg: hsl(0 0% 4% / .78); --glass-border: hsl(0 0% 100% / .09); --glass-highlight: hsl(0 0% 100% / .08);
+  --glass-shadow: none; --ambient-alpha: 0;
+  --gradient-gold: linear-gradient(hsl(var(--foreground)), hsl(var(--foreground)));
+} }
+.dark {
+  --background: 0 0% 0%; --foreground: 0 0% 98%; --card: 0 0% 9%; --popover: 0 0% 9%;
+  --card-foreground: 0 0% 98%; --popover-foreground: 0 0% 98%; --secondary-foreground: 0 0% 98%; --accent-foreground: 0 0% 98%;
+  --muted-foreground: 0 0% 62%; --primary: 0 0% 98%; --primary-foreground: 0 0% 0%;
+  --secondary: 0 0% 14%; --muted: 0 0% 14%; --accent: 0 0% 14%; --input: 0 0% 14%; --border: 0 0% 18%; --ring: 0 0% 70%;
+  --gold: 0 0% 85%; --gold-light: 0 0% 92%; --gold-dark: 0 0% 70%; --sky: 0 0% 85%; --teal: 0 0% 80%; --teal-light: 0 0% 88%;
+  --navy: 0 0% 0%; --navy-deep: 0 0% 0%; --navy-light: 0 0% 14%;
+  --success: 0 0% 88%; --warning: 0 0% 75%; --orange: 0 0% 80%; --indigo: 0 0% 85%; --pink: 0 0% 80%; --purple: 0 0% 80%; --cyan: 0 0% 80%; --slate: 0 0% 62%;
+  --chart-1: 0 0% 95%; --chart-2: 0 0% 75%; --chart-3: 0 0% 55%; --chart-4: 0 0% 40%; --chart-5: 0 0% 28%;
+  --glass-bg: hsl(0 0% 100% / .06); --glass-strong-bg: hsl(0 0% 4% / .78); --glass-border: hsl(0 0% 100% / .09); --glass-highlight: hsl(0 0% 100% / .08);
+  --glass-shadow: none; --ambient-alpha: 0;
+  --gradient-gold: linear-gradient(hsl(var(--foreground)), hsl(var(--foreground)));
+}
+.glass, .glass-strong, .glass-thin, .hq-card, .hq-navigation, .hq-tabbar { -webkit-backdrop-filter: blur(24px) saturate(100%); backdrop-filter: blur(24px) saturate(100%); }
+.hq-card { --tint-c: var(--foreground); }
+.hq-card::before { display: none; }
+.hq-ico { background: hsl(var(--foreground) / .06); color: hsl(var(--foreground)); }
+.hq-bar > i { background: hsl(var(--foreground)); }
+.hq-stat[data-hot="true"] { background: hsl(var(--foreground) / .08); box-shadow: inset 0 0 0 .5px hsl(var(--foreground) / .15); }
+.hq-stat[data-hot="true"] .hq-num { color: hsl(var(--foreground)); }
+.hq-pill-new { background: hsl(var(--foreground)); color: hsl(var(--background)); }
+.hq-tab-link[aria-current="page"] { color: hsl(var(--foreground)); }
+.hq-tab-indicator { background: hsl(var(--foreground) / .08); box-shadow: none; }
+.hq-large-header h1, .hq-large-header .hq-title { letter-spacing: -.025em; }
