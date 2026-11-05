@@ -252,11 +252,12 @@ img, video, canvas { max-width: 100%; }
   --tabbar-h: calc(64px + var(--sab)); --hair: hsl(var(--border) / .9); }
 .hq-navigation { padding-top: var(--sat); box-shadow: inset 0 -.5px 0 var(--hair); }
 .hq-tabbar { left: 0; right: 0; bottom: 0; top: auto; border-radius: 0; border: 0;
-  padding: 6px calc(var(--sar) + 8px) calc(var(--sab) + 6px) calc(var(--sal) + 8px);
+  width: 100%; max-width: none; margin: 0; transform: none; padding: 6px 0 calc(var(--sab) + 6px) 0;
   box-shadow: inset 0 .5px 0 var(--hair); z-index: 50; }
 .hq-tab-scroll { overflow-x: auto; overflow-y: hidden; overscroll-behavior: contain; scroll-snap-type: x proximity; scrollbar-width: none; }
 .hq-tab-scroll::-webkit-scrollbar { display: none; }
-.hq-tab-track { width: 100%; min-width: 0; margin-inline: 0; max-width: none; justify-content: space-between; gap: 0; }
+.hq-tab-scroll { width: 100%; margin: 0; padding: 0; }
+.hq-tab-track { width: 100%; min-width: 0; margin: 0; padding: 0; max-width: none; justify-content: space-between; gap: 0; }
 .hq-tab-link { flex: 1 1 0; min-width: 44px; height: 52px; min-height: 44px; }
 .hq-tab-label { display: block; font-size: 10px; font-weight: 500; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .hq-shell-content { padding-bottom: calc(var(--tabbar-h) + 16px); }
