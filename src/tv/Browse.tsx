@@ -49,8 +49,17 @@ function Row({ title, items, onOpen }: { title: string; items: Title[]; onOpen: 
 function NeedKey({ fallback }: { fallback?: boolean }) {
   return (
     <div className="hq-card px-4 py-3 text-[13px] leading-relaxed text-muted-foreground" data-testid="tmdb-missing-key">
-      Add a <span className="font-medium text-foreground">TMDB_API_KEY</span> secret in Lovable to load movies, ratings, trailers and where-to-watch.
-      {fallback ? " TV shows below are a temporary public catalog until the key is added." : ""}
+      Add a <span className="font-medium text-foreground">TMDB_API_KEY</span> secret in Lovable Secrets to load movies, ratings, official trailers and where-to-watch.
+      {fallback ? " TV shows below come from a public catalog until the key is added." : ""}
+    </div>
+  );
+}
+
+function CatalogError({ message }: { message: string }) {
+  const net = /404|failed to fetch|network|timeout|unavailable|502|503|HTTP/i.test(message);
+  return (
+    <div className="hq-card px-4 py-6 text-center text-sm text-muted-foreground" data-testid="tmdb-catalog-error">
+      {net ? "Couldn't reach the catalog service. Check your connection and try again." : `Couldn't load the catalog (${message}).`}
     </div>
   );
 }
@@ -206,7 +215,7 @@ function SearchBar({ value, onChange, placeholder }: { value: string; onChange: 
   );
 }
 
-export function Browse({ media, open, onOpen }: { media: "all" | "movie" | "tv"; open: Title | null; onOpen: (t: Title | null) => void }) {
+export function Browse({ media, open, onOpen, onPlay }: { media: "all" | "movie" | "tv"; open: Title | null; onOpen: (t: Title | null) => void; onPlay: (i: PlayItem, at?: number) => void }) {
   const home = useTmdb<Home>(catalogPath("home", { media }));
   const genres = useTmdb<GenreList>(media === "all" ? null : catalogPath("genres", { media }));
   const [q, setQ] = useState("");
@@ -231,10 +240,15 @@ export function Browse({ media, open, onOpen }: { media: "all" | "movie" | "tv";
   const searching = genre ? discovered.loading : search.loading;
 
   return (
-    <div className="space-y-6" data-testid={media === "all" ? "tv-home" : media === "movie" ? "tv-movies" : "tv-shows"}>
+    <div className="space-y-10" data-testid={media === "all" ? "tv-home" : media === "movie" ? "tv-movies" : "tv-shows"}>
+      {media !== "tv" ? <IptvCatalog kind="vod" onPlay={onPlay} maxRows={media === "all" ? 4 : 8} /> : null}
+      {media !== "movie" ? <IptvCatalog kind="series" onPlay={onPlay} maxRows={media === "all" ? 4 : 8} /> : null}
+
+      <div className="space-y-6" data-testid="catalog-extras">
+      <h2 className="text-[15px] font-semibold tracking-tight text-muted-foreground">Catalog extras</h2>
       {showNeedKey ? <NeedKey fallback={source === "tvmaze"} /> : null}
       {home.loading && !home.data ? <div className="aspect-[5/4] animate-pulse rounded-[28px] bg-foreground/[0.05] sm:aspect-[21/9]" /> : null}
-      {home.error && !home.data ? <div className="py-10 text-center text-sm text-muted-foreground">Couldn't load the catalog ({home.error}).</div> : null}
+      {home.error && !home.data ? <CatalogError message={home.error} /> : null}
       {!items && home.data?.hero ? <Hero item={home.data.hero} onOpen={openTitle} onTrailer={onTrailer} /> : null}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -268,6 +282,7 @@ export function Browse({ media, open, onOpen }: { media: "all" | "movie" | "tv";
       )}
 
       {open ? <DetailSheet key={`${open.media}-${open.id}-${trailerFromHero}`} item={open} onClose={() => openTitle(null)} startTrailer={trailerFromHero} /> : null}
+      </div>
     </div>
   );
 }

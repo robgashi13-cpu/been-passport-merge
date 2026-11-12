@@ -82,6 +82,12 @@ export async function playUrl(item: PlayItem, token: string | null, download = f
   return { url: `${d.base || TV}/${d.path}`, type: d.type, home: !!d.base };
 }
 
+/** Warm the signed play URL so the next Play click can start immediately. */
+export function prefetchPlay(item: PlayItem, token: string | null) {
+  if (!token || !item.id) return;
+  void playUrl(item, token).catch(() => {});
+}
+
 export function useFavs() {
   const [favs, setFavs] = usePref<Fav[]>("tv_favorites", []);
   const isFav = (kind: Kind, id: number) => favs.some((f) => f.kind === kind && f.id === id);

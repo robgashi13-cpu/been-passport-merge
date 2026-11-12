@@ -119,7 +119,7 @@ export default function TvApp() {
         })}
       </div>
 
-      {tab !== "live" && <Browse media={media} open={open} onOpen={setOpenTitle} />}
+      {tab !== "live" && <Browse media={media} open={open} onOpen={setOpenTitle} onPlay={play} />}
 
       {tab === "live" && (
         <div data-testid="tv-live">
