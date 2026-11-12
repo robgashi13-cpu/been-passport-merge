@@ -1,4 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { type PlayItem } from "./api";
+import { IptvCatalog } from "./IptvCatalog";
 import { Clapperboard, Search, Star, X } from "lucide-react";
 import {
   catalogPath, runtimeLabel, useTmdb, youtubeEmbed,
