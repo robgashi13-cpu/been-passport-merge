@@ -3,7 +3,7 @@ import { Play, Search, Star, Tv, X } from "lucide-react";
 import { useAuth } from "@/hub/auth";
 import { usePref } from "@/hub/prefs";
 import {
-  cleanName, hhmm, tvGet, useFavs, useTv,
+  cleanName, hhmm, prefetchPlay, tvGet, useFavs, useTv,
   type Cat, type Epg, type Live, type PlayItem,
 } from "./api";
 
@@ -122,7 +122,7 @@ export function LiveSection({ onPlay, refreshKey }: { onPlay: (i: PlayItem) => v
               return (
                 <li key={c.id} className="min-w-0">
                   <div className="group flex items-center gap-3 rounded-2xl bg-foreground/[0.045] p-2">
-                    <button onClick={() => onPlay({ kind: "live", id: c.id, name: cleanName(c.name), logo: c.logo, sub: cur?.title })} className="flex min-w-0 flex-1 items-center gap-3 text-left" aria-label={`Play ${cleanName(c.name)}`}>
+                    <button onPointerDown={() => prefetchPlay({ kind: "live", id: c.id, name: cleanName(c.name), logo: c.logo, sub: cur?.title }, token)} onClick={() => onPlay({ kind: "live", id: c.id, name: cleanName(c.name), logo: c.logo, sub: cur?.title })} className="flex min-w-0 flex-1 items-center gap-3 text-left" aria-label={`Play ${cleanName(c.name)}`}>
                       <Logo src={c.logo} className="h-10 w-14 shrink-0 rounded-lg bg-foreground/[0.06] p-1" />
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-sm font-medium">{cleanName(c.name)}</div>

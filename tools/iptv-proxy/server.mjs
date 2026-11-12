@@ -13,6 +13,16 @@ import { Readable } from 'node:stream';
 import fs from 'node:fs';
 import net from 'node:net';
 
+try {
+  const { Agent, setGlobalDispatcher } = await import('undici');
+  setGlobalDispatcher(new Agent({
+    keepAliveTimeout: 30_000,
+    keepAliveMaxTimeout: 60_000,
+    connections: 16,
+    pipelining: 0,
+  }));
+} catch { /* Node without undici: fetch still works, just without a tuned pool. */ }
+
 const PORT = Number(process.env.PORT || 8789);
 const SECRET = (process.env.IPTV_TOKEN_KEY || (process.env.IPTV_TOKEN_KEY_FILE ? fs.readFileSync(process.env.IPTV_TOKEN_KEY_FILE, 'utf8') : '')).trim();
 if (SECRET.length < 32) { console.error('IPTV_TOKEN_KEY missing/short'); process.exit(1); }
@@ -51,15 +61,31 @@ function publicHost(u) {
     const [a, b] = h.split('.').map(Number);
     return !(a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || a >= 224);
   }
-  if (net.isIPv6(h)) return !/^(::1?$|f[cd]|fe80|::ffff:)/i.test(h);
+  if (net.isIPv6(h)) return !/^(::1?$|::ffff:|f[cd]|fe80)/i.test(h);
   return true;
 }
-// fetch with manual redirects so every hop is checked
+
+// Resolved redirect cache keyed by a hash of the original URL (never log or store a plaintext map dump).
+const resolved = new Map();
+function urlKey(u) { return crypto.createHash('sha256').update(u).digest('hex'); }
+
+// fetch with manual redirects so every hop is checked. Keep-alive is provided by the undici pool.
 async function get(u, init, ms, abort) {
+  const origin = u;
+  const hit = resolved.get(urlKey(origin));
+  if (hit && hit.exp > Date.now()) u = hit.url;
   for (let i = 0; i < 5; i++) {
     if (!publicHost(u)) throw new Error('blocked host');
     const r = await fetch(u, { ...init, redirect: 'manual', signal: abort ? AbortSignal.any([abort, AbortSignal.timeout(ms)]) : AbortSignal.timeout(ms) });
     if (r.status >= 300 && r.status < 400 && r.headers.get('location')) { u = new URL(r.headers.get('location'), u).href; continue; }
+    if (r.ok || r.status === 206) {
+      resolved.set(urlKey(origin), { url: u, exp: Date.now() + 10 * 60e3 });
+      if (resolved.size > 400) {
+        const now = Date.now();
+        for (const [k, v] of resolved) if (v.exp < now) resolved.delete(k);
+        if (resolved.size > 400) resolved.clear();
+      }
+    }
     return { r, url: u };
   }
   throw new Error('too many redirects');
@@ -100,7 +126,25 @@ async function pipe(res, r, status, headers, ac) {
   src.on('error', () => res.destroy()).pipe(res);
 }
 
-http.createServer(async (req, res) => {
+// One stream at a time: a new VOD file drops live + other VOD; a live playlist drops any VOD.
+// Live playlist refreshes do not abort their own segments.
+const fileAcs = new Set();
+const allAcs = new Set();
+function track(ac, dropFiles, dropAll) {
+  if (dropAll) {
+    for (const o of allAcs) { if (o !== ac) { try { o.abort(); } catch {} } }
+    allAcs.clear();
+    fileAcs.clear();
+  } else if (dropFiles) {
+    for (const o of fileAcs) { if (o !== ac) { try { o.abort(); } catch {} } }
+    fileAcs.clear();
+  }
+  allAcs.add(ac);
+  if (dropAll) fileAcs.add(ac);
+  ac.signal.addEventListener('abort', () => { allAcs.delete(ac); fileAcs.delete(ac); });
+}
+
+const server = http.createServer({ keepAlive: true, keepAliveInitialDelay: 0 }, async (req, res) => {
   const ac = new AbortController();
   // Client went away (iOS aborts range requests constantly): abort any in-flight upstream fetch.
   res.on('close', () => { if (!res.writableFinished) ac.abort(); });
@@ -114,18 +158,21 @@ http.createServer(async (req, res) => {
     if (!tok) return send(res, 401, 'token required');
     if (kind === 'p') {
       const t = unseal(tok, 'pl'); if (!t) return send(res, 403, 'expired');
+      track(ac, true, false);
       const { r, url } = await get(t.u, { headers: { 'user-agent': UA } }, 15000, ac.signal);
       if (!r.ok) return send(res, r.status === 404 ? 404 : 502, `upstream ${r.status}`);
       return send(res, 200, rewrite(await r.text(), url), { 'content-type': 'application/vnd.apple.mpegurl', 'cache-control': 'no-store' });
     }
     if (kind === 's') {
       const t = unseal(tok, 's'); if (!t) return send(res, 403, 'expired');
+      track(ac, false, false);
       const { r } = await get(t.u, { headers: { 'user-agent': UA } }, 30000, ac.signal);
       if (!r.ok) return send(res, 502, `upstream ${r.status}`);
       return pipe(res, r, 200, { 'content-type': r.headers.get('content-type') || 'video/mp2t', 'cache-control': 'private, max-age=60' }, ac);
     }
     if (kind === 'f') {
       const t = unseal(tok, 'f'); if (!t) return send(res, 403, 'expired');
+      track(ac, false, true);
       const h = { 'user-agent': UA };
       if (req.headers.range) h.range = req.headers.range;
       const { r } = await get(t.u, { headers: h, method: req.method === 'HEAD' ? 'HEAD' : 'GET' }, 6 * 3600e3, ac.signal);
@@ -140,4 +187,7 @@ http.createServer(async (req, res) => {
   } catch {
     if (!res.headersSent) send(res, 502, 'proxy error'); else res.destroy();
   }
-}).listen(PORT, '127.0.0.1', () => console.log(`iptv-proxy on 127.0.0.1:${PORT}`));
+});
+server.keepAliveTimeout = 65_000;
+server.headersTimeout = 66_000;
+server.listen(PORT, '127.0.0.1', () => console.log(`iptv-proxy on 127.0.0.1:${PORT}`));

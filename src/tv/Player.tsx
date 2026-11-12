@@ -56,11 +56,15 @@ export function Player({ item, startAt = 0, onClose }: { item: PlayItem; startAt
           hls = new Hls({
             lowLatencyMode: item.kind === "live",
             startLevel: -1,
+            startFragPrefetch: true,
+            testBandwidth: false,
+            abrEwmaDefaultEstimate: 2_000_000,
             capLevelToPlayerSize: true,
-            backBufferLength: 10,
-            maxBufferLength: item.kind === "live" ? 6 : 20,
-            maxMaxBufferLength: 30,
-            maxBufferSize: 20 * 1000 * 1000,
+            backBufferLength: 8,
+            maxBufferLength: item.kind === "live" ? 4 : 8,
+            maxMaxBufferLength: item.kind === "live" ? 8 : 16,
+            maxBufferSize: 12 * 1000 * 1000,
+            maxStarvationDelay: 2,
             manifestLoadingMaxRetry: 4,
             levelLoadingMaxRetry: 4,
             fragLoadingMaxRetry: 6,
@@ -89,7 +93,11 @@ export function Player({ item, startAt = 0, onClose }: { item: PlayItem; startAt
         fail(String(e?.message || e));
       }
     })();
-    const onPlaying = () => setState("playing");
+    const t0 = performance.now();
+    const onPlaying = () => {
+      setState("playing");
+      try { (window as any).__ttff = Math.round(performance.now() - t0); } catch { /* ignore */ }
+    };
     const onError = () => {
       if (hls) return;
       fail(item.kind === "live" ? "This channel can't be played right now." : "This title couldn't start. Your TV plan allows one stream at a time — close it on other devices and try again.");
