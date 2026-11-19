@@ -66,7 +66,7 @@ function SignIn({ onSignIn }: { onSignIn: (e: string, p: string) => Promise<void
 }
 
 function Input({ d, value, onChange }: { d: FieldDef; value: string; onChange: (v: string) => void }) {
-  const cls = "hq-field w-full px-3 text-[16px]";
+  const cls = "hq-field !min-h-10 w-full rounded-xl px-3 text-[16px]";
   if (d.kind === "select") {
     const opts = d.options ?? [];
     const known = opts.some(([v]) => v === value);
@@ -107,8 +107,9 @@ function Confirm({ changes, busy, onBack, onSave }: { changes: Change[]; busy: b
 }
 
 export default function CarDetail({
-  carId, summary, session, access, accessError, onSignIn, onSignOut, onClose, onSaved,
+  variant = "sheet", carId, summary, session, access, accessError, onSignIn, onSignOut, onClose, onSaved,
 }: {
+  variant?: "sheet" | "pane";
   carId: string;
   summary?: Car | KamCar | null;
   session: Session | null;
@@ -144,10 +145,10 @@ export default function CarDetail({
   }, [carId, ready, access, tick]);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !editing && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !editing && variant === "sheet" && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [editing, onClose]);
+  }, [editing, onClose, variant]);
 
   const fields = useMemo(() => (car ? fieldsFor(car) : []), [car]);
   const head = (car ?? summary ?? null) as Record<string, unknown> | null;
@@ -201,21 +202,21 @@ export default function CarDetail({
 
   const optLabels = (d: FieldDef) => Object.fromEntries(d.options ?? []);
 
-  return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center" onClick={() => !editing && onClose()} data-testid="kam-car-detail">
-      <div className="hq-card flex max-h-[94dvh] w-full max-w-2xl flex-col rounded-b-none p-0 sm:m-4 sm:max-h-[90dvh] sm:rounded-[28px]" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3">
-          <div className="h-12 w-16 shrink-0 overflow-hidden rounded-xl bg-foreground/[0.06]">
+  const pane = variant === "pane";
+  const card = (
+      <div className={pane ? "hq-card flex h-full min-h-0 w-full flex-col !rounded-[18px] p-0" : "hq-card flex max-h-[92dvh] w-full max-w-xl flex-col !rounded-b-none !rounded-t-[22px] p-0"} onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-2.5 border-b border-white/10 px-3 py-2">
+          <div className="h-9 w-12 shrink-0 overflow-hidden rounded-lg bg-foreground/[0.06]">
             {head?.image_url ? <img src={String(head.image_url)} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" /> : <div className="flex h-full items-center justify-center"><CarFront className="h-5 w-5 text-white/30" /></div>}
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-[17px] font-semibold text-white" data-testid="kam-car-title">{title} <span className="text-white/45">{head?.year ? String(head.year) : ""}</span></h2>
-            <p className="truncate text-[12px] text-muted-foreground">{[head?.plate_number, head?.vin, STAGE_LABEL[String(head?.sale_status ?? "")] || head?.sale_status].filter(Boolean).join(" · ") || "—"}</p>
+            <h2 className="truncate text-[15px] font-semibold leading-5 text-white" data-testid="kam-car-title">{title} <span className="text-white/45">{head?.year ? String(head.year) : ""}</span></h2>
+            <p className="truncate text-[11px] leading-4 text-muted-foreground">{[head?.plate_number, head?.vin, STAGE_LABEL[String(head?.sale_status ?? "")] || head?.sale_status].filter(Boolean).join(" · ") || "—"}</p>
           </div>
-          {!editing && <button type="button" onClick={onClose} className="press flex h-11 w-11 items-center justify-center rounded-full bg-foreground/[0.07]" aria-label="Close"><X className="h-4 w-4" /></button>}
+          {!editing && <button type="button" onClick={onClose} className="press flex h-10 w-10 items-center justify-center rounded-full bg-foreground/[0.07]" aria-label="Close"><X className="h-4 w-4" /></button>}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-3 overscroll-contain">
+        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-3 pt-2 overscroll-contain">
           {!session && (
             <div className="space-y-3">
               <SignIn onSignIn={onSignIn} />
@@ -229,7 +230,7 @@ export default function CarDetail({
 
           {ready && (
             <>
-              <div className="mb-3 flex flex-wrap items-center gap-2 text-[12px] text-muted-foreground">
+              <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
                 <span className="hq-chip"><ShieldCheck className="h-3.5 w-3.5" /> {access!.email} · {access!.role}</span>
                 {!isAdmin && <span className="hq-chip">Payments are admin-only in KorAuto Manager</span>}
                 <button type="button" className="hq-chip press" onClick={onSignOut}><LogOut className="h-3.5 w-3.5" /> Sign out</button>
@@ -240,7 +241,7 @@ export default function CarDetail({
               {!car && !loadErr && <div className="space-y-2">{[0, 1, 2, 3, 4].map((i) => <div key={i} className="hq-shimmer h-11 rounded-xl" />)}</div>}
 
               {car && isAdmin && (
-                <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="kam-money">
+                <div className="mb-3 grid grid-cols-3 gap-1.5" data-testid="kam-money">
                   {[
                     ["Buy price", money(car.buy_price)],
                     ["Expenses", expenses ? money(expTotal) : "—"],
@@ -249,9 +250,9 @@ export default function CarDetail({
                     ["Paid by client", money(Math.max(Number(car.amount_paid_cash || 0) + Number(car.amount_paid_bank || 0) + Number(car.deposit || 0), Number(car.amount_paid_by_client || 0)))],
                     ["Balance due", Number(car.sale_price || 0) ? money(Math.max(0, Number(car.sale_price) - Math.max(Number(car.amount_paid_cash || 0) + Number(car.amount_paid_bank || 0) + Number(car.deposit || 0), Number(car.amount_paid_by_client || 0)))) : money(0)],
                   ].map(([l, v]) => (
-                    <div key={l} className="rounded-2xl bg-foreground/[0.05] p-3">
-                      <div className="text-[11px] text-muted-foreground">{l}</div>
-                      <div className="hq-num mt-0.5 text-[17px] font-semibold text-white">{v}</div>
+                    <div key={l} className="min-w-0 rounded-xl bg-foreground/[0.05] px-2 py-1.5">
+                      <div className="truncate text-[10px] text-muted-foreground">{l}</div>
+                      <div className="hq-num truncate text-[13px] font-semibold text-white">{v}</div>
                     </div>
                   ))}
                 </div>
@@ -261,18 +262,18 @@ export default function CarDetail({
                 const list = fields.filter((d) => d.group === g.key);
                 if (!list.length) return null;
                 return (
-                  <section key={g.key} className="mb-4" data-testid={`kam-group-${g.key}`}>
-                    <h3 className="mb-1.5 px-1 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">{g.label}</h3>
-                    <ul className="hq-group">
+                  <section key={g.key} className="mb-3" data-testid={`kam-group-${g.key}`}>
+                    <h3 className="mb-1 px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{g.label}</h3>
+                    <ul className="hq-group !rounded-xl">
                       {list.map((d) => {
                         const editable = editing && canEditField(d, isAdmin);
                         return (
-                          <li key={d.key} className={`hq-row !py-2 ${editable ? "!flex-col !items-stretch !gap-1" : "!items-start"}`} data-field={d.key}>
-                            <span className={`${editable ? "" : "w-[42%] shrink-0"} text-[13px] text-muted-foreground`}>{d.label}</span>
+                          <li key={d.key} className={`hq-row !min-h-[38px] !gap-2 !px-2.5 !py-1.5 ${editable ? "!flex-col !items-stretch !gap-1" : "!items-start"}`} data-field={d.key}>
+                            <span className={`${editable ? "" : "w-[40%] shrink-0"} text-[12px] leading-5 text-muted-foreground`}>{d.label}</span>
                             {editable ? (
                               <Input d={d} value={form[d.key] ?? ""} onChange={(v) => setForm((f) => ({ ...f, [d.key]: v }))} />
                             ) : (
-                              <span className="min-w-0 flex-1 whitespace-pre-wrap break-words text-right text-[14px] text-white">{show(d, car[d.key], optLabels(d))}</span>
+                              <span className="min-w-0 flex-1 whitespace-pre-wrap break-words text-right text-[13px] leading-5 text-white">{show(d, car[d.key], optLabels(d))}</span>
                             )}
                           </li>
                         );
@@ -284,7 +285,7 @@ export default function CarDetail({
 
               {car && isAdmin && expenses && (
                 <section className="mb-4" data-testid="kam-expenses">
-                  <h3 className="mb-1.5 px-1 text-[13px] font-semibold uppercase tracking-wide text-muted-foreground">Costs · {expenses.length} · {money(expTotal)}</h3>
+                  <h3 className="mb-1 px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Costs · {expenses.length} · {money(expTotal)}</h3>
                   <ul className="hq-group">
                     {expenses.map((e) => (
                       <li key={e.id} className="hq-row !py-2 text-[14px]">
@@ -302,20 +303,26 @@ export default function CarDetail({
         </div>
 
         {ready && car && (
-          <div className="border-t border-white/10 px-4 pb-[calc(12px+env(safe-area-inset-bottom))] pt-3">
+          <div className={`border-t border-white/10 px-3 pt-2 ${pane ? "pb-2" : "pb-[calc(8px+env(safe-area-inset-bottom))]"}`}>
             {formErr && <p className="mb-2 text-[13px] text-[hsl(var(--destructive))]" role="alert">{formErr}</p>}
             {editing ? (
               <div className="grid grid-cols-2 gap-2">
-                <button type="button" className="hq-btn !h-11" data-tone="plain" onClick={cancelEdit} data-testid="kam-cancel">Cancel</button>
-                <button type="button" className="hq-btn !h-11" onClick={askSave} data-testid="kam-save">Save</button>
+                <button type="button" className="hq-btn !h-10" data-tone="plain" onClick={cancelEdit} data-testid="kam-cancel">Cancel</button>
+                <button type="button" className="hq-btn !h-10" onClick={askSave} data-testid="kam-save">Save</button>
               </div>
             ) : (
-              <button type="button" className="hq-btn !h-11 w-full" onClick={startEdit} data-testid="kam-edit"><Pencil className="h-4 w-4" /> Edit</button>
+              <button type="button" className="hq-btn !h-10 w-full" onClick={startEdit} data-testid="kam-edit"><Pencil className="h-4 w-4" /> Edit</button>
             )}
           </div>
         )}
       </div>
-      {confirm && <Confirm changes={confirm} busy={saving} onBack={() => setConfirm(null)} onSave={doSave} />}
+  );
+  const dialog = confirm && <Confirm changes={confirm} busy={saving} onBack={() => setConfirm(null)} onSave={doSave} />;
+  if (pane) return <div className="h-full min-h-0" data-testid="kam-car-detail">{card}{dialog}</div>;
+  return (
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/60 backdrop-blur-sm" style={{ paddingLeft: "var(--sal)", paddingRight: "var(--sar)" }} onClick={() => !editing && onClose()} data-testid="kam-car-detail">
+      {card}
+      {dialog}
     </div>
   );
 }

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { ArrowUpRight, CarFront, CheckCircle2, ClipboardCheck, FileWarning, Globe, KeyRound, LogOut, RefreshCw, Search, Ship, ShieldCheck, Sparkles, Store, Truck, Warehouse } from "lucide-react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { ArrowUpRight, CarFront, CheckCircle2, ChevronRight, ClipboardCheck, FileWarning, Globe, KeyRound, LogOut, RefreshCw, Search, Ship, Sparkles, Store, Truck, Wallet, Warehouse } from "lucide-react";
 import { ago } from "@/hub/clock";
 import { KORAUTO_URL } from "@/hub/AppShell";
 import { STAGE_LABEL, carName, useKorauto, type Car } from "./feed";
@@ -11,29 +11,6 @@ const fmtDay = (iso?: string | null) => {
   const d = new Date(iso.length <= 10 ? `${iso}T12:00:00Z` : iso);
   return Number.isNaN(+d) ? iso : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Europe/Belgrade" });
 };
-
-function Thumb({ src }: { src?: string | null }) {
-  return (
-    <div className="h-full w-full overflow-hidden bg-foreground/[0.06]">
-      {src ? (
-        <img src={src} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
-      ) : (
-        <div className="flex h-full w-full items-center justify-center"><CarFront className="h-6 w-6 text-white/25" /></div>
-      )}
-    </div>
-  );
-}
-
-function Stat({ label, value, icon: Icon, hot }: { label: string; value: number | string; icon: typeof Ship; hot?: boolean }) {
-  return (
-    <div className="hq-card hq-stat !rounded-[20px] !p-3.5" data-hot={!!hot}>
-      <div className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
-        <Icon className="h-3.5 w-3.5" /> {label}
-      </div>
-      <div className="hq-num hq-big mt-1.5 text-[28px] text-white">{value}</div>
-    </div>
-  );
-}
 
 function ConnectState({ missing }: { missing?: string[] }) {
   const names = ["KORAUTO_SUPABASE_URL", "KORAUTO_SUPABASE_ANON_KEY", "KORAUTO_READ_EMAIL", "KORAUTO_READ_PASSWORD"];
@@ -63,19 +40,106 @@ function ConnectState({ missing }: { missing?: string[] }) {
   );
 }
 
-type Ev = { at: string; kind: string; text: string; sub?: string; icon: typeof Ship };
+type Row = Car | KamCar;
+type Ev = { at: string; text: string; sub?: string; icon: typeof Ship; carId?: string };
+type FilterKey = "all" | "recent" | "stock" | "sales" | "autosallon" | "shipped" | "water" | "arriving" | "approval" | "balance" | "complaints" | "activity";
+
+const FILTER_LABEL: Record<FilterKey, string> = {
+  all: "All cars", recent: "Recent", stock: "In stock", sales: "In sales", autosallon: "In autosallon", shipped: "Shipped",
+  water: "On the water", arriving: "Arriving ≤7d", approval: "Awaiting approval", balance: "Balance due", complaints: "Open complaints", activity: "Activity",
+};
+const CHIPS: FilterKey[] = ["recent", "all", "water", "arriving", "balance", "approval", "sales", "autosallon", "shipped", "stock", "activity"];
+
+const num = (v: unknown) => Number(v ?? 0) || 0;
+const paid = (r: Record<string, unknown>) => Math.max(num(r.amount_paid_cash) + num(r.amount_paid_bank) + num(r.deposit), num(r.amount_paid_by_client));
+const due = (r: Record<string, unknown>) => (num(r.sale_price) ? Math.max(0, num(r.sale_price) - paid(r)) : 0);
+const todayISO = () => new Date().toISOString().slice(0, 10);
+const weekISO = () => new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
+const eur = (n: number) => new Intl.NumberFormat("en-IE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+
+function useWide(q = "(min-width: 700px)") {
+  const [wide, setWide] = useState(() => typeof window !== "undefined" && window.matchMedia(q).matches);
+  useEffect(() => {
+    const m = window.matchMedia(q);
+    const on = () => setWide(m.matches);
+    on();
+    m.addEventListener("change", on);
+    return () => m.removeEventListener("change", on);
+  }, [q]);
+  return wide;
+}
+
+function CarRow({ r, active, filter, onOpen }: { r: Row; active: boolean; filter: FilterKey; onOpen: () => void }) {
+  const x = r as Record<string, unknown>;
+  const hasMoney = "sale_price" in x || "buy_price" in x;
+  const d = hasMoney ? due(x) : 0;
+  let amount = "";
+  let amountSub = "";
+  if (filter === "water" || filter === "arriving") {
+    amount = x.tracking_eta ? `ETA ${fmtDay(String(x.tracking_eta))}` : "";
+  } else if (hasMoney && d > 0) {
+    amount = eur(d);
+    amountSub = "due";
+  } else if (hasMoney && num(x.sale_price)) {
+    amount = eur(num(x.sale_price));
+  } else if (x.tracking_eta && x.tracking_status === "DEPARTED") {
+    amount = `ETA ${fmtDay(String(x.tracking_eta))}`;
+  }
+  const status = [STAGE_LABEL[String(x.sale_status ?? "")] || (x.sale_status as string), x.approval_status === "pending" ? "pending" : x.status === "sold" ? "sold" : null].filter(Boolean).join(" · ");
+  const id2 = [x.plate_number, x.vin].filter(Boolean).join(" · ");
+  return (
+    <li>
+      <button type="button" onClick={onOpen} aria-current={active || undefined} data-testid="korauto-row"
+        className={`press flex min-h-[52px] w-full items-center gap-3 px-3 py-2 text-left ${active ? "bg-foreground/[0.10]" : ""}`}>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[14px] font-semibold leading-5 text-white">{carName(r as Car)} <span className="font-normal text-white/45">{String(x.year ?? "")}</span></div>
+          <div className="truncate font-mono text-[11px] leading-4 text-muted-foreground">{id2 || "—"}</div>
+        </div>
+        <div className="shrink-0 text-right">
+          <div className="hq-num text-[13px] font-semibold leading-5 text-white">{amount || "\u00a0"}{amountSub && <span className="ml-1 text-[10px] font-normal text-muted-foreground">{amountSub}</span>}</div>
+          <div className="text-[11px] leading-4 text-muted-foreground">{status || "—"}</div>
+        </div>
+        <ChevronRight className="h-4 w-4 shrink-0 text-white/30" />
+      </button>
+    </li>
+  );
+}
 
 export default function KorautoPage() {
   const { feed, loading, refresh } = useKorauto();
-  const [stage, setStage] = useState<string>("all");
   const now = Date.now();
+  const wide = useWide();
   const kamS = useKamSession();
   const { access, error: accessError } = useKamAccess(kamS.session);
-  const [open, setOpen] = useState<{ id: string; summary?: Car | KamCar } | null>(null);
+  const [open, setOpen] = useState<{ id: string; summary?: Row } | null>(null);
+  const [filter, setFilter] = useState<FilterKey>("recent");
   const [q, setQ] = useState("");
+  const [limit, setLimit] = useState(60);
   const [all, setAll] = useState<KamCar[] | null>(null);
   const [allErr, setAllErr] = useState<string | null>(null);
   const kamReady = !!access && access.active && access.canOpenCars;
+  const listRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [areaH, setAreaH] = useState<number | null>(null);
+  // Unfolded: list + detail fill the space between the stats and the bottom bar, each scrolls on its own.
+  useLayoutEffect(() => {
+    if (!wide) return setAreaH(null);
+    const measure = () => {
+      const el = gridRef.current;
+      if (!el) return;
+      const tb = document.querySelector(".hq-tabbar") as HTMLElement | null;
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      setAreaH(Math.max(420, Math.floor(window.innerHeight - top - (tb?.offsetHeight ?? 64) - 8)));
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    const t = setTimeout(measure, 400);
+    return () => {
+      window.removeEventListener("resize", measure);
+      clearTimeout(t);
+    };
+  }, [wide, feed, allErr, access, kamS.session]);
+
   useEffect(() => {
     if (!kamReady || !access) {
       setAll(null);
@@ -88,205 +152,220 @@ export default function KorautoPage() {
     };
   }, [kamReady, access]);
 
-  const cars = useMemo(() => {
+  const feedPool = useMemo(() => {
     const m = new Map<string, Car>();
-    for (const c of [...(feed?.latest ?? []), ...(feed?.recentUpdates ?? []), ...(feed?.addedToday ?? [])]) if (!m.has(c.id)) m.set(c.id, c);
-    return [...m.values()].sort((a, b) => String(b.updated_at || b.created_at).localeCompare(String(a.updated_at || a.created_at)));
+    for (const c of [...(feed?.latest ?? []), ...(feed?.recentUpdates ?? []), ...(feed?.addedToday ?? []), ...(feed?.shipping ?? []), ...(feed?.pendingApprovals ?? []), ...(feed?.arrivingThisWeek ?? [])]) m.set(c.id, { ...(m.get(c.id) ?? {}), ...c });
+    return [...m.values()];
   }, [feed]);
-  const shown = stage === "all" ? cars : cars.filter((c) => (c.sale_status || "none") === stage);
-  const hits = useMemo(() => {
-    const t = q.trim().toLowerCase();
-    if (!t) return [] as (Car | KamCar)[];
-    const pool: (Car | KamCar)[] = all ?? [...cars, ...(feed?.shipping ?? [])];
-    const keys = ["vin", "plate_number", "make", "model", "buyer", "shipping_name", "tracking_container", "tracking_booking", "year"];
-    const seen = new Set<string>();
-    return pool.filter((c) => {
-      if (seen.has(c.id)) return false;
-      const r = c as Record<string, unknown>;
-      const ok = keys.some((k) => String(r[k] ?? "").toLowerCase().includes(t)) || `${r.make ?? ""} ${r.model ?? ""}`.toLowerCase().includes(t);
-      if (ok) seen.add(c.id);
-      return ok;
-    }).slice(0, 30);
-  }, [q, all, cars, feed]);
-  const openCar = (c: Car | KamCar) => setOpen({ id: c.id, summary: c });
+  const byUpdated = (a: Row, b: Row) => String((b as Car).updated_at || (b as Car).created_at || "").localeCompare(String((a as Car).updated_at || (a as Car).created_at || ""));
+
+  const lists = useMemo(() => {
+    const ids = (xs?: { id: string }[]) => new Set((xs ?? []).map((x) => x.id));
+    const pool: Row[] = all ?? feedPool;
+    const t = todayISO(), w = weekISO();
+    const recentIds = ids([...(feed?.latest ?? []), ...(feed?.recentUpdates ?? []), ...(feed?.addedToday ?? [])]);
+    const L: Partial<Record<FilterKey, Row[]>> = {
+      all: [...pool].sort(byUpdated),
+      recent: all ? [...all].sort(byUpdated).slice(0, 30) : feedPool.filter((c) => recentIds.has(c.id)).sort(byUpdated),
+      stock: pool.filter((c) => (c as Car).status === "in_stock"),
+      sales: pool.filter((c) => (c as Car).sale_status === "sales"),
+      autosallon: pool.filter((c) => (c as Car).sale_status === "autosallon"),
+      shipped: pool.filter((c) => (c as Car).sale_status === "shipped"),
+      water: all ? all.filter((c) => c.tracking_status === "DEPARTED") : feedPool.filter((c) => ids(feed?.shipping).has(c.id)),
+      arriving: all ? all.filter((c) => String(c.tracking_eta ?? "") >= t && String(c.tracking_eta ?? "") <= w) : feedPool.filter((c) => ids(feed?.arrivingThisWeek).has(c.id)),
+      approval: all ? all.filter((c) => c.approval_status === "pending") : feedPool.filter((c) => ids(feed?.pendingApprovals).has(c.id)),
+      balance: all && access?.isAdmin ? all.filter((c) => due(c) > 0).sort((a, b) => due(b) - due(a)) : [],
+    };
+    for (const k of ["water", "arriving"] as const) L[k] = [...(L[k] ?? [])].sort((a, b) => String((a as Car).tracking_eta ?? "9").localeCompare(String((b as Car).tracking_eta ?? "9")));
+    return L;
+  }, [all, feedPool, feed, access]);
+
+  const st = feed?.stages ?? {}, ss = feed?.statuses ?? {}, tr = feed?.tracking ?? {};
+  const n = (k: FilterKey, fallback: number) => (all ? lists[k]?.length ?? 0 : fallback);
+  const stats: { key: FilterKey | "websales"; label: string; value: number | string; icon: typeof Ship; hot?: boolean }[] = [
+    { key: "all", label: "Cars", value: all ? all.length : feed?.totalCars ?? "–", icon: CarFront },
+    { key: "stock", label: "In stock", value: n("stock", ss.in_stock ?? 0), icon: Warehouse },
+    { key: "sales", label: "In sales", value: n("sales", st.sales ?? 0), icon: Store },
+    { key: "autosallon", label: "Autosallon", value: n("autosallon", st.autosallon ?? 0), icon: CarFront },
+    { key: "shipped", label: "Shipped", value: n("shipped", st.shipped ?? 0), icon: Truck },
+    { key: "water", label: "On the water", value: n("water", tr.DEPARTED ?? 0), icon: Ship },
+    { key: "arriving", label: "Arriving ≤7d", value: n("arriving", feed?.arrivingThisWeek?.length ?? 0), icon: Ship },
+    { key: "approval", label: "Approval", value: n("approval", feed?.pendingApprovals?.length ?? 0), icon: CheckCircle2 },
+    { key: "balance", label: "Balance due", value: all && access?.isAdmin ? eur((lists.balance ?? []).reduce((s, c) => s + due(c), 0)) : "—", icon: Wallet },
+    { key: "complaints", label: "Complaints", value: feed?.openComplaints?.length ?? 0, icon: FileWarning },
+    { key: "websales", label: "Web sales", value: feed?.pendingWebsiteSales ?? 0, icon: Globe, hot: (feed?.pendingWebsiteSales ?? 0) > 0 },
+    { key: "activity", label: "Activity", value: "", icon: RefreshCw },
+  ];
 
   const events = useMemo(() => {
     const out: Ev[] = [];
     const today = feed?.todayStart || "";
-    for (const c of feed?.addedToday ?? []) out.push({ at: c.created_at || "", kind: "added", text: `${carName(c)} ${c.year ?? ""} added`, sub: [c.plate_number, STAGE_LABEL[c.sale_status || ""] || c.sale_status].filter(Boolean).join(" · "), icon: Sparkles });
-    for (const c of feed?.recentUpdates ?? []) if ((c.updated_at || "") >= today && (c.created_at || "") < today) out.push({ at: c.updated_at || "", kind: "updated", text: `${carName(c)} ${c.year ?? ""} updated`, sub: [c.plate_number, c.tracking_status_label || STAGE_LABEL[c.sale_status || ""]].filter(Boolean).join(" · "), icon: RefreshCw });
-    for (const c of feed?.recentUpdates ?? []) if ((c.updated_at || "") < today) out.push({ at: c.updated_at || "", kind: "updated", text: `${carName(c)} ${c.year ?? ""} updated`, sub: [c.plate_number, c.tracking_status_label || STAGE_LABEL[c.sale_status || ""]].filter(Boolean).join(" · "), icon: RefreshCw });
-    for (const i of feed?.inspections ?? []) out.push({ at: i.created_at || "", kind: "inspection", text: `Inspection request · ${carName(i)} ${i.year ?? ""}`, sub: i.status || "", icon: ClipboardCheck });
-    for (const c of feed?.openComplaints ?? []) out.push({ at: c.updated_at || "", kind: "complaint", text: `Customs complaint${c.car_label ? ` · ${c.car_label}` : ""}`, sub: c.status || "", icon: FileWarning });
-    for (const c of feed?.pendingApprovals ?? []) out.push({ at: c.created_at || "", kind: "approval", text: `Awaiting approval · ${carName(c)} ${c.year ?? ""}`, icon: CheckCircle2 });
+    for (const c of feed?.addedToday ?? []) out.push({ at: c.created_at || "", text: `${carName(c)} ${c.year ?? ""} added`, sub: [c.plate_number, STAGE_LABEL[c.sale_status || ""] || c.sale_status].filter(Boolean).join(" · "), icon: Sparkles, carId: c.id });
+    for (const c of feed?.recentUpdates ?? []) if ((c.updated_at || "") && !((c.created_at || "") >= today && (c.updated_at || "") >= today && feed?.addedToday?.some((a) => a.id === c.id))) out.push({ at: c.updated_at || "", text: `${carName(c)} ${c.year ?? ""} updated`, sub: [c.plate_number, c.tracking_status_label || STAGE_LABEL[c.sale_status || ""]].filter(Boolean).join(" · "), icon: RefreshCw, carId: c.id });
+    for (const i of feed?.inspections ?? []) out.push({ at: i.created_at || "", text: `Inspection · ${carName(i)} ${i.year ?? ""}`, sub: i.status || "", icon: ClipboardCheck });
+    for (const c of feed?.openComplaints ?? []) out.push({ at: c.updated_at || "", text: `Customs complaint${c.car_label ? ` · ${c.car_label}` : ""}`, sub: c.status || "", icon: FileWarning });
+    for (const c of feed?.pendingApprovals ?? []) out.push({ at: c.created_at || "", text: `Awaiting approval · ${carName(c)} ${c.year ?? ""}`, icon: CheckCircle2, carId: c.id });
     const seen = new Set<string>();
-    return out.filter((e) => e.at).sort((a, b) => b.at.localeCompare(a.at)).filter((e) => (seen.has(e.text + e.at) ? false : (seen.add(e.text + e.at), true))).slice(0, 25);
+    return out.filter((e) => e.at).sort((a, b) => b.at.localeCompare(a.at)).filter((e) => (seen.has(e.text + e.at) ? false : (seen.add(e.text + e.at), true))).slice(0, 30);
   }, [feed]);
 
-  if (feed && !feed.configured) return <main className="mx-auto max-w-[1440px] px-3 pb-12 pt-4 sm:px-5"><ConnectState missing={feed.missing} /></main>;
+  const shown = useMemo(() => {
+    const t = q.trim().toLowerCase();
+    const base: Row[] = t ? (all ?? feedPool) : lists[filter] ?? [];
+    if (!t) return base;
+    const keys = ["vin", "plate_number", "make", "model", "buyer", "shipping_name", "tracking_container", "tracking_booking", "year"];
+    return base.filter((c) => {
+      const r = c as Record<string, unknown>;
+      return keys.some((k) => String(r[k] ?? "").toLowerCase().includes(t)) || `${r.make ?? ""} ${r.model ?? ""}`.toLowerCase().includes(t);
+    });
+  }, [q, all, feedPool, lists, filter]);
 
-  const st = feed?.stages ?? {};
-  const ss = feed?.statuses ?? {};
-  const tr = feed?.tracking ?? {};
-  const stats = [
-    { label: "Cars", value: feed?.totalCars ?? "–", icon: CarFront },
-    { label: "In stock", value: ss.in_stock ?? 0, icon: Warehouse },
-    { label: "In sales", value: st.sales ?? 0, icon: Store },
-    { label: "In autosallon", value: st.autosallon ?? 0, icon: CarFront },
-    { label: "Shipped", value: st.shipped ?? 0, icon: Truck },
-    { label: "On the water", value: tr.DEPARTED ?? 0, icon: Ship },
-    { label: "Arriving ≤7d", value: feed?.arrivingThisWeek?.length ?? 0, icon: Ship, hot: (feed?.arrivingThisWeek?.length ?? 0) > 0 },
-    { label: "Awaiting approval", value: feed?.pendingApprovals?.length ?? 0, icon: CheckCircle2, hot: (feed?.pendingApprovals?.length ?? 0) > 0 },
-    { label: "Open complaints", value: feed?.openComplaints?.length ?? 0, icon: FileWarning },
-    { label: "Website sales pending", value: feed?.pendingWebsiteSales ?? 0, icon: Globe, hot: (feed?.pendingWebsiteSales ?? 0) > 0 },
-  ];
-  const stageKeys = ["all", ...Object.keys(st).sort()];
+  useEffect(() => setLimit(60), [filter, q]);
+
+  const pick = (k: FilterKey | "websales") => {
+    if (k === "websales") return window.open(KORAUTO_URL, "_blank", "noopener,noreferrer");
+    setFilter(k);
+    setQ("");
+    if (!wide) requestAnimationFrame(() => listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
+  const openCar = (c: Row) => setOpen({ id: c.id, summary: c });
+  const openById = (id: string) => {
+    const c = (all ?? feedPool).find((x) => x.id === id);
+    setOpen({ id, summary: c });
+  };
+
+  if (feed && !feed.configured) return <main className="mx-auto max-w-[1100px] px-3 pb-12 pt-4"><ConnectState missing={feed.missing} /></main>;
+
+  const activeLabel = q.trim() ? `Search · ${q.trim()}` : FILTER_LABEL[filter];
+  const feedOnly = !all && !q.trim() && !["recent", "activity", "complaints"].includes(filter);
+  const expected = stats.find((s) => s.key === filter)?.value;
+
+  const detail = open ? (
+    <CarDetail
+      key={open.id}
+      variant={wide ? "pane" : "sheet"}
+      carId={open.id}
+      summary={open.summary}
+      session={kamS.session}
+      access={access}
+      accessError={accessError}
+      onSignIn={kamS.signIn}
+      onSignOut={kamS.signOut}
+      onClose={() => setOpen(null)}
+      onSaved={(c) => setAll((xs) => (xs ? xs.map((x) => (x.id === c.id ? c : x)) : xs))}
+    />
+  ) : null;
 
   return (
-    <main className="mx-auto max-w-[1440px] px-3 pb-12 pt-4 sm:px-5" data-testid="korauto-page">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="sr-only">KORAUTO Manager</h1>
-          <p className="t-footnote text-muted-foreground">Overview · {feed?.generatedAt ? `updated ${ago(feed.generatedAt, now)}` : loading ? "loading…" : "—"}{feed?.stale ? " · showing cached data" : ""}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={refresh} className="hq-btn press" data-tone="plain" aria-label="Refresh">
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
-          </button>
-          <a href={KORAUTO_URL} target="_blank" rel="noopener noreferrer" className="hq-btn">
-            Open manager <ArrowUpRight className="h-3.5 w-3.5" />
-          </a>
-        </div>
+    <main className="korauto-page mx-auto w-full max-w-[1100px] pb-4 pt-1" style={{ paddingLeft: "max(12px, var(--sal))", paddingRight: "max(12px, var(--sar))" }} data-testid="korauto-page">
+      <h1 className="sr-only">KORAUTO Manager</h1>
+      <div className="flex items-center gap-2">
+        <p className="min-w-0 flex-1 truncate text-[12px] text-muted-foreground">
+          {feed?.generatedAt ? `Updated ${ago(feed.generatedAt, now)}` : loading ? "Loading…" : "—"}{feed?.stale ? " · cached" : ""}
+          {kamS.session && access ? ` · ${access.email} (${access.role})` : ""}
+        </p>
+        {kamS.session && <button type="button" onClick={kamS.signOut} className="hq-chip press !min-h-9 !px-2.5" aria-label="Sign out of KorAuto Manager"><LogOut className="h-3.5 w-3.5" /></button>}
+        <button onClick={refresh} className="hq-chip press !min-h-9 !px-2.5" aria-label="Refresh"><RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /></button>
+        <a href={KORAUTO_URL} target="_blank" rel="noopener noreferrer" className="hq-chip press !min-h-9 !px-2.5" aria-label="Open KorAuto Manager"><ArrowUpRight className="h-3.5 w-3.5" /></a>
       </div>
 
-      <section className="hq-card mt-4 p-4" data-testid="korauto-find">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="t-headline">Find a car</h2>
-          {kamS.session ? (
-            <div className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
-              <span className="hq-chip"><ShieldCheck className="h-3.5 w-3.5" /> {access ? `${access.email} · ${access.role}` : "KorAuto Manager…"}</span>
-              <button type="button" className="hq-chip press" onClick={kamS.signOut} aria-label="Sign out of KorAuto Manager"><LogOut className="h-3.5 w-3.5" /></button>
+      {feed?.error && <div className="mt-2 rounded-xl bg-[hsl(var(--destructive)/.12)] px-3 py-2 text-[13px] text-[hsl(var(--destructive))]">Couldn’t read KORAUTO ({feed.error}).</div>}
+      {allErr && <div className="mt-2 rounded-xl bg-[hsl(var(--destructive)/.12)] px-3 py-2 text-[13px] text-[hsl(var(--destructive))]">KorAuto Manager: {allErr}</div>}
+
+      <section className="mt-1.5 grid grid-cols-4 gap-1 min-[700px]:grid-cols-6 min-[700px]:gap-1.5" data-testid="korauto-stats">
+        {stats.map((s) => {
+          const on = s.key === filter && !q.trim();
+          const Icon = s.icon;
+          return (
+            <button key={s.key} type="button" onClick={() => pick(s.key)} aria-pressed={on} data-testid={`korauto-stat-${s.key}`}
+              className={`press min-w-0 rounded-xl px-2 py-1.5 text-left transition-colors min-[700px]:px-2.5 ${on ? "bg-foreground text-background" : "bg-foreground/[0.06] text-foreground"}`}>
+              <div className={`flex items-center gap-1 truncate text-[11px] leading-4 ${on ? "text-background/70" : "text-muted-foreground"}`}><Icon className="hidden h-3 w-3 shrink-0 min-[700px]:block" /> <span className="truncate">{s.label}</span>{s.hot && !on ? <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-current" /> : null}</div>
+              <div className="hq-num truncate text-[16px] font-bold leading-5 min-[700px]:text-[18px] min-[700px]:leading-6">{s.value === "" ? <ChevronRight className="h-4 w-4" /> : s.value}</div>
+            </button>
+          );
+        })}
+      </section>
+
+      <div ref={gridRef} className={`mt-2 ${wide ? "grid grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] gap-2" : ""}`} style={wide && areaH ? { height: areaH } : undefined}>
+        <div ref={listRef} className={`hq-card min-w-0 overflow-hidden !rounded-[18px] p-0 ${wide ? "flex min-h-0 flex-col" : ""}`} style={{ scrollMarginTop: "calc(var(--hub-h, 56px) + 8px)" }} data-testid="korauto-list">
+          <div className="sticky top-0 z-[1] shrink-0 space-y-2 border-b border-white/10 bg-background/80 px-3 pb-2 pt-2.5 backdrop-blur">
+            <label className="relative block">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input className="hq-field !min-h-10 w-full rounded-xl pl-9 pr-3 text-[16px]" placeholder={all ? `Search ${all.length} cars` : "Search VIN, plate, make…"} value={q} onChange={(e) => setQ(e.target.value)} data-testid="korauto-search" />
+            </label>
+            <div className="no-scrollbar -mx-3 flex gap-1 overflow-x-auto px-3">
+              {CHIPS.map((k) => (
+                <button key={k} type="button" onClick={() => pick(k)} aria-pressed={filter === k && !q.trim()}
+                  className={`press shrink-0 rounded-full px-2.5 py-1 text-[12px] ${filter === k && !q.trim() ? "bg-foreground font-semibold text-background" : "bg-foreground/[0.06] text-foreground/75"}`}>
+                  {FILTER_LABEL[k]}
+                </button>
+              ))}
             </div>
+            <div className="flex items-baseline justify-between text-[12px]">
+              <span className="font-semibold text-white" data-testid="korauto-list-title">{activeLabel}</span>
+              <span className="text-muted-foreground">{filter === "activity" && !q.trim() ? events.length : filter === "complaints" && !q.trim() ? feed?.openComplaints?.length ?? 0 : shown.length}{feedOnly && typeof expected === "number" && expected > shown.length ? ` of ${expected}` : ""}</span>
+            </div>
+          </div>
+
+          {!kamS.session && (feedOnly || filter === "balance") && (
+            <button type="button" onClick={() => setOpen({ id: shown[0]?.id ?? feedPool[0]?.id ?? "" , summary: shown[0] ?? feedPool[0] })} disabled={!feedPool.length}
+              className="press flex w-full shrink-0 items-center gap-2 border-b border-white/10 px-3 py-2 text-left text-[12px] text-muted-foreground">
+              <KeyRound className="h-3.5 w-3.5 shrink-0" /> {filter === "balance" ? "Balance due needs a KorAuto Manager admin sign-in — tap to sign in." : "Showing the cars in the read-only feed. Sign in to KorAuto Manager to list every car."}
+            </button>
+          )}
+
+          {filter === "activity" && !q.trim() ? (
+            <ul className={`divide-y divide-white/[0.07] ${wide ? "min-h-0 flex-1 overflow-y-auto" : ""}`} data-testid="korauto-activity">
+              {events.map((e, i) => {
+                const Icon = e.icon;
+                return (
+                  <li key={i}>
+                    <button type="button" disabled={!e.carId} onClick={() => e.carId && openById(e.carId)} className="press flex min-h-[48px] w-full items-center gap-2.5 px-3 py-1.5 text-left disabled:opacity-100">
+                      <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <div className="min-w-0 flex-1"><div className="truncate text-[13px] text-white">{e.text}</div>{e.sub && <div className="truncate text-[11px] text-muted-foreground">{e.sub}</div>}</div>
+                      <span className="shrink-0 text-[11px] text-muted-foreground">{ago(e.at, now)}</span>
+                    </button>
+                  </li>
+                );
+              })}
+              {!events.length && <li className="py-6 text-center text-[13px] text-muted-foreground">No recent activity</li>}
+            </ul>
+          ) : filter === "complaints" && !q.trim() ? (
+            <ul className={`divide-y divide-white/[0.07] ${wide ? "min-h-0 flex-1 overflow-y-auto" : ""}`}>
+              {(feed?.openComplaints ?? []).map((c) => (
+                <li key={c.id}>
+                  <a href={`${KORAUTO_URL}/customs`} target="_blank" rel="noopener noreferrer" className="press flex min-h-[48px] items-center gap-2.5 px-3 py-1.5">
+                    <FileWarning className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0 flex-1"><div className="truncate text-[13px] text-white">{c.car_label || "Customs complaint"}</div><div className="truncate text-[11px] text-muted-foreground">{c.status || ""}</div></div>
+                    <span className="shrink-0 text-[11px] text-muted-foreground">{ago(c.updated_at, now)}</span>
+                  </a>
+                </li>
+              ))}
+              {!(feed?.openComplaints ?? []).length && <li className="py-6 text-center text-[13px] text-muted-foreground">No open complaints</li>}
+            </ul>
           ) : (
-            <span className="text-[12px] text-muted-foreground">Tap a car and sign in with KorAuto Manager to see every field and edit</span>
+            <ul className={`divide-y divide-white/[0.07] ${wide ? "min-h-0 flex-1 overflow-y-auto" : ""}`} data-testid="korauto-rows">
+              {shown.slice(0, limit).map((c) => <CarRow key={c.id} r={c} filter={filter} active={open?.id === c.id} onOpen={() => openCar(c)} />)}
+              {!feed && !all && [0, 1, 2, 3, 4].map((i) => <li key={i} className="hq-shimmer h-[52px]" />)}
+              {(feed || all) && !shown.length && <li className="py-6 text-center text-[13px] text-muted-foreground">{q.trim() && !all ? "No match in the feed — sign in to search every car" : "No cars here"}</li>}
+              {shown.length > limit && <li><button type="button" className="press w-full py-3 text-[13px] font-semibold" onClick={() => setLimit((l) => l + 60)}>Show more ({shown.length - limit})</button></li>}
+            </ul>
           )}
         </div>
-        <label className="relative mt-3 block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input className="hq-field w-full pl-9 pr-3 text-[16px]" placeholder={all ? `Search ${all.length} cars — VIN, plate, make, buyer…` : "Search VIN, plate, make, model…"} value={q} onChange={(e) => setQ(e.target.value)} data-testid="korauto-search" />
-        </label>
-        {allErr && <p className="mt-2 text-[12px] text-[hsl(var(--destructive))]">KorAuto Manager: {allErr}</p>}
-        {q.trim() && (
-          <ul className="hq-group mt-3" data-testid="korauto-hits">
-            {hits.map((c) => {
-              const r = c as Record<string, unknown>;
-              return (
-                <li key={c.id}>
-                  <button type="button" className="hq-row press w-full text-left" onClick={() => openCar(c)}>
-                    <div className="h-10 w-14 shrink-0 overflow-hidden rounded-lg"><Thumb src={r.image_url as string | null} /></div>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium text-white">{carName(c as Car)} <span className="text-white/45">{String(r.year ?? "")}</span></div>
-                      <div className="truncate text-[12px] text-muted-foreground">{[r.plate_number, r.vin, r.buyer].filter(Boolean).join(" · ") || "—"}</div>
-                    </div>
-                    <span className="shrink-0 text-[11px] text-muted-foreground">{STAGE_LABEL[String(r.sale_status ?? "")] || String(r.sale_status ?? "")}</span>
-                  </button>
-                </li>
-              );
-            })}
-            {!hits.length && <li className="py-4 text-center text-sm text-muted-foreground">No match{all ? "" : " in the recent list — sign in to search every car"}</li>}
-          </ul>
-        )}
-      </section>
 
-      {feed?.error && <div className="mt-3 rounded-2xl bg-[hsl(var(--destructive)/.12)] p-3 text-sm text-[hsl(var(--destructive))]">Couldn’t read KORAUTO right now ({feed.error}).</div>}
-
-      <section className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-        {stats.map((s) => <Stat key={s.label} {...s} />)}
-      </section>
-
-      <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_380px]">
-        <div className="min-w-0 space-y-4">
-          <section className="hq-card p-4">
-            <div className="flex items-center justify-between"><h2 className="t-headline">On the water</h2><span className="text-[13px] text-muted-foreground">{feed?.shipping?.length ?? 0} cars</span></div>
-            <ul className="mt-3 hq-group">
-              {(feed?.shipping ?? []).slice(0, 12).map((c) => (
-                <li key={c.id} className="hq-row press !min-h-[56px] !py-2 cursor-pointer" role="button" tabIndex={0} onClick={() => openCar(c)} onKeyDown={(e) => e.key === "Enter" && openCar(c)}>
-                  <div className="h-10 w-14 shrink-0 overflow-hidden rounded-lg"><Thumb src={c.image_url} /></div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium text-white">{carName(c)} <span className="text-white/45">{c.year ?? ""}</span></div>
-                    <div className="truncate text-[12px] text-muted-foreground">{[c.tracking_vessel, c.tracking_arrival_port || c.tracking_destination].filter(Boolean).join(" → ") || c.tracking_status_label || "—"}</div>
-                  </div>
-                  <div className="shrink-0 text-right text-[11px]"><div className="text-white/80">ETA {fmtDay(c.tracking_eta)}</div><div className="text-muted-foreground">{c.plate_number || ""}</div></div>
-                </li>
-              ))}
-              {feed && !(feed.shipping ?? []).length && <li className="py-4 text-center text-sm text-muted-foreground">Nothing at sea right now</li>}
-            </ul>
-          </section>
-
-          <section className="hq-card p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="t-headline">Recent cars</h2>
-              <div className="no-scrollbar flex gap-1 overflow-x-auto">
-                {stageKeys.map((k) => (
-                  <button key={k} onClick={() => setStage(k)} className={`press shrink-0 rounded-full px-3 py-1.5 text-[13px] ${stage === k ? "bg-primary font-semibold text-primary-foreground" : "bg-foreground/[0.06] text-foreground/75"}`}>
-                    {k === "all" ? "All" : STAGE_LABEL[k] || k}{k !== "all" ? ` · ${st[k]}` : ""}
-                  </button>
-                ))}
+        {wide && (
+          <div className="min-h-0 min-w-0" data-testid="korauto-pane">
+            {detail ?? (
+              <div className="hq-card flex h-full flex-col items-center justify-center !rounded-[18px] p-6 text-center">
+                <CarFront className="h-7 w-7 text-white/30" />
+                <p className="mt-2 text-[14px] font-semibold text-white">Select a car</p>
+                <p className="mt-1 max-w-[260px] text-[12px] text-muted-foreground">Tap a row to see every KorAuto Manager field here and edit with your own login.</p>
               </div>
-            </div>
-            <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4" data-testid="korauto-recent">
-              {shown.slice(0, 16).map((c) => (
-                <li key={c.id} className="press cursor-pointer overflow-hidden rounded-2xl bg-foreground/[0.045]" role="button" tabIndex={0} onClick={() => openCar(c)} onKeyDown={(e) => e.key === "Enter" && openCar(c)} data-testid="korauto-car">
-                  <div className="aspect-[4/3]"><Thumb src={c.image_url} /></div>
-                  <div className="p-2.5">
-                    <div className="truncate text-sm font-medium text-white">{carName(c)} <span className="text-white/45">{c.year ?? ""}</span></div>
-                    <div className="truncate text-[12px] text-muted-foreground">{c.plate_number || "—"}</div>
-                    <div className="mt-1.5 flex flex-wrap gap-1">
-                      {c.sale_status && <span className="rounded-full bg-foreground/[0.07] px-2 py-0.5 text-[11px] text-white/75">{STAGE_LABEL[c.sale_status] || c.sale_status}</span>}
-                      {c.tracking_status_label && <span className="rounded-full bg-primary/12 px-2 py-0.5 text-[11px] text-primary">{c.tracking_status_label}</span>}
-                    </div>
-                  </div>
-                </li>
-              ))}
-              {feed && !shown.length && <li className="col-span-full py-6 text-center text-sm text-muted-foreground">No cars in this stage</li>}
-            </ul>
-          </section>
-        </div>
-
-        <section className="hq-card h-fit p-4">
-          <h2 className="t-headline">Activity</h2>
-          <ul className="hq-group mt-3" data-testid="korauto-activity">
-            {events.map((e, i) => {
-              const Icon = e.icon;
-              return (
-                <li key={i} className="hq-row !items-start !py-2.5">
-                  <span className="mt-0.5 hq-ico !h-7 !w-7 !rounded-lg"><Icon className="h-3.5 w-3.5" /></span>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm text-white">{e.text}</div>
-                    {e.sub && <div className="truncate text-[11px] text-muted-foreground">{e.sub}</div>}
-                  </div>
-                  <span className="shrink-0 text-[12px] text-muted-foreground">{ago(e.at, now)}</span>
-                </li>
-              );
-            })}
-            {feed && !events.length && <li className="py-4 text-center text-sm text-muted-foreground">No recent activity</li>}
-            {!feed && [0, 1, 2, 3].map((i) => <li key={i} className="hq-shimmer h-12" />)}
-          </ul>
-        </section>
+            )}
+          </div>
+        )}
       </div>
-      {open && (
-        <CarDetail
-          carId={open.id}
-          summary={open.summary}
-          session={kamS.session}
-          access={access}
-          accessError={accessError}
-          onSignIn={kamS.signIn}
-          onSignOut={kamS.signOut}
-          onClose={() => setOpen(null)}
-          onSaved={(c) => setAll((xs) => (xs ? xs.map((x) => (x.id === c.id ? c : x)) : xs))}
-        />
-      )}
+      {!wide && detail}
     </main>
   );
 }
