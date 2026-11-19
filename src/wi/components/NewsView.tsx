@@ -41,18 +41,13 @@ export default function NewsView({ meta, region }) {
   const alerts = { items: (gd.data?.items || []).filter((x) => x.severity >= 2).sort((a, b) => b.time.localeCompare(a.time)).map((x) => ({ ...x, via: 'GDACS', source: x.alert + ' alert' })) };
   return (
     <div className="news-view">
-      <div className="news-note">
-        {meta?.xEnabled ? <>X API enabled — reads cost credits: server caches each query ≥ {Math.round(meta.xCacheSec / 60)} min and only the World + selected country are fetched.</> :
-          <>X API not configured (<code>X_BEARER_TOKEN</code>) — showing free sources: public RSS + GDELT DOC. Note: X reads are paid per request; when enabled, caching ≥ 5 min per query keeps cost low.</>}
-        <span className="muted"> · refresh every {Math.round(ms / 60000)} min</span>
-      </div>
       {mobile && <div className="pad" style={{ paddingTop: 0, paddingBottom: 8 }}><div className="seg-mini wide">{[['world', t('World')], ['local', cc === 'XK' ? 'Kosovo' : (scopes[cc]?.name || cc)], ['alerts', 'Alerts'], ['cyber', 'Cyber']].map(([k, l]) => <button key={k} className={mtab === k ? 'on' : ''} onClick={() => setMtab(k)}>{l}</button>)}</div></div>}
       <div className="news-cols">
-        {(!mobile || mtab === 'world') && <Column title={'🌐 ' + t('World')} data={world.data} loading={world.loading} now={now} />}
+        {(!mobile || mtab === 'world') && <Column title={'\uD83C\uDF10 ' + t('World')} data={world.data} loading={world.loading} now={now} />}
         {(!mobile || mtab === 'local') && <Column title={<>{flag(cc)} <select value={cc} onChange={(e) => setCc(e.target.value)} className="inline-select">{opts.map(([k, v]) => <option key={k} value={k}>{v.name}</option>)}</select></>} data={local.data} loading={local.loading} now={now} />}
         {(!mobile || mtab === 'alerts' || mtab === 'cyber') && <div className="news-stack" style={mobile ? { display: 'block' } : null}>
-          {(!mobile || mtab === 'alerts') && <Column title={'⚠ ' + t('DISASTER ALERTS') + ' (GDACS)'} data={alerts} now={now} />}
-          {(!mobile || mtab === 'cyber') && <Column title={'⌁ ' + t('CYBER · KEV')} data={kev.data && { items: kev.data.items.map((k) => ({ ...k, via: 'CISA', summary: k.detail })) }} now={now} />}
+          {(!mobile || mtab === 'alerts') && <Column title={'\u26A0 ' + t('DISASTER ALERTS') + ' (GDACS)'} data={alerts} now={now} />}
+          {(!mobile || mtab === 'cyber') && <Column title={'\u2301 ' + t('CYBER \u00B7 KEV')} data={kev.data && { items: kev.data.items.map((k) => ({ ...k, via: 'CISA', summary: k.detail })) }} now={now} />}
         </div>}
       </div>
     </div>
