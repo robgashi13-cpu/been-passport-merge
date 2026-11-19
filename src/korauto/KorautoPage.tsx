@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react";
-import { ArrowUpRight, CarFront, CheckCircle2, ClipboardCheck, FileWarning, Globe, KeyRound, RefreshCw, Ship, Sparkles, Store, Truck, Warehouse } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowUpRight, CarFront, CheckCircle2, ClipboardCheck, FileWarning, Globe, KeyRound, LogOut, RefreshCw, Search, Ship, ShieldCheck, Sparkles, Store, Truck, Warehouse } from "lucide-react";
 import { ago } from "@/hub/clock";
 import { KORAUTO_URL } from "@/hub/AppShell";
 import { STAGE_LABEL, carName, useKorauto, type Car } from "./feed";
+import CarDetail from "./CarDetail";
+import { fetchKamCars, useKamAccess, useKamSession, type KamCar } from "./kam";
 
 const fmtDay = (iso?: string | null) => {
   if (!iso) return "—";
@@ -67,6 +69,24 @@ export default function KorautoPage() {
   const { feed, loading, refresh } = useKorauto();
   const [stage, setStage] = useState<string>("all");
   const now = Date.now();
+  const kamS = useKamSession();
+  const { access, error: accessError } = useKamAccess(kamS.session);
+  const [open, setOpen] = useState<{ id: string; summary?: Car | KamCar } | null>(null);
+  const [q, setQ] = useState("");
+  const [all, setAll] = useState<KamCar[] | null>(null);
+  const [allErr, setAllErr] = useState<string | null>(null);
+  const kamReady = !!access && access.active && access.canOpenCars;
+  useEffect(() => {
+    if (!kamReady || !access) {
+      setAll(null);
+      return;
+    }
+    let alive = true;
+    fetchKamCars(access.isAdmin).then((r) => alive && setAll(r)).catch((e) => alive && setAllErr(String(e.message || e)));
+    return () => {
+      alive = false;
+    };
+  }, [kamReady, access]);
 
   const cars = useMemo(() => {
     const m = new Map<string, Car>();
@@ -74,6 +94,21 @@ export default function KorautoPage() {
     return [...m.values()].sort((a, b) => String(b.updated_at || b.created_at).localeCompare(String(a.updated_at || a.created_at)));
   }, [feed]);
   const shown = stage === "all" ? cars : cars.filter((c) => (c.sale_status || "none") === stage);
+  const hits = useMemo(() => {
+    const t = q.trim().toLowerCase();
+    if (!t) return [] as (Car | KamCar)[];
+    const pool: (Car | KamCar)[] = all ?? [...cars, ...(feed?.shipping ?? [])];
+    const keys = ["vin", "plate_number", "make", "model", "buyer", "shipping_name", "tracking_container", "tracking_booking", "year"];
+    const seen = new Set<string>();
+    return pool.filter((c) => {
+      if (seen.has(c.id)) return false;
+      const r = c as Record<string, unknown>;
+      const ok = keys.some((k) => String(r[k] ?? "").toLowerCase().includes(t)) || `${r.make ?? ""} ${r.model ?? ""}`.toLowerCase().includes(t);
+      if (ok) seen.add(c.id);
+      return ok;
+    }).slice(0, 30);
+  }, [q, all, cars, feed]);
+  const openCar = (c: Car | KamCar) => setOpen({ id: c.id, summary: c });
 
   const events = useMemo(() => {
     const out: Ev[] = [];
@@ -112,7 +147,7 @@ export default function KorautoPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="sr-only">KORAUTO Manager</h1>
-          <p className="t-footnote text-muted-foreground">Read-only overview · {feed?.generatedAt ? `updated ${ago(feed.generatedAt, now)}` : loading ? "loading…" : "—"}{feed?.stale ? " · showing cached data" : ""}</p>
+          <p className="t-footnote text-muted-foreground">Overview · {feed?.generatedAt ? `updated ${ago(feed.generatedAt, now)}` : loading ? "loading…" : "—"}{feed?.stale ? " · showing cached data" : ""}</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={refresh} className="hq-btn press" data-tone="plain" aria-label="Refresh">
@@ -123,6 +158,45 @@ export default function KorautoPage() {
           </a>
         </div>
       </div>
+
+      <section className="hq-card mt-4 p-4" data-testid="korauto-find">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="t-headline">Find a car</h2>
+          {kamS.session ? (
+            <div className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+              <span className="hq-chip"><ShieldCheck className="h-3.5 w-3.5" /> {access ? `${access.email} · ${access.role}` : "KorAuto Manager…"}</span>
+              <button type="button" className="hq-chip press" onClick={kamS.signOut} aria-label="Sign out of KorAuto Manager"><LogOut className="h-3.5 w-3.5" /></button>
+            </div>
+          ) : (
+            <span className="text-[12px] text-muted-foreground">Tap a car and sign in with KorAuto Manager to see every field and edit</span>
+          )}
+        </div>
+        <label className="relative mt-3 block">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input className="hq-field w-full pl-9 pr-3 text-[16px]" placeholder={all ? `Search ${all.length} cars — VIN, plate, make, buyer…` : "Search VIN, plate, make, model…"} value={q} onChange={(e) => setQ(e.target.value)} data-testid="korauto-search" />
+        </label>
+        {allErr && <p className="mt-2 text-[12px] text-[hsl(var(--destructive))]">KorAuto Manager: {allErr}</p>}
+        {q.trim() && (
+          <ul className="hq-group mt-3" data-testid="korauto-hits">
+            {hits.map((c) => {
+              const r = c as Record<string, unknown>;
+              return (
+                <li key={c.id}>
+                  <button type="button" className="hq-row press w-full text-left" onClick={() => openCar(c)}>
+                    <div className="h-10 w-14 shrink-0 overflow-hidden rounded-lg"><Thumb src={r.image_url as string | null} /></div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium text-white">{carName(c as Car)} <span className="text-white/45">{String(r.year ?? "")}</span></div>
+                      <div className="truncate text-[12px] text-muted-foreground">{[r.plate_number, r.vin, r.buyer].filter(Boolean).join(" · ") || "—"}</div>
+                    </div>
+                    <span className="shrink-0 text-[11px] text-muted-foreground">{STAGE_LABEL[String(r.sale_status ?? "")] || String(r.sale_status ?? "")}</span>
+                  </button>
+                </li>
+              );
+            })}
+            {!hits.length && <li className="py-4 text-center text-sm text-muted-foreground">No match{all ? "" : " in the recent list — sign in to search every car"}</li>}
+          </ul>
+        )}
+      </section>
 
       {feed?.error && <div className="mt-3 rounded-2xl bg-[hsl(var(--destructive)/.12)] p-3 text-sm text-[hsl(var(--destructive))]">Couldn’t read KORAUTO right now ({feed.error}).</div>}
 
@@ -136,7 +210,7 @@ export default function KorautoPage() {
             <div className="flex items-center justify-between"><h2 className="t-headline">On the water</h2><span className="text-[13px] text-muted-foreground">{feed?.shipping?.length ?? 0} cars</span></div>
             <ul className="mt-3 hq-group">
               {(feed?.shipping ?? []).slice(0, 12).map((c) => (
-                <li key={c.id} className="hq-row !min-h-[56px] !py-2">
+                <li key={c.id} className="hq-row press !min-h-[56px] !py-2 cursor-pointer" role="button" tabIndex={0} onClick={() => openCar(c)} onKeyDown={(e) => e.key === "Enter" && openCar(c)}>
                   <div className="h-10 w-14 shrink-0 overflow-hidden rounded-lg"><Thumb src={c.image_url} /></div>
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium text-white">{carName(c)} <span className="text-white/45">{c.year ?? ""}</span></div>
@@ -162,7 +236,7 @@ export default function KorautoPage() {
             </div>
             <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4" data-testid="korauto-recent">
               {shown.slice(0, 16).map((c) => (
-                <li key={c.id} className="press overflow-hidden rounded-2xl bg-foreground/[0.045]">
+                <li key={c.id} className="press cursor-pointer overflow-hidden rounded-2xl bg-foreground/[0.045]" role="button" tabIndex={0} onClick={() => openCar(c)} onKeyDown={(e) => e.key === "Enter" && openCar(c)} data-testid="korauto-car">
                   <div className="aspect-[4/3]"><Thumb src={c.image_url} /></div>
                   <div className="p-2.5">
                     <div className="truncate text-sm font-medium text-white">{carName(c)} <span className="text-white/45">{c.year ?? ""}</span></div>
@@ -200,6 +274,19 @@ export default function KorautoPage() {
           </ul>
         </section>
       </div>
+      {open && (
+        <CarDetail
+          carId={open.id}
+          summary={open.summary}
+          session={kamS.session}
+          access={access}
+          accessError={accessError}
+          onSignIn={kamS.signIn}
+          onSignOut={kamS.signOut}
+          onClose={() => setOpen(null)}
+          onSaved={(c) => setAll((xs) => (xs ? xs.map((x) => (x.id === c.id ? c : x)) : xs))}
+        />
+      )}
     </main>
   );
 }
