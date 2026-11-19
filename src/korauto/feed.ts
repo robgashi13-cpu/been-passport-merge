@@ -21,6 +21,10 @@ export type Car = {
   tracking_vessel?: string | null;
   tracking_destination?: string | null;
   tracking_arrival_port?: string | null;
+  tracking_etd?: string | null;
+  tracking_active?: boolean | null;
+  shipping_name?: string | null;
+  shipping_date?: string | null;
   status?: string | null;
 };
 export type Feed = {

@@ -76,7 +76,7 @@ function startOfTodayISO() {
   return new Date(now.getTime() - elapsed).toISOString();
 }
 
-const CAR_COLS = 'id,make,model,year,plate_number,status,sale_status,approval_status,delivery_status,tracking_status_label,tracking_eta,image_url,created_at,updated_at';
+const CAR_COLS = 'id,make,model,year,plate_number,status,sale_status,approval_status,delivery_status,tracking_status,tracking_status_label,tracking_vessel,tracking_eta,tracking_etd,tracking_active,shipping_name,shipping_date,image_url,created_at,updated_at';
 const safe = async (p) => { try { return await p; } catch (e) { return { __err: String(e?.message || e).slice(0, 120) }; } };
 const arr = (v) => (Array.isArray(v) ? v : []);
 const count = (rows, k) => { const o = {}; for (const r of rows) { const v = r?.[k] ?? 'none'; o[v] = (o[v] || 0) + 1; } return o; };
@@ -97,7 +97,7 @@ async function build(c) {
     safe(sel(c, token, `pending_website_sales?select=id&limit=50`)),
     // stage counts only (no prices / buyer fields)
     safe(sel(c, token, `cars?select=sale_status,status,tracking_status,approval_status&limit=5000`)),
-    safe(sel(c, token, `cars?select=id,make,model,year,plate_number,image_url,tracking_status,tracking_status_label,tracking_vessel,tracking_eta,tracking_destination,tracking_arrival_port,updated_at&tracking_status=eq.DEPARTED&order=tracking_eta.asc.nullslast&limit=30`)),
+    safe(sel(c, token, `cars?select=id,make,model,year,plate_number,image_url,status,sale_status,created_at,shipping_name,shipping_date,tracking_etd,tracking_active,tracking_status,tracking_status_label,tracking_vessel,tracking_eta,tracking_destination,tracking_arrival_port,updated_at&tracking_status=eq.DEPARTED&order=tracking_eta.asc.nullslast&limit=30`)),
     safe(sel(c, token, `cars?select=${CAR_COLS}&order=updated_at.desc&limit=14`)),
   ]);
   const errors = [todayCars, latest, updated, pending, arriving, inspections, complaints, webSales, stageRows, shipping, recentUpdates].filter((x) => x && x.__err).map((x) => x.__err);
