@@ -1,10 +1,11 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ArrowUpRight, CarFront, CheckCircle2, ChevronRight, ClipboardCheck, FileWarning, Globe, KeyRound, LogOut, RefreshCw, Search, Ship, Sparkles, Store, Truck, Wallet, Warehouse } from "lucide-react";
+import { ArrowUpRight, CarFront, ChevronsDownUp, ChevronsUpDown, CheckCircle2, ChevronRight, ClipboardCheck, FileWarning, Globe, KeyRound, LogOut, RefreshCw, Search, Ship, Sparkles, Store, Truck, Wallet, Warehouse } from "lucide-react";
 import { ago } from "@/hub/clock";
 import { KORAUTO_URL } from "@/hub/AppShell";
 import { STAGE_LABEL, carName, useKorauto, type Car } from "./feed";
 import CarDetail from "./CarDetail";
 import { fetchKamCars, useKamAccess, useKamSession, type KamCar } from "./kam";
+import { groupByShip } from "./ships";
 
 const fmtDay = (iso?: string | null) => {
   if (!iso) return "—";
@@ -48,6 +49,12 @@ const FILTER_LABEL: Record<FilterKey, string> = {
   all: "All cars", recent: "Recent", stock: "In stock", sales: "In sales", autosallon: "In autosallon", shipped: "Shipped",
   water: "On the water", arriving: "Arriving ≤7d", approval: "Awaiting approval", balance: "Balance due", complaints: "Open complaints", activity: "Activity",
 };
+/** Lists divided by ship like KorAuto Manager's car tabs (stage drives its group order). */
+const SHIP_GROUPED: Partial<Record<FilterKey, { stage?: string; sort?: "eta_asc" | "eta_desc" }>> = {
+  all: {}, stock: {}, sales: { stage: "sales" }, autosallon: { stage: "autosallon" }, shipped: { stage: "shipped" },
+  water: { sort: "eta_asc" }, arriving: { sort: "eta_asc" },
+};
+const COLLAPSE_KEY = "wp.korauto.shipGroups.collapsed";
 const CHIPS: FilterKey[] = ["recent", "all", "water", "arriving", "balance", "approval", "sales", "autosallon", "shipped", "stock", "activity"];
 
 const num = (v: unknown) => Number(v ?? 0) || 0;
@@ -222,6 +229,36 @@ export default function KorautoPage() {
 
   useEffect(() => setLimit(60), [filter, q]);
 
+  // Ship groups: same keys/labels/order as KorAuto Manager. Searching groups the hits too (expanded).
+  const groupCfg = q.trim() ? SHIP_GROUPED.all : SHIP_GROUPED[filter];
+  const groups = useMemo(() => {
+    if (!groupCfg) return null;
+    const byCreated = [...shown].sort((a, b) => String((b as Car).created_at ?? "").localeCompare(String((a as Car).created_at ?? "")));
+    return groupByShip(byCreated as (Row & Record<string, unknown>)[], groupCfg.stage, groupCfg.sort);
+  }, [shown, groupCfg]);
+  // Collapsed groups per list, saved on this device. Like KorAuto Manager, groups start collapsed.
+  const [collapsed, setCollapsed] = useState<Record<string, string[] | undefined>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(COLLAPSE_KEY) || "{}");
+    } catch {
+      return {};
+    }
+  });
+  const listKey = q.trim() ? "" : filter;
+  const closedKeys = listKey ? collapsed[listKey] ?? (groups ? groups.map((g) => g.key) : []) : [];
+  const saveCollapsed = (next: string[]) => {
+    if (!listKey) return;
+    setCollapsed((c) => {
+      const out = { ...c, [listKey]: next };
+      try {
+        localStorage.setItem(COLLAPSE_KEY, JSON.stringify(out));
+      } catch { /* ignore */ }
+      return out;
+    });
+  };
+  const toggleGroup = (k: string) => saveCollapsed(closedKeys.includes(k) ? closedKeys.filter((x) => x !== k) : [...closedKeys, k]);
+  const allOpen = !!groups && groups.every((g) => !closedKeys.includes(g.key));
+
   const pick = (k: FilterKey | "websales") => {
     if (k === "websales") return window.open(KORAUTO_URL, "_blank", "noopener,noreferrer");
     setFilter(k);
@@ -302,7 +339,12 @@ export default function KorautoPage() {
               ))}
             </div>
             <div className="flex items-baseline justify-between text-[12px]">
-              <span className="font-semibold text-white" data-testid="korauto-list-title">{activeLabel}</span>
+              <span className="flex items-center gap-1.5 font-semibold text-white" data-testid="korauto-list-title">{activeLabel}{groups && <span className="font-normal text-muted-foreground">· {groups.length} ship{groups.length === 1 ? "" : "s"}</span>}</span>
+              {groups && listKey && groups.length > 1 && (
+                <button type="button" className="press ml-auto mr-2 flex items-center gap-1 text-[11px] text-muted-foreground" onClick={() => saveCollapsed(allOpen ? groups.map((g) => g.key) : [])} data-testid="korauto-groups-toggle">
+                  {allOpen ? <ChevronsDownUp className="h-3.5 w-3.5" /> : <ChevronsUpDown className="h-3.5 w-3.5" />} {allOpen ? "Collapse" : "Expand"} all
+                </button>
+              )}
               <span className="text-muted-foreground">{filter === "activity" && !q.trim() ? events.length : filter === "complaints" && !q.trim() ? feed?.openComplaints?.length ?? 0 : shown.length}{feedOnly && typeof expected === "number" && expected > shown.length ? ` of ${expected}` : ""}</span>
             </div>
           </div>
@@ -344,12 +386,40 @@ export default function KorautoPage() {
               {!(feed?.openComplaints ?? []).length && <li className="py-6 text-center text-[13px] text-muted-foreground">No open complaints</li>}
             </ul>
           ) : (
+            groups ? (
+              <div className={wide ? "min-h-0 flex-1 overflow-y-auto" : ""} data-testid="korauto-groups">
+                {groups.map((g) => {
+                  const isOpen = !closedKeys.includes(g.key);
+                  return (
+                    <section key={g.key || "none"} className="border-b border-white/[0.07] last:border-b-0" data-group-key={g.key}>
+                      <button type="button" onClick={() => toggleGroup(g.key)} aria-expanded={isOpen} data-testid="korauto-group"
+                        className="press flex min-h-[44px] w-full items-center gap-2 bg-foreground/[0.035] px-3 py-1.5 text-left">
+                        <ChevronRight className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-90" : ""}`} />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[11px] font-semibold uppercase leading-4 tracking-wider text-white">{g.label}</span>
+                          {g.span && <span className="block truncate text-[11px] leading-4 text-muted-foreground">{g.span}</span>}
+                        </span>
+                        <span className="shrink-0 text-[11px] text-muted-foreground">{g.list.length} car{g.list.length === 1 ? "" : "s"}</span>
+                      </button>
+                      {isOpen && (
+                        <ul className="divide-y divide-white/[0.07]" data-testid="korauto-rows">
+                          {g.list.map((c) => <CarRow key={c.id} r={c} filter={filter} active={open?.id === c.id} onOpen={() => openCar(c)} />)}
+                        </ul>
+                      )}
+                    </section>
+                  );
+                })}
+                {!feed && !all && [0, 1, 2, 3, 4].map((i) => <div key={i} className="hq-shimmer h-[44px]" />)}
+                {(feed || all) && !shown.length && <p className="py-6 text-center text-[13px] text-muted-foreground">{q.trim() && !all ? "No match in the feed — sign in to search every car" : "No cars here"}</p>}
+              </div>
+            ) : (
             <ul className={`divide-y divide-white/[0.07] ${wide ? "min-h-0 flex-1 overflow-y-auto" : ""}`} data-testid="korauto-rows">
               {shown.slice(0, limit).map((c) => <CarRow key={c.id} r={c} filter={filter} active={open?.id === c.id} onOpen={() => openCar(c)} />)}
               {!feed && !all && [0, 1, 2, 3, 4].map((i) => <li key={i} className="hq-shimmer h-[52px]" />)}
               {(feed || all) && !shown.length && <li className="py-6 text-center text-[13px] text-muted-foreground">{q.trim() && !all ? "No match in the feed — sign in to search every car" : "No cars here"}</li>}
               {shown.length > limit && <li><button type="button" className="press w-full py-3 text-[13px] font-semibold" onClick={() => setLimit((l) => l + 60)}>Show more ({shown.length - limit})</button></li>}
             </ul>
+            )
           )}
         </div>
 
