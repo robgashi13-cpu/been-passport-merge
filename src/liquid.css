@@ -324,3 +324,13 @@ img, video, canvas { max-width: 100%; }
 /* KORAUTO: compact large title so the list starts higher (folded + unfolded iPhone Duo) */
 .hq-shell-content:has(.korauto-page) .hq-large-header { padding: 6px max(12px, var(--sal)) 2px; max-width: 1100px; }
 .hq-shell-content:has(.korauto-page) .hq-large-header h1 { font-size: 24px; line-height: 30px; }
+
+/* HQ native iOS shell only (window.__HQ_NATIVE__ / html.hq-native).
+   wanderpass.me in a regular browser is unchanged. */
+html.hq-native {
+  --tabbar-h: var(--hq-native-tabbar-h, calc(76px + env(safe-area-inset-bottom, 0px)));
+}
+html.hq-native .hq-tabbar {
+  display: none !important;
+  pointer-events: none !important;
+}
