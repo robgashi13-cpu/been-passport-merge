@@ -39,6 +39,11 @@ targets:
       - path: Wanderpass
         excludes:
           - "**/.DS_Store"
+          - "Web/**"
+    resources:
+      - path: Wanderpass/Web
+        type: folder
+        optional: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: me.wanderpass.hub
@@ -63,3 +68,8 @@ targets:
           - UIInterfaceOrientationLandscapeRight
         UIDeviceFamily:
           - 1
+        CFBundleURLTypes:
+          - CFBundleURLName: me.wanderpass.hub
+            CFBundleURLSchemes:
+              - app
+            CFBundleTypeRole: Editor

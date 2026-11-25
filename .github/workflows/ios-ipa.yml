@@ -126,3 +126,186 @@ jobs:
           name: Wanderpass.ipa
           path: Wanderpass.ipa
           if-no-files-found: error
+
+  bundled:
+    runs-on: xcode-27
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode and log SDK
+        id: sdk
+        run: |
+          set -euo pipefail
+          echo "Available Xcode apps:"
+          ls -d /Applications/Xcode*.app 2>/dev/null || true
+          if [ -d /Applications/Xcode_27.1.app ]; then
+            sudo xcode-select -s /Applications/Xcode_27.1.app/Contents/Developer
+          elif [ -d /Applications/Xcode_27.1.0.app ]; then
+            sudo xcode-select -s /Applications/Xcode_27.1.0.app/Contents/Developer
+          fi
+          echo "DEVELOPER_DIR=$(xcode-select -p)"
+          xcodebuild -version
+          echo "Installed SDKs:"
+          xcodebuild -showsdks
+          SDK="$(xcrun --show-sdk-version --sdk iphoneos)"
+          echo "iPhoneOS SDK: ${SDK}"
+          DESIRED="27.1"
+          TARGET="$(printf '%s\n%s\n' "${SDK}" "${DESIRED}" | sort -V | head -1)"
+          echo "IPHONEOS_DEPLOYMENT_TARGET=${TARGET} (preferred ${DESIRED})"
+          {
+            echo "sdk=${SDK}"
+            echo "target=${TARGET}"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "## Xcode and SDK"
+            echo "- runner: \`xcode-27\`"
+            echo "- \`$(xcodebuild -version | tr '\n' ' ')\`"
+            echo "- iPhoneOS SDK: \`${SDK}\`"
+            echo "- deployment target: \`${TARGET}\`"
+            echo "- variant: bundled"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Confirm public Vite keys without printing values
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          env_path = Path(".env")
+          if not env_path.exists():
+              raise SystemExit("Committed .env with public VITE_* keys was not found")
+          keys = []
+          for raw in env_path.read_text().splitlines():
+              line = raw.strip()
+              if not line or line.startswith("#") or "=" not in line:
+                  continue
+              keys.append(line.split("=", 1)[0].strip())
+          print("Vite env key names present:", ", ".join(keys))
+          required = ["VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY"]
+          missing = [key for key in required if key not in keys]
+          if missing:
+              raise SystemExit("Missing required public Vite keys: " + ", ".join(missing))
+          unexpected = [key for key in keys if not key.startswith("VITE_")]
+          if unexpected:
+              raise SystemExit("Refusing to build: .env has non-VITE keys")
+          print("Required public Supabase Vite keys are present; values are not printed")
+          PY
+
+      - name: Build web app
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run build
+          test -f dist/index.html
+          echo "Web build output:"
+          find dist -type f | wc -l
+          du -sh dist
+
+      - name: Copy dist into the iOS app resource folder
+        run: |
+          set -euo pipefail
+          rm -rf ios-shell/Wanderpass/Web
+          mkdir -p ios-shell/Wanderpass/Web
+          cp -R dist/. ios-shell/Wanderpass/Web/
+          test -f ios-shell/Wanderpass/Web/index.html
+          echo "Bundled web files:"
+          find ios-shell/Wanderpass/Web -type f | wc -l
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Prepare icon and deployment target
+        run: |
+          set -euo pipefail
+          TARGET="${{ steps.sdk.outputs.target }}"
+          sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET_PLACEHOLDER/${TARGET}/g" ios-shell/project.yml
+          DEST="ios-shell/Wanderpass/Assets.xcassets/AppIcon.appiconset/AppIcon.png"
+          SRC=""
+          for candidate in public/app-icon.png assets/icon.png public/icons/icon-512.png public/apple-touch-icon.png; do
+            if [ -f "${candidate}" ]; then
+              SRC="${candidate}"
+              break
+            fi
+          done
+          if [ -z "${SRC}" ]; then
+            echo "No app icon found in public/ or assets/"
+            exit 1
+          fi
+          echo "Using icon source: ${SRC}"
+          WIDTH="$(sips -g pixelWidth "${SRC}" | awk '/pixelWidth/{print $2}')"
+          HEIGHT="$(sips -g pixelHeight "${SRC}" | awk '/pixelHeight/{print $2}')"
+          SIDE="$WIDTH"
+          if [ "${HEIGHT}" -gt "${WIDTH}" ]; then SIDE="${HEIGHT}"; fi
+          TMP="$(mktemp -t wanderpass-icon).png"
+          sips -s format png --padToHeightWidth "${SIDE}" "${SIDE}" "${SRC}" --out "${TMP}" >/dev/null
+          sips -z 1024 1024 "${TMP}" --out "${DEST}" >/dev/null
+          rm -f "${TMP}"
+
+      - name: Generate Xcode project
+        working-directory: ios-shell
+        run: xcodegen generate
+
+      - name: Build Release for generic iOS
+        working-directory: ios-shell
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project Wanderpass.xcodeproj \
+            -scheme Wanderpass \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY= \
+            build
+
+      - name: Package Wanderpass-bundled.ipa
+        run: |
+          set -euo pipefail
+          APP="$(find ios-shell/build -path '*/Release-iphoneos/Wanderpass.app' -type d | head -1)"
+          if [ -z "${APP}" ]; then
+            echo "Wanderpass.app not found under ios-shell/build"
+            find ios-shell/build -name 'Wanderpass.app' -type d || true
+            exit 1
+          fi
+          if [ ! -f "${APP}/Web/index.html" ]; then
+            echo "Web folder missing from the built app; copying dist into the bundle"
+            rm -rf "${APP}/Web"
+            cp -R ios-shell/Wanderpass/Web "${APP}/Web"
+          fi
+          test -f "${APP}/Web/index.html"
+          echo "Web bundle in app:"
+          find "${APP}/Web" -type f | wc -l
+          ls -la "${APP}/Web" | head
+          echo "Packaging ${APP}"
+          rm -rf Payload
+          mkdir Payload
+          cp -R "${APP}" Payload/Wanderpass.app
+          ditto -c -k --keepParent Payload Wanderpass-bundled.ipa
+          ls -lh Wanderpass-bundled.ipa
+          unzip -l Wanderpass-bundled.ipa | head -80
+          echo "--- web files in IPA ---"
+          unzip -l Wanderpass-bundled.ipa | grep -E 'Payload/Wanderpass.app/Web/(index\.html|assets/)' | head -40
+          test -n "$(unzip -Z -1 Wanderpass-bundled.ipa | grep -E '^Payload/Wanderpass.app/Web/index\.html$')"
+          PLIST="Payload/Wanderpass.app/Info.plist"
+          echo "CFBundleIdentifier=$(plutil -extract CFBundleIdentifier raw "${PLIST}")"
+          echo "MinimumOSVersion=$(plutil -extract MinimumOSVersion raw "${PLIST}")"
+          echo "CFBundleDisplayName=$(plutil -extract CFBundleDisplayName raw "${PLIST}")"
+          codesign -dv --verbose=4 Payload/Wanderpass.app || true
+
+      - name: Upload bundled IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Wanderpass-bundled.ipa
+          path: Wanderpass-bundled.ipa
+          if-no-files-found: error

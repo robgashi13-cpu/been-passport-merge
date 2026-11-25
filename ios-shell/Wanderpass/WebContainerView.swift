@@ -16,6 +16,14 @@ struct WebContainerView: UIViewRepresentable {
         config.allowsAirPlayForMediaPlayback = true
         config.allowsPictureInPictureMediaPlayback = true
 
+        let bundled = BundledWebHandler.bundleAvailable
+        if bundled {
+            let handler = BundledWebHandler()
+            config.setURLSchemeHandler(handler, forURLScheme: BundledWebHandler.scheme)
+            context.coordinator.schemeHandler = handler
+        }
+        context.coordinator.usesBundle = bundled
+
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
@@ -35,8 +43,9 @@ struct WebContainerView: UIViewRepresentable {
         webView.scrollView.refreshControl = refresh
 
         context.coordinator.webView = webView
-        if let url = URL(string: "https://wanderpass.me") {
-            webView.load(URLRequest(url: url))
+        let start = bundled ? BundledWebHandler.startURL : URL(string: "https://wanderpass.me")
+        if let start {
+            webView.load(URLRequest(url: start))
         }
         return webView
     }
@@ -45,6 +54,8 @@ struct WebContainerView: UIViewRepresentable {
 
     final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
         weak var webView: WKWebView?
+        var schemeHandler: BundledWebHandler?
+        var usesBundle = false
 
         @objc func pullToRefresh(_ sender: UIRefreshControl) {
             webView?.reload()
@@ -75,6 +86,12 @@ struct WebContainerView: UIViewRepresentable {
                 return
             }
 
+            if usesBundle, let rewritten = BundledWebHandler.rewriteLiveSite(url) {
+                decisionHandler(.cancel)
+                webView.load(URLRequest(url: rewritten))
+                return
+            }
+
             if let frame = navigationAction.targetFrame, !frame.isMainFrame {
                 decisionHandler(.allow)
                 return
@@ -91,6 +108,10 @@ struct WebContainerView: UIViewRepresentable {
 
         func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
             guard let url = navigationAction.request.url else { return nil }
+            if usesBundle, let rewritten = BundledWebHandler.rewriteLiveSite(url) {
+                webView.load(URLRequest(url: rewritten))
+                return nil
+            }
             if shouldOpenExternally(url) {
                 UIApplication.shared.open(url)
             } else {
@@ -101,7 +122,7 @@ struct WebContainerView: UIViewRepresentable {
 
         private func shouldOpenExternally(_ url: URL) -> Bool {
             let scheme = url.scheme?.lowercased() ?? ""
-            if scheme == "about" || scheme == "blob" || scheme == "data" || scheme == "javascript" {
+            if scheme == BundledWebHandler.scheme || scheme == "about" || scheme == "blob" || scheme == "data" || scheme == "javascript" {
                 return false
             }
             guard scheme == "http" || scheme == "https" else { return false }
