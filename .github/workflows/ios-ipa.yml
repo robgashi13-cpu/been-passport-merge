@@ -203,7 +203,7 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=8192
         run: |
           set -euo pipefail
-          npm ci
+          npm ci --legacy-peer-deps
           npm run build
           test -f dist/index.html
           echo "Web build output:"
