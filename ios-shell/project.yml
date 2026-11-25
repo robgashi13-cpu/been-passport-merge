@@ -22,7 +22,7 @@ settings:
     SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: "NO"
     SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: "NO"
     GENERATE_INFOPLIST_FILE: "YES"
-    INFOPLIST_KEY_CFBundleDisplayName: Wanderpass
+    INFOPLIST_KEY_CFBundleDisplayName: HQ
     INFOPLIST_KEY_LSRequiresIPhoneOS: "YES"
     INFOPLIST_KEY_UILaunchScreen_Generation: "YES"
     INFOPLIST_KEY_UIRequiresFullScreen: "YES"
@@ -53,7 +53,7 @@ targets:
     info:
       path: Wanderpass/Info.plist
       properties:
-        CFBundleDisplayName: Wanderpass
+        CFBundleDisplayName: HQ
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"
         LSRequiresIPhoneOS: true

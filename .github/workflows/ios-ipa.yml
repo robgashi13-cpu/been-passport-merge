@@ -57,7 +57,7 @@ jobs:
           sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET_PLACEHOLDER/${TARGET}/g" ios-shell/project.yml
           DEST="ios-shell/Wanderpass/Assets.xcassets/AppIcon.appiconset/AppIcon.png"
           SRC=""
-          for candidate in public/app-icon.png assets/icon.png public/icons/icon-512.png public/apple-touch-icon.png; do
+          for candidate in public/icons/icon-512.png public/icons/hq-logo.png public/icons/icon-192.png public/icons/icon-maskable-512.png; do
             if [ -f "${candidate}" ]; then
               SRC="${candidate}"
               break
@@ -230,7 +230,7 @@ jobs:
           sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET_PLACEHOLDER/${TARGET}/g" ios-shell/project.yml
           DEST="ios-shell/Wanderpass/Assets.xcassets/AppIcon.appiconset/AppIcon.png"
           SRC=""
-          for candidate in public/app-icon.png assets/icon.png public/icons/icon-512.png public/apple-touch-icon.png; do
+          for candidate in public/icons/icon-512.png public/icons/hq-logo.png public/icons/icon-192.png public/icons/icon-maskable-512.png; do
             if [ -f "${candidate}" ]; then
               SRC="${candidate}"
               break
