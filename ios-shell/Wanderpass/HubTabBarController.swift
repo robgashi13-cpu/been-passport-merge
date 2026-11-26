@@ -13,13 +13,19 @@ import WebKit
 ///
 /// Fix: keep the web view inside the selected child view controller, which
 /// is the region UITabBarController already lays out under/beside its chrome.
-final class HubTabBarController: UITabBarController, UITabBarControllerDelegate {
+///
+/// On iPhone / folded Duo the system still caps visible tabs at 5 (4 + More).
+/// Tapping More used to look like a no-op because `didSelect` / layout
+/// attached the shared WKWebView to `moreNavigationController` and covered
+/// the system More list. The web view is only attached to `HubPageController`.
+final class HubTabBarController: UITabBarController, UITabBarControllerDelegate, UINavigationControllerDelegate {
     private let engine = WebEngine()
     private var applyingSelectionFromWeb = false
     private var chromeVisible = true
     private var lastChromeSignature: String?
     private let placementToggle = UIButton(type: .system)
     private var prefersSidebar = true
+    private var lastContentPage: HubPageController?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -46,6 +52,9 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate 
             return page
         }
 
+        moreNavigationController.delegate = self
+        moreNavigationController.navigationBar.prefersLargeTitles = false
+
         engine.onRouteChange = { [weak self] path in
             self?.selectTab(matching: path)
         }
@@ -64,6 +73,14 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate 
             self.publishChrome()
             self.updatePlacementToggle()
         }
+
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-HQShowMore") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { [weak self] in
+                self?.presentMoreForScreenshot()
+            }
+        }
+        #endif
     }
 
     override func viewDidLayoutSubviews() {
@@ -90,13 +107,18 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate 
     }
 
     func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
-        guard !applyingSelectionFromWeb else {
-            attachWebView(to: viewController)
+        if isMoreInterface(viewController) {
             return true
         }
-        guard let tab = HubTab(rawValue: viewController.tabBarItem.tag) else { return true }
-        attachWebView(to: viewController)
-        if selectedViewController === viewController {
+        guard let page = contentPage(from: viewController), let tab = HubTab(rawValue: page.tabBarItem.tag) else {
+            return true
+        }
+        guard !applyingSelectionFromWeb else {
+            attachWebView(to: page)
+            return true
+        }
+        attachWebView(to: page)
+        if selectedViewController === viewController || contentPage(from: selectedViewController) === page {
             engine.scrollToTop()
         } else {
             engine.navigate(to: tab.path)
@@ -106,8 +128,36 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate 
     }
 
     func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
-        attachWebView(to: viewController)
+        if isMoreInterface(viewController) {
+            moreNavigationController.setNavigationBarHidden(false, animated: false)
+            publishChrome()
+            return
+        }
+        if let page = contentPage(from: viewController) {
+            attachWebView(to: page)
+        }
         publishChrome()
+    }
+
+    func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
+        guard navigationController === moreNavigationController else { return }
+        if let page = viewController as? HubPageController {
+            navigationController.setNavigationBarHidden(true, animated: animated)
+            attachWebView(to: page)
+            if let tab = HubTab(rawValue: page.tabBarItem.tag), !applyingSelectionFromWeb {
+                engine.navigate(to: tab.path)
+            }
+        } else {
+            navigationController.setNavigationBarHidden(false, animated: animated)
+        }
+    }
+
+    func navigationController(_ navigationController: UINavigationController, didShow viewController: UIViewController, animated: Bool) {
+        guard navigationController === moreNavigationController else { return }
+        if let page = viewController as? HubPageController {
+            attachWebView(to: page)
+            publishChrome()
+        }
     }
 
     private func selectTab(matching path: String) {
@@ -122,13 +172,20 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate 
     }
 
     private func attachWebViewToSelectedPage() {
+        if isMoreInterface(selectedViewController) {
+            if let last = lastContentPage, last.isViewLoaded {
+                attachWebView(to: last)
+            }
+            return
+        }
         if let host = selectedViewController {
             attachWebView(to: host)
         }
     }
 
     private func attachWebView(to host: UIViewController) {
-        let page = unwrapped(host)
+        guard let page = contentPage(from: host) else { return }
+        lastContentPage = page
         let webView = engine.webView
         if webView.superview !== page.view {
             webView.removeFromSuperview()
@@ -139,11 +196,33 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate 
         webView.frame = page.view.bounds
     }
 
+    private func contentPage(from controller: UIViewController?) -> HubPageController? {
+        guard let controller else { return nil }
+        if let page = controller as? HubPageController { return page }
+        if let nav = controller as? UINavigationController, let page = nav.topViewController as? HubPageController {
+            return page
+        }
+        if let page = unwrapped(controller) as? HubPageController { return page }
+        return nil
+    }
+
     private func unwrapped(_ controller: UIViewController) -> UIViewController {
         if let nav = controller as? UINavigationController, let top = nav.topViewController {
             return top
         }
         return controller
+    }
+
+    /// System More list / More navigation, not a hub page.
+    private func isMoreInterface(_ controller: UIViewController?) -> Bool {
+        guard let controller else { return false }
+        if controller === moreNavigationController { return true }
+        if contentPage(from: controller) != nil { return false }
+        let names = [
+            String(describing: type(of: controller)),
+            String(describing: type(of: unwrapped(controller)))
+        ]
+        return names.contains { $0.localizedCaseInsensitiveContains("More") }
     }
 
     private func updateChromeVisibility(for url: URL?) {
@@ -157,8 +236,7 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate 
     }
 
     private func publishChrome() {
-        let host = selectedViewController.map { unwrapped($0) }
-        let insets = host?.view.safeAreaInsets ?? view.safeAreaInsets
+        let insets = resolvedChromeInsets()
         let regular = traitCollection.horizontalSizeClass == .regular
         let chrome = NativeChrome(
             isRegularWidth: regular,
@@ -167,10 +245,81 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate 
             trailing: chromeVisible ? insets.right : 0,
             top: insets.top
         )
-        let signature = "\(chrome.isRegularWidth ? 1 : 0)-\(Int(chrome.bottom))-\(Int(chrome.leading))-\(Int(chrome.trailing))-\(Int(chrome.top))"
+        if let page = contentPage(from: selectedViewController) ?? lastContentPage {
+            applyAdditionalSafeArea(on: page, needed: chromeVisible ? insets : UIEdgeInsets(top: insets.top, left: 0, bottom: 0, right: 0))
+        }
+        let signature = "\(chrome.isRegularWidth ? 1 : 0)-\(Int(chrome.bottom.rounded()))-\(Int(chrome.leading.rounded()))-\(Int(chrome.trailing.rounded()))-\(Int(chrome.top.rounded()))"
         guard signature != lastChromeSignature else { return }
         lastChromeSignature = signature
         engine.applyNativeChrome(chrome)
+    }
+
+    /// Combine UIKit safe-area insets with the on-screen tab bar / Liquid Glass
+    /// pill frame. On folded iPhone Duo the vertical status chrome and the
+    /// floating tab pill overlay the web view instead of shrinking its frame,
+    /// so `safeAreaInsets.right` alone is not enough for the web header.
+    private func resolvedChromeInsets() -> UIEdgeInsets {
+        let webView = engine.webView
+        let host = contentPage(from: selectedViewController) ?? lastContentPage
+        var insets = webView.superview != nil ? webView.safeAreaInsets : (host?.view.safeAreaInsets ?? view.safeAreaInsets)
+        if let host {
+            let extra = host.additionalSafeAreaInsets
+            insets = UIEdgeInsets(
+                top: max(0, insets.top - extra.top),
+                left: max(0, insets.left - extra.left),
+                bottom: max(0, insets.bottom - extra.bottom),
+                right: max(0, insets.right - extra.right)
+            )
+        }
+        let windowInsets = webView.window?.safeAreaInsets ?? view.window?.safeAreaInsets ?? .zero
+        insets.top = max(insets.top, windowInsets.top)
+        insets.left = max(insets.left, windowInsets.left)
+        insets.bottom = max(insets.bottom, windowInsets.bottom)
+        insets.right = max(insets.right, windowInsets.right)
+
+        if chromeVisible, !tabBar.isHidden, tabBar.alpha > 0.01, tabBar.bounds.width > 1, tabBar.bounds.height > 1 {
+            let target: UIView = webView.superview != nil ? webView : (host?.view ?? view)
+            let tabFrame = tabBar.convert(tabBar.bounds, to: target)
+            let bounds = target.bounds
+            if tabFrame.intersects(bounds) {
+                let overlap = tabFrame.intersection(bounds).insetBy(dx: -8, dy: -8).intersection(bounds)
+                let maxSide = max(bounds.width, bounds.height) * 0.4
+                if overlap.width >= overlap.height, overlap.height > 1, overlap.height <= maxSide {
+                    if overlap.midY > bounds.midY {
+                        insets.bottom = max(insets.bottom, bounds.maxY - overlap.minY)
+                    } else {
+                        insets.top = max(insets.top, overlap.maxY - bounds.minY)
+                    }
+                } else if overlap.width > 1, overlap.width <= maxSide {
+                    if overlap.midX > bounds.midX {
+                        insets.right = max(insets.right, bounds.maxX - overlap.minX)
+                    } else {
+                        insets.left = max(insets.left, overlap.maxX - bounds.minX)
+                    }
+                }
+            }
+        }
+        return insets
+    }
+
+    private func applyAdditionalSafeArea(on page: UIViewController, needed: UIEdgeInsets) {
+        let current = page.view.safeAreaInsets
+        let additional = page.additionalSafeAreaInsets
+        let system = UIEdgeInsets(
+            top: max(0, current.top - additional.top),
+            left: max(0, current.left - additional.left),
+            bottom: max(0, current.bottom - additional.bottom),
+            right: max(0, current.right - additional.right)
+        )
+        let extra = UIEdgeInsets(
+            top: max(0, needed.top - system.top),
+            left: max(0, needed.left - system.left),
+            bottom: max(0, needed.bottom - system.bottom),
+            right: max(0, needed.right - system.right)
+        )
+        if extra != additional {
+            page.additionalSafeAreaInsets = extra
+        }
     }
 
     private func configurePlacementToggle() {
@@ -216,7 +365,7 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate 
 
     private func layoutPlacementToggle() {
         let size: CGFloat = 36
-        let insets = view.safeAreaInsets
+        let insets = resolvedChromeInsets()
         let x = max(insets.right, 10)
         let y = max(insets.top, 10)
         placementToggle.frame = CGRect(
@@ -227,6 +376,15 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate 
         )
         placementToggle.layer.cornerRadius = size / 2
     }
+
+    #if DEBUG
+    /// Used by the screenshot job (`simctl launch … -HQShowMore`) so we can
+    /// capture the system More list without coordinate tapping.
+    fileprivate func presentMoreForScreenshot() {
+        guard let controllers = viewControllers, controllers.count > 5 else { return }
+        selectedViewController = moreNavigationController
+    }
+    #endif
 
     private static func shouldShowChrome(for url: URL?) -> Bool {
         guard let url else { return true }

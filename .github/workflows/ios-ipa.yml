@@ -499,7 +499,7 @@ jobs:
               print(status.stdout)
               return udid
 
-          def install_and_launch(udid):
+          def install_and_launch(udid, extra_args=None, settle=8):
               if not Path(app).is_dir():
                   log(f"Simulator app missing at {app}")
                   return False
@@ -508,9 +508,16 @@ jobs:
               if inst.returncode != 0:
                   log(f"Install failed on {udid}: {inst.stdout.strip()}")
                   return False
-              launch = run(["xcrun", "simctl", "launch", udid, bundle_id], check=False)
+              return launch_app(udid, extra_args=extra_args, settle=settle)
+
+          def launch_app(udid, extra_args=None, settle=8):
+              run(["xcrun", "simctl", "terminate", udid, bundle_id], check=False)
+              cmd = ["xcrun", "simctl", "launch", udid, bundle_id]
+              if extra_args:
+                  cmd.extend(extra_args)
+              launch = run(cmd, check=False)
               print(launch.stdout)
-              time.sleep(8)
+              time.sleep(settle)
               return launch.returncode == 0
 
           def enumerate_displays(udid):
@@ -545,10 +552,16 @@ jobs:
                       ("folded-cover-primary.png", "primary"),
                       ("unfolded-inner-display3.png", "3"),
                       ("unfolded-inner-primary-1.png", "primary-1"),
-                      ("default-display.png", None),
                   ):
                       screenshot(udid, out / label, display)
                       captured = True
+                  log("Relaunching iPhone Duo with -HQShowMore to capture the More list")
+                  if launch_app(udid, extra_args=["-HQShowMore"], settle=10):
+                      screenshot(udid, out / "folded-cover-more-display1.png", "1")
+                      screenshot(udid, out / "folded-cover-more-primary.png", "primary")
+                      captured = True
+                  else:
+                      log("Duo relaunch with -HQShowMore failed")
               else:
                   log("iPhone Duo boot/install skipped or failed")
           else:
@@ -560,6 +573,12 @@ jobs:
               if udid and install_and_launch(udid):
                   screenshot(udid, out / "compact-iphone.png")
                   captured = True
+                  log("Relaunching compact iPhone with -HQShowMore to capture the More list")
+                  if launch_app(udid, extra_args=["-HQShowMore"], settle=10):
+                      screenshot(udid, out / "compact-iphone-more.png")
+                      captured = True
+                  else:
+                      log("Compact relaunch with -HQShowMore failed")
 
           if resizable:
               log(f"Booting resizable iPhone for regular-width fallback: {resizable.get('name')}")

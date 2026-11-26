@@ -111,6 +111,9 @@ final class WebEngine: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptMes
         webView.isOpaque = false
         webView.backgroundColor = .systemBackground
         webView.scrollView.backgroundColor = .systemBackground
+        // Keep .never so a CSS position:fixed header can pad with the injected
+        // --hq-safe-* insets. .automatic would inset the scroll view only and
+        // still leave the header under Duo's vertical status chrome / tab pill.
         webView.scrollView.contentInsetAdjustmentBehavior = .never
         webView.scrollView.bouncesZoom = false
         if #available(iOS 15.0, *) {
@@ -194,6 +197,14 @@ final class WebEngine: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptMes
               r.classList.add('hq-native');
               r.classList.toggle('hq-native-regular', \(regular));
               r.classList.toggle('hq-native-compact', !\(regular));
+              r.style.setProperty('--hq-safe-top', '\(top)px');
+              r.style.setProperty('--hq-safe-right', '\(trailing)px');
+              r.style.setProperty('--hq-safe-bottom', '\(bottom)px');
+              r.style.setProperty('--hq-safe-left', '\(leading)px');
+              r.style.setProperty('--sat', '\(top)px');
+              r.style.setProperty('--sar', '\(trailing)px');
+              r.style.setProperty('--sab', '\(bottom)px');
+              r.style.setProperty('--sal', '\(leading)px');
               r.style.setProperty('--hq-native-tabbar-h', '\(bottom)px');
               r.style.setProperty('--hq-native-chrome-l', '\(leading)px');
               r.style.setProperty('--hq-native-chrome-r', '\(trailing)px');
