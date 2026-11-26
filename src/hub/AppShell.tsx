@@ -16,6 +16,7 @@ import { LoginScreen, AccessDenied } from "./Login";
 import { Splash } from "./Splash";
 import { fmtTime, useNow } from "./clock";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "./notifications";
 
 export const KORAUTO_URL = "https://korautomanager.biz";
 
@@ -199,6 +200,7 @@ export function AppShell({
           <span className="hq-compact-title t-headline">{title}</span>
           <div className="flex items-center gap-3">
             <TopClock />
+            <NotificationBell />
             <div ref={menuRef} className="relative">
               <Button onClick={() => setMenu((m) => !m)} className="hq-avatar" aria-label="Account" aria-expanded={menu} aria-controls="hq-account-menu" variant="secondary">{initial}</Button>
               {menu && (
