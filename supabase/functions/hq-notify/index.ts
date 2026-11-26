@@ -19,6 +19,7 @@ const CORS = {
 };
 const json = (v, status = 200) => Response.json(v, { status, headers: { ...CORS, 'cache-control': 'no-store' } });
 const TZ = 'Europe/Belgrade';
+const EXCLUDE_NAMES = new Set((Deno.env.get('HQ_NOTIFY_EXCLUDE_NAMES') || 'robert').split(',').map((n) => n.trim().toLowerCase()).filter(Boolean));
 const DEVICE_TTL = 180 * 864e2; // seconds
 const enc = new TextEncoder();
 const b64 = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -95,20 +96,33 @@ async function feed(q) {
   const sources = {};
   const items = [];
   const [cam, cars] = await Promise.all([
-    want('frigate') ? frigateEventsSince(sinceMs / 1000).catch((e) => ({ error: String(e?.message || e).slice(0, 80) })) : null,
+    want('frigate') ? frigateEventsSince(sinceMs / 1000 - 600, 200).catch((e) => ({ error: String(e?.message || e).slice(0, 80) })) : null,
     want('cars') ? getCarChangesSince(sinceISO).catch((e) => ({ error: String(e?.message || e).slice(0, 80) })) : null,
   ]);
   if (cam) {
     sources.frigate = cam.error ? 'error' : cam.configured ? 'ok' : 'not-configured';
     if (cam.error) sources.frigateError = cam.error;
-    for (const e of cam.items || []) {
+    // Same rules as the office person-alert watcher on the Mac mini (frigate-notify): skip Robert's own face,
+    // name recognised people, wait ~10 s for face recognition, and rate-limit so one visit = one alert.
+    const nowSec = Date.now() / 1000;
+    const last = {};
+    const events = [...(cam.items || [])].sort((a, b) => a.start - b.start);
+    for (const e of events) {
+      const name = typeof e.subLabel === 'string' && e.subLabel.trim() ? e.subLabel.trim() : null;
+      if (name && EXCLUDE_NAMES.has(name.toLowerCase())) continue;
+      if (!name && e.label === 'person' && nowSec - e.start < 10) continue; // face recognition still running
+      const key = name ? `n:${name.toLowerCase()}` : `u:${e.label}`;
+      const gap = name ? 600 : 60;
+      if (last[key] && e.start - last[key] < gap) continue;
+      last[key] = e.start;
+      if (e.start * 1000 <= sinceMs) continue; // only used as cooldown context
       const at = new Date(e.start * 1000);
-      const pct = typeof e.score === 'number' ? ` · ${Math.round(e.score * 100)}%` : '';
+      const who = name ? `${nice(name)} is in the office` : `Unknown ${e.label === 'person' ? 'person' : nice(e.label)} in the office`;
       items.push({
         id: `frigate:${e.id}`,
         kind: 'camera',
-        title: `${nice(e.subLabel || e.label)} · ${nice(e.camera)}`,
-        body: `Detected at ${clock(at)}${pct}${e.zones?.length ? ` · ${e.zones.map(nice).join(', ')}` : ''}`,
+        title: who,
+        body: `${nice(e.camera)} camera · ${clock(at)}${e.zones?.length ? ` · ${e.zones.map(nice).join(', ')}` : ''}`,
         at: at.toISOString(),
         path: '/cameras',
         camera: e.camera,
