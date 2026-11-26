@@ -4,20 +4,19 @@ import WebKit
 /// System tab bar controller so iOS 27.1 can apply Liquid Glass automatically.
 /// A single WKWebView is shared across tabs and only its route changes.
 ///
-/// Root cause of the missing bar in ecd956aa: the web view was added to
-/// `UITabBarController.view` with `frame = view.bounds`, which covers the
-/// system tab bar (and, on iPhone Duo's inner display, the vertical bar
-/// under the status bar). On iOS 27 the Liquid Glass tab bar is not a
-/// simple sibling that `bringSubviewToFront(tabBar)` can reliably raise,
-/// so the chrome ended up hidden behind the web view.
+/// The web view is pinned to this controller's full bounds, inserted behind
+/// the system tab bar (or its Liquid Glass wrapper), so the page is
+/// edge-to-edge and the glass pill floats over the content. Insets are
+/// published as CSS variables; the web view frame is never shrunk, which
+/// would leave a system-background strip where the navigation sits.
 ///
-/// Fix: keep the web view inside the selected child view controller, which
-/// is the region UITabBarController already lays out under/beside its chrome.
+/// ecd956aa added the web view on top of `UITabBarController.view` and hid
+/// the chrome. 70a92b2a moved it into the inset child, which made the bar
+/// visible but reserved a white strip beside or below it.
 ///
 /// On iPhone / folded Duo the system still caps visible tabs at 5 (4 + More).
-/// Tapping More used to look like a no-op because `didSelect` / layout
-/// attached the shared WKWebView to `moreNavigationController` and covered
-/// the system More list. The web view is only attached to `HubPageController`.
+/// The web view is hidden while the system More list is showing so it cannot
+/// cover that list; selecting a More item reveals it again and navigates.
 final class HubTabBarController: UITabBarController, UITabBarControllerDelegate, UINavigationControllerDelegate {
     private let engine = WebEngine()
     private var applyingSelectionFromWeb = false
@@ -33,7 +32,7 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate,
     override func viewDidLoad() {
         super.viewDidLoad()
         delegate = self
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = HQCanvas.color
         tabBar.isTranslucent = true
         // Do not set a custom appearance or background — the SDK supplies Liquid Glass.
         tabBarMinimizeBehavior = .onScrollDown
@@ -92,7 +91,7 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate,
         publishChrome()
         layoutPlacementToggle()
         // Keep the toggle above the web content, but never above the system chrome.
-        view.bringSubviewToFront(placementToggle)
+        raisePlacementToggleWithoutCoveringChrome()
     }
 
     override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
@@ -179,27 +178,87 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate,
 
     private func attachWebViewToSelectedPage() {
         if isMoreInterface(selectedViewController) {
-            if let last = lastContentPage, last.isViewLoaded {
-                attachWebView(to: last)
-            }
+            hideWebViewForMoreList()
             return
         }
-        if let host = selectedViewController {
-            attachWebView(to: host)
+        if let host = selectedViewController, let page = contentPage(from: host) {
+            lastContentPage = page
+            if page.additionalSafeAreaInsets != .zero {
+                page.additionalSafeAreaInsets = .zero
+            }
         }
+        pinWebViewEdgeToEdge()
     }
 
     private func attachWebView(to host: UIViewController) {
-        guard let page = contentPage(from: host) else { return }
-        lastContentPage = page
-        let webView = engine.webView
-        if webView.superview !== page.view {
-            webView.removeFromSuperview()
-            webView.translatesAutoresizingMaskIntoConstraints = true
-            webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-            page.view.addSubview(webView)
+        if let page = contentPage(from: host) {
+            lastContentPage = page
+            if page.additionalSafeAreaInsets != .zero {
+                page.additionalSafeAreaInsets = .zero
+            }
         }
-        webView.frame = page.view.bounds
+        if isMoreInterface(selectedViewController) {
+            hideWebViewForMoreList()
+            return
+        }
+        pinWebViewEdgeToEdge()
+    }
+
+    /// Hide the shared web view so the system More list is visible.
+    private func hideWebViewForMoreList() {
+        engine.webView.isHidden = true
+    }
+
+    /// Fill this controller's bounds and sit behind the Liquid Glass chrome.
+    private func pinWebViewEdgeToEdge() {
+        let webView = engine.webView
+        webView.isHidden = false
+        webView.translatesAutoresizingMaskIntoConstraints = true
+        webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        if webView.superview !== view {
+            webView.removeFromSuperview()
+            insertWebViewBehindChrome(webView)
+        } else {
+            ensureWebViewBehindChrome(webView)
+        }
+        webView.frame = view.bounds
+    }
+
+    private func insertWebViewBehindChrome(_ webView: UIView) {
+        if let chrome = chromeContainer() {
+            view.insertSubview(webView, belowSubview: chrome)
+        } else {
+            view.insertSubview(webView, at: 0)
+        }
+    }
+
+    private func ensureWebViewBehindChrome(_ webView: UIView) {
+        guard let chrome = chromeContainer(),
+              let webIdx = view.subviews.firstIndex(of: webView),
+              let chromeIdx = view.subviews.firstIndex(of: chrome),
+              webIdx >= chromeIdx
+        else { return }
+        view.insertSubview(webView, belowSubview: chrome)
+    }
+
+    /// The direct subview of this controller that hosts the tab bar / Liquid Glass.
+    /// Only a direct child can be passed to `insertSubview(_:belowSubview:)`.
+    private func chromeContainer() -> UIView? {
+        var node: UIView? = tabBar
+        while let current = node {
+            if current.superview === view { return current }
+            node = current.superview
+        }
+        return nil
+    }
+
+    private func raisePlacementToggleWithoutCoveringChrome() {
+        guard placementToggle.superview === view else { return }
+        if let chrome = chromeContainer() {
+            view.insertSubview(placementToggle, belowSubview: chrome)
+        } else {
+            view.bringSubviewToFront(placementToggle)
+        }
     }
 
     private func contentPage(from controller: UIViewController?) -> HubPageController? {
@@ -251,8 +310,12 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate,
             trailing: chromeVisible ? insets.right : 0,
             top: insets.top
         )
-        if let page = contentPage(from: selectedViewController) ?? lastContentPage {
-            applyAdditionalSafeArea(on: page, needed: chromeVisible ? insets : UIEdgeInsets(top: insets.top, left: 0, bottom: 0, right: 0))
+        // Never shrink the child or the web view with additionalSafeAreaInsets:
+        // that reserved a white strip under the floating glass bar. Content is
+        // cleared with the injected CSS variables instead.
+        if let page = contentPage(from: selectedViewController) ?? lastContentPage,
+           page.additionalSafeAreaInsets != .zero {
+            page.additionalSafeAreaInsets = .zero
         }
         let signature = "\(chrome.isRegularWidth ? 1 : 0)-\(Int(chrome.bottom.rounded()))-\(Int(chrome.leading.rounded()))-\(Int(chrome.trailing.rounded()))-\(Int(chrome.top.rounded()))"
         guard signature != lastChromeSignature else { return }
@@ -268,15 +331,6 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate,
         let webView = engine.webView
         let host = contentPage(from: selectedViewController) ?? lastContentPage
         var insets = webView.superview != nil ? webView.safeAreaInsets : (host?.view.safeAreaInsets ?? view.safeAreaInsets)
-        if let host {
-            let extra = host.additionalSafeAreaInsets
-            insets = UIEdgeInsets(
-                top: max(0, insets.top - extra.top),
-                left: max(0, insets.left - extra.left),
-                bottom: max(0, insets.bottom - extra.bottom),
-                right: max(0, insets.right - extra.right)
-            )
-        }
         let windowInsets = webView.window?.safeAreaInsets ?? view.window?.safeAreaInsets ?? .zero
         insets.top = max(insets.top, windowInsets.top)
         insets.left = max(insets.left, windowInsets.left)
@@ -323,26 +377,6 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate,
             }
         }
         return insets
-    }
-
-    private func applyAdditionalSafeArea(on page: UIViewController, needed: UIEdgeInsets) {
-        let current = page.view.safeAreaInsets
-        let additional = page.additionalSafeAreaInsets
-        let system = UIEdgeInsets(
-            top: max(0, current.top - additional.top),
-            left: max(0, current.left - additional.left),
-            bottom: max(0, current.bottom - additional.bottom),
-            right: max(0, current.right - additional.right)
-        )
-        let extra = UIEdgeInsets(
-            top: max(0, needed.top - system.top),
-            left: max(0, needed.left - system.left),
-            bottom: max(0, needed.bottom - system.bottom),
-            right: max(0, needed.right - system.right)
-        )
-        if extra != additional {
-            page.additionalSafeAreaInsets = extra
-        }
     }
 
     private func configurePlacementToggle() {
@@ -435,7 +469,9 @@ extension HubTabBarController: UITabBarController.Sidebar.Delegate {
 final class HubPageController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
-        view.clipsToBounds = true
+        view.backgroundColor = HQCanvas.color
+        view.clipsToBounds = false
+        edgesForExtendedLayout = .all
+        extendedLayoutIncludesOpaqueBars = true
     }
 }

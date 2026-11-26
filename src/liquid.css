@@ -349,11 +349,26 @@ html.hq-native .hq-tabbar {
   display: none !important;
   pointer-events: none !important;
 }
-/* Pad the app root so login and dashboard both clear overlay chrome.
-   Fixed header still needs its own padding (it is viewport-positioned). */
+/* The web view is edge-to-edge under the floating glass bar. Keep content
+   clear with padding (not by shrinking the native frame). Background must
+   fill the padding box so no white strip shows where the navigation sits. */
+html.hq-native,
+html.hq-native body {
+  background-color: var(--boot-bg, #f2f2f7);
+  min-height: 100%;
+  min-height: 100dvh;
+}
 html.hq-native #root {
+  box-sizing: border-box;
+  min-height: 100%;
+  min-height: 100dvh;
+  background-color: var(--boot-bg, #f2f2f7);
   padding-left: var(--sal);
   padding-right: var(--sar);
+}
+/* Login and other pages without .hq-shell-content still need bottom clearance. */
+html.hq-native #root:not(:has(.hq-shell-content)) {
+  padding-bottom: var(--sab);
 }
 html.hq-native .hq-navigation {
   padding-top: var(--sat);

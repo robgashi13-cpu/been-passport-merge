@@ -1,6 +1,19 @@
 import UIKit
 import WebKit
 
+/// Matches the web app's `html, body, #root` `--boot-bg` (#f2f2f7 light, #000 dark)
+/// so native views behind the floating Liquid Glass tab bar are the same colour
+/// as the page instead of a white `systemBackground` strip.
+enum HQCanvas {
+    static let color = UIColor { trait in
+        if trait.userInterfaceStyle == .dark {
+            return UIColor.black
+        }
+        return UIColor(red: 242 / 255, green: 242 / 255, blue: 247 / 255, alpha: 1)
+    }
+}
+
+
 final class WebEngine: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
     let webView: WKWebView
     var usesBundle = false
@@ -109,15 +122,15 @@ final class WebEngine: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptMes
         webView.allowsBackForwardNavigationGestures = true
         webView.allowsLinkPreview = true
         webView.isOpaque = false
-        webView.backgroundColor = .systemBackground
-        webView.scrollView.backgroundColor = .systemBackground
+        webView.backgroundColor = HQCanvas.color
+        webView.scrollView.backgroundColor = HQCanvas.color
         // Keep .never so a CSS position:fixed header can pad with the injected
         // --hq-safe-* insets. .automatic would inset the scroll view only and
         // still leave the header under Duo's vertical status chrome / tab pill.
         webView.scrollView.contentInsetAdjustmentBehavior = .never
         webView.scrollView.bouncesZoom = false
         if #available(iOS 15.0, *) {
-            webView.underPageBackgroundColor = .systemBackground
+            webView.underPageBackgroundColor = HQCanvas.color
         }
 
         let refresh = UIRefreshControl()
