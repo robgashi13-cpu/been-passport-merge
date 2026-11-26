@@ -2,6 +2,13 @@ name: iOS IPA
 
 on:
   workflow_dispatch:
+    inputs:
+      backend:
+        description: "Backend for the bundled HQ app: vps (self-hosted, https://wanderpass.me) or lovable (Lovable Cloud)"
+        required: false
+        default: "vps"
+        type: choice
+        options: ["vps", "lovable"]
   push:
     paths:
       - "ios-shell/**"
@@ -174,13 +181,18 @@ jobs:
           cache: npm
 
       - name: Confirm public Vite keys without printing values
+        env:
+          HQ_BACKEND: ${{ inputs.backend || 'vps' }}
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          env_path = Path(".env")
+          import os
+          backend = os.environ.get("HQ_BACKEND", "vps")
+          env_path = Path(".env.vps" if backend == "vps" else ".env")
+          print("HQ backend:", backend, "->", env_path)
           if not env_path.exists():
-              raise SystemExit("Committed .env with public VITE_* keys was not found")
+              raise SystemExit(f"Committed {env_path} with public VITE_* keys was not found")
           keys = []
           for raw in env_path.read_text().splitlines():
               line = raw.strip()
@@ -201,10 +213,17 @@ jobs:
       - name: Build web app
         env:
           NODE_OPTIONS: --max-old-space-size=8192
+          HQ_BACKEND: ${{ inputs.backend || 'vps' }}
         run: |
           set -euo pipefail
           npm install --legacy-peer-deps
-          npm run build
+          # Build flag: "vps" uses .env.vps (vite --mode vps); "lovable" is the normal Lovable build (.env).
+          if [ "${HQ_BACKEND}" = "vps" ]; then
+            npx vite build --mode vps
+          else
+            npm run build
+          fi
+          echo "HQ backend: ${HQ_BACKEND}" >> "$GITHUB_STEP_SUMMARY"
           test -f dist/index.html
           echo "Web build output:"
           find dist -type f | wc -l

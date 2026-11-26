@@ -101,6 +101,12 @@ final class HQNotifier: NSObject, WKScriptMessageHandler, UNUserNotificationCent
         return nil
     }
 
+    /// Lovable Cloud (*.supabase.co) or the self-hosted VPS backend (wanderpass.me).
+    static func isAllowedBackend(_ host: String?) -> Bool {
+        guard let h = host?.lowercased() else { return false }
+        return h.hasSuffix(".supabase.co") || h == "wanderpass.me" || h == "www.wanderpass.me"
+    }
+
     // MARK: Messages from the web app
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -111,7 +117,7 @@ final class HQNotifier: NSObject, WKScriptMessageHandler, UNUserNotificationCent
         case "register":
             guard let key = body["key"] as? String, !key.isEmpty, key.count < 600,
                   let base = body["base"] as? String, let baseURL = URL(string: base),
-                  baseURL.scheme == "https", baseURL.host?.hasSuffix(".supabase.co") == true else { return }
+                  baseURL.scheme == "https", Self.isAllowedBackend(baseURL.host) else { return }
             DeviceKeychain.save(key)
             defaults.set(base, forKey: Key.base)
             applyPrefs(body["prefs"])
