@@ -424,9 +424,23 @@ jobs:
               log("No iOS simulator runtimes available")
               Path("hq-shots/README.txt").write_text("\n".join(notes) + "\n")
               sys.exit(0)
-          runtime = sorted(ios_runtimes, key=lambda r: r.get("version", ""), reverse=True)[0]
-          runtime_id = runtime["identifier"]
-          log(f"Using runtime {runtime.get('name')} ({runtime_id})")
+
+          def pick_runtime(*needles_groups, exclude=()):
+              for needles in needles_groups:
+                  for r in ios_runtimes:
+                      blob = (r.get("identifier", "") + " " + r.get("name", "")).lower()
+                      if any(x.lower() in blob for x in exclude):
+                          continue
+                      if all(n.lower() in blob for n in needles):
+                          return r
+              return sorted(ios_runtimes, key=lambda r: r.get("version", ""), reverse=True)[0]
+
+          # iPhone Duo (iPhone19,4) is incompatible with the generic iOS 27.2
+          # runtime. Prefer the Duo-specific 27.2 runtime, then iOS 27.1.
+          duo_runtime = pick_runtime(("iphone19-4",), ("ios-27-1",), ("27.1",))
+          phone_runtime = pick_runtime(("ios-27-2",), ("27.2",), ("27.1",), exclude=("iphone19-4",))
+          log(f"Duo runtime {duo_runtime.get('name')} ({duo_runtime.get('identifier')})")
+          log(f"Phone runtime {phone_runtime.get('name')} ({phone_runtime.get('identifier')})")
 
           def find_type(*needles):
               for t in type_list:
@@ -448,8 +462,9 @@ jobs:
               or find_type("iphone")
           )
 
-          def create_and_boot(device_type, name):
+          def create_and_boot(device_type, name, runtime):
               ident = device_type["identifier"]
+              runtime_id = runtime["identifier"]
               created = run(["xcrun", "simctl", "create", name, ident, runtime_id], check=False)
               print(created.stdout)
               if created.returncode != 0:
@@ -495,7 +510,7 @@ jobs:
           captured = False
           if duo:
               log(f"Booting iPhone Duo: {duo.get('name')} {duo.get('identifier')}")
-              udid = create_and_boot(duo, "HQ-Duo-Shots")
+              udid = create_and_boot(duo, "HQ-Duo-Shots", duo_runtime)
               if udid and install_and_launch(udid):
                   enumerate_displays(udid)
                   # Cover / folded (default boot). Display IDs on Xcode 27.1:
@@ -514,16 +529,16 @@ jobs:
           else:
               log("No iPhone Duo simulator device type in this runner")
 
-          if compact and not duo:
-              log(f"Booting compact iPhone fallback: {compact.get('name')}")
-              udid = create_and_boot(compact, "HQ-Compact-Shots")
+          if compact:
+              log(f"Booting compact iPhone: {compact.get('name')}")
+              udid = create_and_boot(compact, "HQ-Compact-Shots", phone_runtime)
               if udid and install_and_launch(udid):
                   screenshot(udid, out / "compact-iphone.png")
                   captured = True
 
           if resizable:
               log(f"Booting resizable iPhone for regular-width fallback: {resizable.get('name')}")
-              udid = create_and_boot(resizable, "HQ-Regular-Shots")
+              udid = create_and_boot(resizable, "HQ-Regular-Shots", phone_runtime)
               if udid and install_and_launch(udid):
                   screenshot(udid, out / "regular-resizable-iphone.png")
                   captured = True
