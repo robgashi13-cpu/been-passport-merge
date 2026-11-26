@@ -349,15 +349,18 @@ html.hq-native .hq-tabbar {
   display: none !important;
   pointer-events: none !important;
 }
-/* Fixed header must clear the vertical status chrome and tab pill on the right. */
+/* Pad the app root so login and dashboard both clear overlay chrome.
+   Fixed header still needs its own padding (it is viewport-positioned). */
+html.hq-native #root {
+  padding-left: var(--sal);
+  padding-right: var(--sar);
+}
 html.hq-native .hq-navigation {
   padding-top: var(--sat);
   padding-left: var(--sal);
   padding-right: var(--sar);
 }
 html.hq-native .hq-shell-content {
-  padding-left: var(--sal);
-  padding-right: var(--sar);
   padding-bottom: calc(var(--sab) + 16px);
 }
 html.hq-native .hq-flush .wi-root {

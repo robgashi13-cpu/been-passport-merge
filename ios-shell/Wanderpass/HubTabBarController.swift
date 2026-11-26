@@ -26,6 +26,9 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate,
     private let placementToggle = UIButton(type: .system)
     private var prefersSidebar = true
     private var lastContentPage: HubPageController?
+    #if DEBUG
+    private var forceMoreForScreenshot = false
+    #endif
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -76,7 +79,7 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate,
 
         #if DEBUG
         if ProcessInfo.processInfo.arguments.contains("-HQShowMore") {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
                 self?.presentMoreForScreenshot()
             }
         }
@@ -161,6 +164,9 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate,
     }
 
     private func selectTab(matching path: String) {
+        #if DEBUG
+        if forceMoreForScreenshot { return }
+        #endif
         guard let tab = HubTab.matching(path: path) else { return }
         guard let pages = viewControllers, tab.rawValue < pages.count else { return }
         guard selectedIndex != tab.rawValue else { return }
@@ -280,6 +286,7 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate,
         if chromeVisible, !tabBar.isHidden, tabBar.alpha > 0.01, tabBar.bounds.width > 1, tabBar.bounds.height > 1 {
             let target: UIView = webView.superview != nil ? webView : (host?.view ?? view)
             let tabFrame = tabBar.convert(tabBar.bounds, to: target)
+            let barInRoot = tabBar.convert(tabBar.bounds, to: view)
             let bounds = target.bounds
             if tabFrame.intersects(bounds) {
                 let overlap = tabFrame.intersection(bounds).insetBy(dx: -8, dy: -8).intersection(bounds)
@@ -296,6 +303,22 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate,
                     } else {
                         insets.left = max(insets.left, overlap.maxX - bounds.minX)
                     }
+                }
+            }
+            // Liquid Glass on Duo can draw a vertical pill whose UIView frame
+            // does not intersect the web view. If the bar is taller than it is
+            // wide, still reserve its width on the side it sits on.
+            if tabBar.bounds.height > tabBar.bounds.width * 1.2 {
+                let pad = tabBar.bounds.width + 12
+                if barInRoot.midX >= view.bounds.midX {
+                    insets.right = max(insets.right, pad)
+                } else {
+                    insets.left = max(insets.left, pad)
+                }
+            } else if tabBar.bounds.width > tabBar.bounds.height * 1.2 {
+                let pad = tabBar.bounds.height + 12
+                if barInRoot.midY >= view.bounds.midY {
+                    insets.bottom = max(insets.bottom, pad)
                 }
             }
         }
@@ -381,8 +404,13 @@ final class HubTabBarController: UITabBarController, UITabBarControllerDelegate,
     /// Used by the screenshot job (`simctl launch … -HQShowMore`) so we can
     /// capture the system More list without coordinate tapping.
     fileprivate func presentMoreForScreenshot() {
-        guard let controllers = viewControllers, controllers.count > 5 else { return }
+        let visibleCount = tabBar.items?.count ?? 0
+        let titles = (tabBar.items ?? []).compactMap { $0.title }
+        let hasMoreItem = titles.contains("More") || visibleCount < HubTab.allCases.count
+        guard hasMoreItem else { return }
+        forceMoreForScreenshot = true
         selectedViewController = moreNavigationController
+        moreNavigationController.setNavigationBarHidden(false, animated: false)
     }
     #endif
 
