@@ -142,3 +142,15 @@ export async function getKorautoFeed({ force = false } = {}) {
     return { configured: true, error: String(e?.message || e).slice(0, 120) };
   }
 }
+
+/**
+ * Cars added or edited after `sinceISO` (READ-ONLY GET on korautomanager, same read user as the feed).
+ * Only identity fields — no prices, buyers or documents. Used by hq-notify.
+ */
+export async function getCarChangesSince(sinceISO: string, limit = 60) {
+  const c = await cfg();
+  if (!c.ok) return { configured: false, items: [] };
+  const token = await signIn(c);
+  const rows = await sel(c, token, `cars?select=id,make,model,year,plate_number,created_at,updated_at&updated_at=gt.${encodeURIComponent(sinceISO)}&order=updated_at.desc&limit=${Math.min(200, Math.max(1, limit))}`);
+  return { configured: true, items: arr(rows) };
+}
