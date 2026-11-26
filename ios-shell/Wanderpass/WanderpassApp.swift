@@ -2,6 +2,8 @@ import SwiftUI
 
 @main
 struct WanderpassApp: App {
+    @UIApplicationDelegateAdaptor(HQAppDelegate.self) private var hqAppDelegate
+
     var body: some Scene {
         WindowGroup {
             HubRootView()

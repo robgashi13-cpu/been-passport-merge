@@ -68,6 +68,10 @@ targets:
           - UIInterfaceOrientationLandscapeRight
         UIDeviceFamily:
           - 1
+        UIBackgroundModes:
+          - fetch
+        BGTaskSchedulerPermittedIdentifiers:
+          - me.wanderpass.hub.notify-refresh
         CFBundleURLTypes:
           - CFBundleURLName: me.wanderpass.hub
             CFBundleURLSchemes:
