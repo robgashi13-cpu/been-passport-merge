@@ -380,9 +380,12 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY= \
             build
-          APP="$(find build-sim -path '*/Debug-iphonesimulator/Wanderpass.app' -type d | head -1)"
+          APP="$(find "$(pwd)/build-sim" -path '*/Debug-iphonesimulator/Wanderpass.app' -type d | head -1)"
           test -n "${APP}"
+          test -d "${APP}"
           echo "APP=${APP}" >> "$GITHUB_ENV"
+          echo "Simulator app: ${APP}"
+          ls -ld "${APP}"
 
       - name: Capture compact and regular-width screenshots
         run: |
@@ -478,10 +481,13 @@ jobs:
               return udid
 
           def install_and_launch(udid):
+              if not Path(app).is_dir():
+                  log(f"Simulator app missing at {app}")
+                  return False
               inst = run(["xcrun", "simctl", "install", udid, app], check=False)
               print(inst.stdout)
               if inst.returncode != 0:
-                  log(f"Install failed on {udid}")
+                  log(f"Install failed on {udid}: {inst.stdout.strip()}")
                   return False
               launch = run(["xcrun", "simctl", "launch", udid, bundle_id], check=False)
               print(launch.stdout)
