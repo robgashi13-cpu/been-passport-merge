@@ -175,16 +175,31 @@ final class WebEngine: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptMes
     }
 
     func setNativeTabBarHeight(_ height: CGFloat) {
-        let px = String(format: "%.0f", max(height, 0))
+        applyNativeChrome(NativeChrome(isRegularWidth: false, bottom: height, leading: 0, trailing: 0, top: 0))
+    }
+
+    func applyNativeChrome(_ chrome: NativeChrome) {
+        let bottom = String(format: "%.0f", max(chrome.bottom, 0))
+        let leading = String(format: "%.0f", max(chrome.leading, 0))
+        let trailing = String(format: "%.0f", max(chrome.trailing, 0))
+        let top = String(format: "%.0f", max(chrome.top, 0))
+        let regular = chrome.isRegularWidth ? "true" : "false"
         webView.evaluateJavaScript("""
         (function() {
           try {
             window.__HQ_NATIVE__ = true;
+            window.__HQ_NATIVE_REGULAR__ = \(regular);
             var r = document.documentElement;
             if (r) {
               r.classList.add('hq-native');
-              r.style.setProperty('--hq-native-tabbar-h', '\(px)px');
+              r.classList.toggle('hq-native-regular', \(regular));
+              r.classList.toggle('hq-native-compact', !\(regular));
+              r.style.setProperty('--hq-native-tabbar-h', '\(bottom)px');
+              r.style.setProperty('--hq-native-chrome-l', '\(leading)px');
+              r.style.setProperty('--hq-native-chrome-r', '\(trailing)px');
+              r.style.setProperty('--hq-native-chrome-t', '\(top)px');
             }
+            window.dispatchEvent(new Event('hq-native-layout'));
           } catch (e) {}
         })();
         """)
@@ -412,4 +427,12 @@ final class WebEngine: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptMes
             self?.onRouteChange?(path)
         }
     }
+}
+
+struct NativeChrome {
+    var isRegularWidth: Bool
+    var bottom: CGFloat
+    var leading: CGFloat
+    var trailing: CGFloat
+    var top: CGFloat
 }

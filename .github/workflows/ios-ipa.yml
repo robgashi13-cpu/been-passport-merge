@@ -309,3 +309,238 @@ jobs:
           name: Wanderpass-bundled.ipa
           path: Wanderpass-bundled.ipa
           if-no-files-found: error
+
+  screenshots:
+    runs-on: xcode-27
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode and log SDK
+        id: sdk
+        run: |
+          set -euo pipefail
+          if [ -d /Applications/Xcode_27.1.app ]; then
+            sudo xcode-select -s /Applications/Xcode_27.1.app/Contents/Developer
+          elif [ -d /Applications/Xcode_27.1.0.app ]; then
+            sudo xcode-select -s /Applications/Xcode_27.1.0.app/Contents/Developer
+          fi
+          xcodebuild -version
+          SDK="$(xcrun --show-sdk-version --sdk iphoneos)"
+          DESIRED="27.1"
+          TARGET="$(printf '%s\n%s\n' "${SDK}" "${DESIRED}" | sort -V | head -1)"
+          echo "target=${TARGET}" >> "$GITHUB_OUTPUT"
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Prepare icon and deployment target
+        run: |
+          set -euo pipefail
+          TARGET="${{ steps.sdk.outputs.target }}"
+          sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET_PLACEHOLDER/${TARGET}/g" ios-shell/project.yml
+          DEST="ios-shell/Wanderpass/Assets.xcassets/AppIcon.appiconset/AppIcon.png"
+          SRC=""
+          for candidate in public/icons/icon-512.png public/icons/hq-logo.png public/icons/icon-192.png public/icons/icon-maskable-512.png; do
+            if [ -f "${candidate}" ]; then
+              SRC="${candidate}"
+              break
+            fi
+          done
+          if [ -z "${SRC}" ]; then
+            echo "No app icon found"
+            exit 1
+          fi
+          WIDTH="$(sips -g pixelWidth "${SRC}" | awk '/pixelWidth/{print $2}')"
+          HEIGHT="$(sips -g pixelHeight "${SRC}" | awk '/pixelHeight/{print $2}')"
+          SIDE="$WIDTH"
+          if [ "${HEIGHT}" -gt "${WIDTH}" ]; then SIDE="${HEIGHT}"; fi
+          TMP="$(mktemp -t wanderpass-icon).png"
+          sips -s format png --padToHeightWidth "${SIDE}" "${SIDE}" "${SRC}" --out "${TMP}" >/dev/null
+          sips -z 1024 1024 "${TMP}" --out "${DEST}" >/dev/null
+          rm -f "${TMP}"
+
+      - name: Generate Xcode project
+        working-directory: ios-shell
+        run: xcodegen generate
+
+      - name: Build for iOS Simulator
+        working-directory: ios-shell
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project Wanderpass.xcodeproj \
+            -scheme Wanderpass \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build-sim \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY= \
+            build
+          APP="$(find build-sim -path '*/Debug-iphonesimulator/Wanderpass.app' -type d | head -1)"
+          test -n "${APP}"
+          echo "APP=${APP}" >> "$GITHUB_ENV"
+
+      - name: Capture compact and regular-width screenshots
+        run: |
+          set -euo pipefail
+          mkdir -p hq-shots
+          python3 - <<'PY'
+          import json, os, shutil, subprocess, sys, time
+          from pathlib import Path
+
+          out = Path("hq-shots")
+          out.mkdir(exist_ok=True)
+          app = os.environ["APP"]
+          bundle_id = "me.wanderpass.hub"
+          notes = []
+
+          def run(cmd, check=True, **kw):
+              print("+", " ".join(cmd), flush=True)
+              return subprocess.run(cmd, check=check, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, **kw)
+
+          def log(msg):
+              print(msg, flush=True)
+              notes.append(msg)
+
+          # Xcode 27.1 has no simctl command to fold/unfold iPhone Duo
+          # (Device Hub pose buttons only). A freshly booted Duo starts folded
+          # on the cover display. We still capture both displays, and also
+          # boot any resizable-iPhone or large iPhone we can find for a
+          # regular-width fallback.
+          log("Note: simctl cannot change iPhone Duo pose in Xcode 27.1; unfolded inner shots are only useful if the runtime starts or stays open.")
+
+          types = run(["xcrun", "simctl", "list", "devicetypes", "-j"]).stdout
+          runtimes = run(["xcrun", "simctl", "list", "runtimes", "-j"]).stdout
+          Path("hq-shots/simctl-devicetypes.json").write_text(types)
+          Path("hq-shots/simctl-runtimes.json").write_text(runtimes)
+          type_list = json.loads(types).get("devicetypes", [])
+          runtime_list = json.loads(runtimes).get("runtimes", [])
+          ios_runtimes = [r for r in runtime_list if r.get("isAvailable", True) and "iOS" in r.get("name", "")]
+          if not ios_runtimes:
+              log("No iOS simulator runtimes available")
+              Path("hq-shots/README.txt").write_text("\n".join(notes) + "\n")
+              sys.exit(0)
+          runtime = sorted(ios_runtimes, key=lambda r: r.get("version", ""), reverse=True)[0]
+          runtime_id = runtime["identifier"]
+          log(f"Using runtime {runtime.get('name')} ({runtime_id})")
+
+          def find_type(*needles):
+              for t in type_list:
+                  ident = t.get("identifier", "")
+                  name = t.get("name", "")
+                  blob = (ident + " " + name).lower()
+                  if all(n.lower() in blob for n in needles):
+                      return t
+              return None
+
+          duo = find_type("iphone", "duo") or find_type("iphone-duo")
+          resizable = find_type("resizable", "iphone") or find_type("iphone", "resizable")
+          compact = (
+              find_type("iphone-17-pro")
+              or find_type("iphone 17 pro")
+              or find_type("iphone-16-pro")
+              or find_type("iphone 16 pro")
+              or find_type("iphone-16")
+              or find_type("iphone")
+          )
+
+          def create_and_boot(device_type, name):
+              ident = device_type["identifier"]
+              created = run(["xcrun", "simctl", "create", name, ident, runtime_id], check=False)
+              print(created.stdout)
+              if created.returncode != 0:
+                  log(f"Could not create {name}: {created.stdout.strip()}")
+                  return None
+              udid = created.stdout.strip()
+              boot = run(["xcrun", "simctl", "boot", udid], check=False)
+              print(boot.stdout)
+              status = run(["xcrun", "simctl", "bootstatus", udid, "-b"], check=False)
+              print(status.stdout)
+              return udid
+
+          def install_and_launch(udid):
+              inst = run(["xcrun", "simctl", "install", udid, app], check=False)
+              print(inst.stdout)
+              if inst.returncode != 0:
+                  log(f"Install failed on {udid}")
+                  return False
+              launch = run(["xcrun", "simctl", "launch", udid, bundle_id], check=False)
+              print(launch.stdout)
+              time.sleep(8)
+              return launch.returncode == 0
+
+          def enumerate_displays(udid):
+              listed = run(["xcrun", "simctl", "io", udid, "enumerate"], check=False)
+              Path(f"hq-shots/enumerate-{udid[:8]}.txt").write_text(listed.stdout or "")
+              return listed.stdout or ""
+
+          def screenshot(udid, dest, display=None):
+              cmd = ["xcrun", "simctl", "io", udid, "screenshot"]
+              if display is not None:
+                  cmd.append(f"--display={display}")
+              cmd.append(str(dest))
+              result = run(cmd, check=False)
+              print(result.stdout)
+              if dest.exists() and dest.stat().st_size > 100:
+                  # skip obviously empty/black-only files later
+                  log(f"Wrote {dest} ({dest.stat().st_size} bytes)")
+                  return True
+              log(f"Screenshot failed for display={display}: {result.stdout.strip()}")
+              return False
+
+          captured = False
+          if duo:
+              log(f"Booting iPhone Duo: {duo.get('name')} {duo.get('identifier')}")
+              udid = create_and_boot(duo, "HQ-Duo-Shots")
+              if udid and install_and_launch(udid):
+                  enumerate_displays(udid)
+                  # Cover / folded (default boot). Display IDs on Xcode 27.1:
+                  # 1 or "primary" = outer cover, 3 or "primary-1" = inner.
+                  for label, display in (
+                      ("folded-cover-display1.png", "1"),
+                      ("folded-cover-primary.png", "primary"),
+                      ("unfolded-inner-display3.png", "3"),
+                      ("unfolded-inner-primary-1.png", "primary-1"),
+                      ("default-display.png", None),
+                  ):
+                      screenshot(udid, out / label, display)
+                      captured = True
+              else:
+                  log("iPhone Duo boot/install skipped or failed")
+          else:
+              log("No iPhone Duo simulator device type in this runner")
+
+          if compact and not duo:
+              log(f"Booting compact iPhone fallback: {compact.get('name')}")
+              udid = create_and_boot(compact, "HQ-Compact-Shots")
+              if udid and install_and_launch(udid):
+                  screenshot(udid, out / "compact-iphone.png")
+                  captured = True
+
+          if resizable:
+              log(f"Booting resizable iPhone for regular-width fallback: {resizable.get('name')}")
+              udid = create_and_boot(resizable, "HQ-Regular-Shots")
+              if udid and install_and_launch(udid):
+                  screenshot(udid, out / "regular-resizable-iphone.png")
+                  captured = True
+          else:
+              log("No Resizable iPhone device type; unfolded regular-width fallback was not available via simctl")
+
+          Path("hq-shots/README.txt").write_text("\n".join(notes) + "\n")
+          if not captured:
+              log("No screenshots were captured")
+              # Do not fail the IPA workflow; the job is continue-on-error.
+              sys.exit(0)
+          PY
+
+      - name: Upload layout screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hq-shots
+          path: hq-shots/
+          if-no-files-found: warn

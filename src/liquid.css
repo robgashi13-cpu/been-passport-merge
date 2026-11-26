@@ -326,11 +326,38 @@ img, video, canvas { max-width: 100%; }
 .hq-shell-content:has(.korauto-page) .hq-large-header h1 { font-size: 24px; line-height: 30px; }
 
 /* HQ native iOS shell only (window.__HQ_NATIVE__ / html.hq-native).
-   wanderpass.me in a regular browser is unchanged. */
+   wanderpass.me in a regular browser is unchanged. The native shell parents
+   the WKWebView in the selected tab page, so env(safe-area-inset-*) already
+   includes the system tab bar or sidebar. */
 html.hq-native {
-  --tabbar-h: var(--hq-native-tabbar-h, calc(76px + env(safe-area-inset-bottom, 0px)));
+  --hq-native-tabbar-h: env(safe-area-inset-bottom, 0px);
+  --hq-native-chrome-l: env(safe-area-inset-left, 0px);
+  --hq-native-chrome-r: env(safe-area-inset-right, 0px);
+  --tabbar-h: var(--hq-native-tabbar-h);
+  --sal: var(--hq-native-chrome-l);
+  --sar: var(--hq-native-chrome-r);
 }
 html.hq-native .hq-tabbar {
   display: none !important;
   pointer-events: none !important;
+}
+html.hq-native .hq-flush .wi-root {
+  left: var(--sal, env(safe-area-inset-left, 0px));
+  right: var(--sar, env(safe-area-inset-right, 0px));
+}
+
+/* Regular horizontal size class (iPhone Duo inner display). The CSS pixel
+   width can sit just under Tailwind's md (768px) breakpoint, so the tablet
+   dashboard grid is driven by the shell's size-class flag, not a fixed width. */
+html.hq-native-regular main .grid.grid-flow-row-dense.grid-cols-2 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: 210px;
+  gap: 1rem;
+}
+html.hq-native-regular main.mx-auto {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+html.hq-native-regular .hq-page {
+  padding: 4px 24px 32px;
 }
